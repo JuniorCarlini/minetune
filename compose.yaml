@@ -66,6 +66,10 @@ services:
 
   backup:
     image: itzg/mc-backup:${MC_BACKUP_IMAGE_TAG:-latest}
+    # Wrapper: carrega config/backup.env (destino, agenda e retenção salvos pelo
+    # painel) a cada start. Assim o painel aplica mudanças só reiniciando o agendador.
+    entrypoint: ["bash", "/minetune/bin/entrypoint.sh"]
+    command: ["loop"]
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: backup
@@ -91,6 +95,8 @@ services:
       - ${DATA_DIR:-./data}:/data:ro
       - ${BACKUP_LOCAL_DIR:-./backups}:/backups
       - restic-cache:/cache
+      - ${CONFIG_DIR:-./config}:/minetune/config:ro
+      - ./docker/backup:/minetune/bin:ro
     restart: unless-stopped
     logging: *logging
     networks: [game]
@@ -116,6 +122,8 @@ services:
       BACKUP_EXCLUDES: ${BACKUP_EXCLUDES:-/data/*.jar,/data/libraries,/data/versions,/data/cache,/data/logs,/data/.minetune,*.tmp}
       BACKUP_RETENTION: ${BACKUP_RETENTION:---keep-last 4 --keep-daily 7 --keep-weekly 4 --keep-monthly 6}
       BACKUP_INTERVAL: ${BACKUP_INTERVAL:-6h}
+      BACKUP_PAUSE_IF_NO_PLAYERS: ${BACKUP_PAUSE_IF_NO_PLAYERS:-true}
+      RESTIC_LIMIT_UPLOAD: ${RESTIC_LIMIT_UPLOAD:-0}
       RESTIC_CACHE_DIR: /cache
     ports:
       - "${PANEL_BIND:-127.0.0.1}:${PANEL_PORT:-8080}:8080"

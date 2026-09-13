@@ -14,3 +14,6 @@ panel/dist/
 
 # Site do GitHub Pages (gerado por scripts/build-site.mjs)
 _site/
+
+# Destino dos backups salvo pelo painel (tem segredos)
+config/backup.env
