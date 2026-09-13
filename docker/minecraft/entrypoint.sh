@@ -98,6 +98,12 @@ if [[ "$loader" == "paper" && "${APPLY_PAPER_OPTIMIZATIONS:-true}" == "true" ]];
   add_patches paper
 fi
 
+# Sem limite de uma conexão a cada 4s por IP: atrás de túnel (playit) ou proxy todos os
+# jogadores chegam com o mesmo IP, e quem entrasse logo depois de outro era recusado.
+if [[ "$loader" == "paper" ]]; then
+  add_patches bukkit
+fi
+
 if [[ "${BEDROCK_CROSSPLAY:-false}" == "true" ]]; then
   # Bedrock autentica via Floodgate (conta Xbox), não exige conta Java.
   # O plugin só cria o config no primeiro boot; até lá, semeamos o mínimo e ele completa o resto.
