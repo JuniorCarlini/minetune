@@ -489,10 +489,10 @@ code {
 }
 
 /* Perguntas frequentes: texto de verdade na página (bom para buscadores e IAs), abre e fecha */
+/* Mesma largura das outras seções: a lista acompanha a borda dos cartões de cima. */
 .faq {
   display: grid;
   gap: 0.6rem;
-  max-width: 52rem;
 }
 .faq-item {
   background: var(--card);
