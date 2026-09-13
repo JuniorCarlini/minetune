@@ -9,7 +9,7 @@
  * Uso: node scripts/build-site.mjs
  */
 
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -74,6 +74,10 @@ for (const [name, transform] of Object.entries(pages)) {
 // SEO e GEO: mapa do site, regras para robôs e o resumo em texto que assistentes de IA leem.
 for (const file of ['robots.txt', 'sitemap.xml', 'llms.txt']) {
   writeFileSync(join(OUT, file), fill(readFileSync(join(SITE, file), 'utf8')));
+}
+// Verificação do Google Search Console: o arquivo precisa continuar publicado, sem alteração.
+for (const file of readdirSync(SITE).filter((name) => /^google[0-9a-f]+\.html$/.test(name))) {
+  cpSync(join(SITE, file), join(OUT, file));
 }
 writeFileSync(join(OUT, '.nojekyll'), '');
 
