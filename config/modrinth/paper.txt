@@ -1,0 +1,7 @@
+# Plugins (Paper/Purpur) baixados do Modrinth a cada start.
+# Formato: slug[?][:versão|release|beta]   "?" = opcional (não derruba o boot se não houver versão)
+# Remover uma linha remove o plugin. Editável pelo painel em "Plugins & Mods".
+# O Paper já inclui o profiler spark (/spark).
+
+# Pré-geração de chunks: a otimização mais efetiva para evitar lag de exploração.
+chunky?

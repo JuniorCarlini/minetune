@@ -1,0 +1,5 @@
+# Mods (NeoForge) baixados do Modrinth a cada start.
+# Formato: slug[?][:versão|release|beta]   "?" = opcional
+
+spark?
+chunky?

@@ -1,0 +1,21 @@
+# =============================================================================
+# Overlay: túnel playit.gg — expõe o servidor sem abrir portas no roteador.
+# Resolve CGNAT (comum em provedores residenciais) e IP dinâmico.
+#
+# 1. Crie a conta e gere a chave em https://playit.gg (agente tipo Docker)
+# 2. PLAYIT_SECRET_KEY=... e COMPOSE_FILE=compose.yaml:compose.tunnel.yaml no .env
+# 3. No dashboard do playit, crie um túnel "Minecraft Java" apontando para
+#    127.0.0.1:25565 (e "Minecraft Bedrock" -> 127.0.0.1:19132 se usar crossplay)
+#
+# network_mode: host porque o agente encaminha para as portas publicadas no host.
+# (Linux nativo, ou Docker Desktop/OrbStack com host networking habilitado.)
+# =============================================================================
+services:
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:${PLAYIT_IMAGE_TAG:-0.16}
+    network_mode: host
+    environment:
+      SECRET_KEY: ${PLAYIT_SECRET_KEY:?defina PLAYIT_SECRET_KEY no .env}
+    depends_on:
+      - mc
+    restart: unless-stopped

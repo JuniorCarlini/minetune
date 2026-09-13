@@ -1,0 +1,46 @@
+# =============================================================================
+# Overlay: RustFS como destino S3 dos backups.
+#
+# Uso típico: testar o fluxo S3 localmente, ou rodar ESTE arquivo sozinho em
+# outra máquina (NAS, mini-PC) para ter backup fora do disco do servidor:
+#
+#   docker compose -f compose.s3-local.yaml up -d rustfs
+#
+# No .env:
+#   COMPOSE_FILE=compose.yaml:compose.s3-local.yaml
+#   RESTIC_REPOSITORY=s3:http://rustfs:9000/minetune-backups
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY   (viram as credenciais root do RustFS)
+#   AWS_DEFAULT_REGION=us-east-1
+#
+# O bucket é criado automaticamente pelo restic no primeiro backup.
+# =============================================================================
+services:
+  rustfs:
+    image: rustfs/rustfs:${RUSTFS_IMAGE_TAG:-latest}
+    labels:
+      minetune.instance: ${INSTANCE_NAME:-minetune}
+      minetune.role: s3
+    environment:
+      RUSTFS_ACCESS_KEY: ${AWS_ACCESS_KEY_ID:?defina AWS_ACCESS_KEY_ID no .env}
+      RUSTFS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY:?defina AWS_SECRET_ACCESS_KEY no .env}
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      # Console web só pela máquina local. A API S3 (9000) fica na rede interna do compose.
+      - "127.0.0.1:${RUSTFS_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs-data:/data
+    restart: unless-stopped
+    networks: [game]
+
+  backup:
+    depends_on:
+      rustfs:
+        condition: service_started
+
+  panel:
+    depends_on:
+      rustfs:
+        condition: service_started
+
+volumes:
+  rustfs-data: {}

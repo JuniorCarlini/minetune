@@ -1,0 +1,168 @@
+# =============================================================================
+# minetune — stack principal
+#
+#   mc            Servidor Minecraft (itzg/minecraft-server). Config do jogo em config/server.env
+#   backup        Backups agendados com restic -> disco local, S3, R2, RustFS/MinIO...
+#   panel         Painel web de configuração/operação (código em ./panel)
+#   docker-proxy  Acesso MÍNIMO ao Docker para o painel (ler status/logs, start/stop/restart)
+#
+# Overlays opcionais: compose.s3-local.yaml, compose.tunnel.yaml (ver COMPOSE_FILE no .env)
+# =============================================================================
+name: ${COMPOSE_PROJECT_NAME:-minetune}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Mesmas credenciais para o agendador (backup) e para o painel (backup manual/restore).
+x-restic-env: &restic-env
+  RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-/backups/restic}
+  RESTIC_PASSWORD: ${RESTIC_PASSWORD:?defina RESTIC_PASSWORD no .env (rode make init)}
+  RESTIC_HOST: ${INSTANCE_NAME:-minetune}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-auto}
+
+services:
+  mc:
+    image: itzg/minecraft-server:${MC_IMAGE_TAG:-java25}
+    # Wrapper: carrega config/server.env a cada start. Assim o painel só precisa
+    # REINICIAR o container para aplicar mudanças (sem recriar via compose).
+    entrypoint: ["bash", "/minetune/bin/entrypoint.sh"]
+    labels:
+      minetune.instance: ${INSTANCE_NAME:-minetune}
+      minetune.role: server
+    environment:
+      EULA: "TRUE"
+      TZ: ${TZ:-America/Sao_Paulo}
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: ${RCON_PASSWORD:?defina RCON_PASSWORD no .env (rode make init)}
+      CREATE_CONSOLE_IN_PIPE: "true"
+      ENABLE_ROLLING_LOGS: "true"
+      STOP_SERVER_ANNOUNCE_DELAY: "5"
+      STOP_DURATION: "60"
+    ports:
+      - "${MC_PORT:-25565}:25565/tcp"
+      - "${BEDROCK_PORT:-19132}:19132/udp"
+    volumes:
+      - ${DATA_DIR:-./data}:/data
+      # Montado fora de /config de propósito: a imagem sincroniza /config para /data/config.
+      - ${CONFIG_DIR:-./config}:/minetune/config:ro
+      - ./docker/minecraft:/minetune/bin:ro
+    mem_limit: ${MC_MEMORY_LIMIT:-6g}
+    stop_grace_period: 90s
+    healthcheck:
+      test: ["CMD-SHELL", "mc-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # Primeiro boot baixa servidor, plugins e gera o mundo.
+      start_period: 5m
+    restart: unless-stopped
+    logging: *logging
+    networks: [game]
+
+  backup:
+    image: itzg/mc-backup:${MC_BACKUP_IMAGE_TAG:-latest}
+    labels:
+      minetune.instance: ${INSTANCE_NAME:-minetune}
+      minetune.role: backup
+    depends_on:
+      mc:
+        condition: service_healthy
+    environment:
+      <<: *restic-env
+      TZ: ${TZ:-America/Sao_Paulo}
+      BACKUP_METHOD: restic
+      BACKUP_NAME: world
+      RCON_HOST: mc
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      INITIAL_DELAY: ${BACKUP_INITIAL_DELAY:-5m}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-6h}
+      PAUSE_IF_NO_PLAYERS: ${BACKUP_PAUSE_IF_NO_PLAYERS:-true}
+      PRUNE_RESTIC_RETENTION: ${BACKUP_RETENTION:---keep-last 4 --keep-daily 7 --keep-weekly 4 --keep-monthly 6}
+      EXCLUDES: ${BACKUP_EXCLUDES:-/data/*.jar,/data/libraries,/data/versions,/data/cache,/data/logs,/data/.minetune,*.tmp}
+      # KiB/s. 0 = sem limite. Útil quando o upload compete com o jogo na banda de casa.
+      RESTIC_LIMIT_UPLOAD: ${RESTIC_LIMIT_UPLOAD:-0}
+      RESTIC_CACHE_DIR: /cache
+    volumes:
+      - ${DATA_DIR:-./data}:/data:ro
+      - ${BACKUP_LOCAL_DIR:-./backups}:/backups
+      - restic-cache:/cache
+    restart: unless-stopped
+    logging: *logging
+    networks: [game]
+
+  panel:
+    build: ./panel
+    image: minetune-panel:local
+    labels:
+      minetune.instance: ${INSTANCE_NAME:-minetune}
+      minetune.role: panel
+    depends_on:
+      - docker-proxy
+    environment:
+      <<: *restic-env
+      TZ: ${TZ:-America/Sao_Paulo}
+      INSTANCE_NAME: ${INSTANCE_NAME:-minetune}
+      PANEL_PASSWORD: ${PANEL_PASSWORD:?defina PANEL_PASSWORD no .env (rode make init)}
+      PANEL_SESSION_SECRET: ${PANEL_SESSION_SECRET:?defina PANEL_SESSION_SECRET no .env (rode make init)}
+      RCON_HOST: mc
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      DOCKER_API: http://docker-proxy:2375
+      BACKUP_NAME: world
+      BACKUP_EXCLUDES: ${BACKUP_EXCLUDES:-/data/*.jar,/data/libraries,/data/versions,/data/cache,/data/logs,/data/.minetune,*.tmp}
+      BACKUP_RETENTION: ${BACKUP_RETENTION:---keep-last 4 --keep-daily 7 --keep-weekly 4 --keep-monthly 6}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-6h}
+      RESTIC_CACHE_DIR: /cache
+    ports:
+      - "${PANEL_BIND:-127.0.0.1}:${PANEL_PORT:-8080}:8080"
+    volumes:
+      - ${DATA_DIR:-./data}:/data
+      - ${CONFIG_DIR:-./config}:/config
+      - ${BACKUP_LOCAL_DIR:-./backups}:/backups
+      - restic-cache:/cache
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    # Restore precisa preservar dono/permissões dos arquivos do mundo.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    restart: unless-stopped
+    logging: *logging
+    networks: [game, docker-api]
+
+  docker-proxy:
+    image: wollomatic/socket-proxy:1
+    # Allowlist por método+caminho. Nada de exec, create, images ou volumes:
+    # mesmo com o painel comprometido, não dá para criar containers no host.
+    command:
+      - -loglevel=WARN
+      - -listenip=0.0.0.0
+      - -allowfrom=panel
+      - -allowGET=^(/v[0-9.]+)?/(_ping|version|containers/json|containers/[a-zA-Z0-9_.-]+/(json|logs|stats))$$
+      - -allowPOST=^(/v[0-9.]+)?/containers/[a-zA-Z0-9_.-]+/(start|stop|restart)$$
+      - -shutdowngracetime=5
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # O socket pertence a root:<grupo docker>, e o GID muda entre hosts. Padrão root
+    # (sem capabilities, FS read-only). Para rodar sem root: DOCKER_PROXY_USER=65534:<gid do socket>.
+    user: ${DOCKER_PROXY_USER:-0:0}
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    mem_limit: 64m
+    restart: unless-stopped
+    logging: *logging
+    networks: [docker-api]
+
+networks:
+  game: {}
+  # Rede interna: só o painel alcança o proxy do Docker, e o proxy não sai para a internet.
+  docker-api:
+    internal: true
+
+volumes:
+  restic-cache: {}

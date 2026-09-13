@@ -1,0 +1,11 @@
+# Mods (Fabric) baixados do Modrinth a cada start.
+# Formato: slug[?][:versão|release|beta]   "?" = opcional
+# Mods só de servidor não exigem nada no cliente.
+
+fabric-api
+# Otimizações server-side (não mudam a jogabilidade vanilla)
+lithium?
+ferrite-core?
+# Profiler e pré-geração
+spark?
+chunky?

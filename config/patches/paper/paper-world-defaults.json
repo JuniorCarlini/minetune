@@ -1,0 +1,17 @@
+{
+  "file": "/data/config/paper-world-defaults.yml",
+  "ops": [
+    { "$set": { "path": "$['environment']['optimize-explosions']", "value": true } },
+    { "$set": { "path": "$['misc']['redstone-implementation']", "value": "ALTERNATE_CURRENT" } },
+    { "$set": { "path": "$['collisions']['max-entity-collisions']", "value": 2 } },
+    { "$set": { "path": "$['tick-rates']['mob-spawner']", "value": 2 } },
+    { "$set": { "path": "$['chunks']['prevent-moving-into-unloaded-chunks']", "value": true } },
+    { "$set": { "path": "$['chunks']['max-auto-save-chunks-per-tick']", "value": 8 } },
+    { "$set": { "path": "$['chunks']['entity-per-chunk-save-limit']['arrow']", "value": 16 } },
+    { "$set": { "path": "$['chunks']['entity-per-chunk-save-limit']['ender_pearl']", "value": 8 } },
+    { "$set": { "path": "$['chunks']['entity-per-chunk-save-limit']['experience_orb']", "value": 16 } },
+    { "$set": { "path": "$['chunks']['entity-per-chunk-save-limit']['fireball']", "value": 8 } },
+    { "$set": { "path": "$['chunks']['entity-per-chunk-save-limit']['small_fireball']", "value": 8 } },
+    { "$set": { "path": "$['chunks']['entity-per-chunk-save-limit']['snowball']", "value": 8 } }
+  ]
+}
