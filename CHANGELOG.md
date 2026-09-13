@@ -11,7 +11,30 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 
 ## [Não lançado]
 
-Nada ainda.
+### Adicionado
+
+- **Mapa de seeds no site**: digite uma seed e veja os biomas, as estruturas
+  (vilas, fortalezas, mansões, cidades ancestrais, câmaras do desafio e mais) e o
+  spawn, do Minecraft Java 1.18 ao 26.2, no mundo normal, no Nether e no End.
+  O cálculo roda no navegador com o cubiomes compilado para WebAssembly e foi
+  conferido contra um servidor 26.1.2 de verdade. Clicar num ponto ou numa
+  estrutura abre as coordenadas com o comando de teleporte pronto, já com a
+  altura do chão calculada.
+- **Endereço público no painel**: `PUBLIC_ADDRESS` no `.env` define o que aparece
+  em "Como entrar" (domínio ou endereço do túnel). Sem ele, o painel avisa quando o
+  endereço mostrado só funciona no próprio computador ou na mesma rede.
+- **Convidar pelo menu de quem está jogando**: "Adicionar aos convidados" (ou
+  "Tirar dos convidados") junto de administrador, expulsar e banir.
+
+### Alterado
+
+- Agente do playit.gg na versão 1.0.
+
+### Corrigido
+
+- Jogadores entrando pelo túnel (playit) ou por proxy eram recusados quando
+  alguém tinha acabado de entrar: todos chegam com o mesmo IP e o Paper limitava
+  uma conexão a cada 4 segundos por IP. O limite fica desligado.
 
 ## [0.2.0] - 2026-09-13
 
