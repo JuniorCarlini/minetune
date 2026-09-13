@@ -397,15 +397,24 @@ code {
 }
 
 /* Passos do início rápido */
+/* Cada passo é um cartão com a caixa de comandos embaixo, todos da mesma altura. */
 .steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.2rem;
-  align-items: start;
+  align-items: stretch;
 }
 .step {
   display: grid;
-  gap: 0.7rem;
+  grid-template-rows: auto auto 1fr;
+  gap: 0.8rem;
+  padding: 1.2rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--bevel);
+}
+.step .terminal {
+  height: 100%;
 }
 .step-num {
   display: grid;
