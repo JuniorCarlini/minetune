@@ -17,7 +17,8 @@ import type { BackupProvider, BackupSchedule, BackupSettings } from './backup-de
 export interface StatusResponse {
   server: ContainerInfo;
   backup: ContainerInfo;
-  resources?: { memoryUsed: number; memoryLimit: number; cpuPercent: number | null };
+  /** cpuPercent: 100 = um núcleo inteiro (padrão do Docker); cpuCores: núcleos disponíveis. */
+  resources?: { memoryUsed: number; memoryLimit: number; cpuPercent: number | null; cpuCores: number };
   players?: { online: number; max: number; names: string[] };
   tps?: number[];
   game: { type: string; version: string; motd: string };

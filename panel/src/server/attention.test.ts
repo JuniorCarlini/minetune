@@ -11,7 +11,7 @@ const status = (overrides: Partial<StatusResponse> = {}): StatusResponse => ({
   game: { type: 'PAPER', version: '26.2', motd: '' },
   backupProvider: 'r2',
   lastBackup: { id: 'a', shortId: 'a', time: new Date(Date.now() - 2 * HOUR).toISOString(), tags: [] },
-  resources: { memoryUsed: 3 * 1024 ** 3, memoryLimit: 6 * 1024 ** 3, cpuPercent: 5 },
+  resources: { memoryUsed: 3 * 1024 ** 3, memoryLimit: 6 * 1024 ** 3, cpuPercent: 5, cpuCores: 4 },
   tps: [20, 20, 20],
   attention: [],
   ...overrides,
@@ -31,7 +31,7 @@ describe('avisos da tela Início', () => {
   });
 
   it('avisa memória acima de 90% e jogo travando', () => {
-    const s = status({ resources: { memoryUsed: 5.6 * 1024 ** 3, memoryLimit: 6 * 1024 ** 3, cpuPercent: 90 }, tps: [12, 14, 16] });
+    const s = status({ resources: { memoryUsed: 5.6 * 1024 ** 3, memoryLimit: 6 * 1024 ** 3, cpuPercent: 90, cpuCores: 4 }, tps: [12, 14, 16] });
     assert.deepEqual(ids(s), ['memory', 'performance']);
   });
 

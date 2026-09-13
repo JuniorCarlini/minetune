@@ -36,6 +36,8 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
   endereço para copiar e "Precisa de atenção" juntando os avisos (servidor
   desligado, memória cheia, jogo travando, backup só local ou antigo) com o botão
   que resolve cada um.
+- Uso do processador na tela Início, em porcentagem da capacidade total da
+  máquina e com barra, junto de jogadores, memória e desempenho.
 - Chave "Só convidados podem entrar" direto na página de Jogadores, aplicada na
   hora com o servidor ligado.
 - "Opções avançadas": nomes técnicos e ajustes fáceis de quebrar ficam escondidos

@@ -95,7 +95,7 @@ export class DockerClient {
     return info;
   }
 
-  async stats(role: Role): Promise<{ memoryUsed: number; memoryLimit: number; cpuPercent: number | null } | null> {
+  async stats(role: Role): Promise<{ memoryUsed: number; memoryLimit: number; cpuPercent: number | null; cpuCores: number } | null> {
     const id = await this.findId(role);
     if (!id) return null;
     // one-shot responde em ~90ms. Sem ele o Docker espera ~2s para colher duas amostras e
@@ -117,6 +117,8 @@ export class DockerClient {
       memoryUsed: Math.max(0, usage - (s.memory_stats.stats?.inactive_file ?? 0)),
       memoryLimit: s.memory_stats.limit ?? 0,
       cpuPercent,
+      // Núcleos que o container enxerga: a UI divide o % por eles para mostrar 0–100% da máquina.
+      cpuCores: cpus,
     };
   }
 

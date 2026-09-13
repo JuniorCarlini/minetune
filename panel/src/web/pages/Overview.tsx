@@ -83,6 +83,13 @@ export function OverviewPage() {
     .join(' · ');
 
   const memPct = data.resources?.memoryLimit ? data.resources.memoryUsed / data.resources.memoryLimit : undefined;
+
+  // O Docker mede CPU em "núcleos" (100% = um núcleo, 350% = três e meio). Dividido pelos
+  // núcleos disponíveis vira 0–100% da máquina, que é o que uma pessoa entende.
+  const cpuShare =
+    running && data.resources?.cpuPercent != null && data.resources.cpuCores > 0
+      ? Math.min(1, data.resources.cpuPercent / 100 / data.resources.cpuCores)
+      : undefined;
   const tps = data.tps?.[0];
 
   return (
@@ -160,6 +167,21 @@ export function OverviewPage() {
           bar={memPct}
           tone={memPct === undefined ? undefined : memPct > 0.9 ? 'danger' : memPct > 0.75 ? 'warning' : undefined}
           detail={data.resources ? `${formatBytes(data.resources.memoryUsed)} de ${formatBytes(data.resources.memoryLimit)}` : 'servidor desligado'}
+        />
+        <StatTile
+          icon="cpu"
+          label="Processador"
+          // Abaixo de 10% mostra uma casa: servidor ocioso em máquina com muitos núcleos daria "0%", que parece medição quebrada.
+          value={cpuShare !== undefined ? `${(cpuShare * 100).toLocaleString('pt-BR', { maximumFractionDigits: cpuShare < 0.1 ? 1 : 0 })}% em uso` : '—'}
+          bar={cpuShare}
+          tone={cpuShare === undefined ? undefined : cpuShare > 0.9 ? 'danger' : cpuShare > 0.7 ? 'warning' : undefined}
+          detail={
+            !running
+              ? 'servidor desligado'
+              : cpuShare === undefined
+                ? 'medindo…'
+                : `da capacidade total · ${data.resources!.cpuCores} ${data.resources!.cpuCores === 1 ? 'núcleo' : 'núcleos'}`
+          }
         />
         <StatTile
           icon="gauge"
