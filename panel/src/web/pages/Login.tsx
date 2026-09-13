@@ -38,7 +38,7 @@ export function LoginPage({ onLogin }: { onLogin: () => void }) {
               type="password"
               autoFocus
               autoComplete="current-password"
-              placeholder="PANEL_PASSWORD do .env"
+              placeholder="Digite a senha"
               value={password}
               invalid={invalid}
               aria-invalid={invalid || undefined}
