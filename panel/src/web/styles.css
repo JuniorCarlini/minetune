@@ -342,9 +342,15 @@ code {
   color: var(--tuc-muted);
 }
 
+/*
+ * Em monitor largo o conteúdo acompanha a tela até 1680px e fica centralizado
+ * na área ao lado do menu; antes parava em 1240px colado à esquerda e sobrava
+ * metade da tela vazia. Acima disso as linhas ficariam longas demais para ler.
+ */
 .content {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1680px;
+  margin-inline: auto;
   padding: 2.25rem clamp(1rem, 3vw, 3rem) 7rem;
   display: flex;
   flex-direction: column;
