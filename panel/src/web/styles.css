@@ -404,6 +404,15 @@ code {
 .grid.two {
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
 }
+/*
+ * Cartões lado a lado têm a mesma altura: o aviso de lista vazia cresce até o fim
+ * do cartão em vez de deixar um vão embaixo. Listas com jogadores não esticam,
+ * senão a moldura da lista ganharia linhas vazias.
+ */
+.grid.two > .card > .empty-state:last-child {
+  flex: 1;
+  justify-content: center;
+}
 
 @media (max-width: 860px) {
   .layout {
