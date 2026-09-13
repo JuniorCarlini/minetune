@@ -1303,10 +1303,24 @@ input.tuc-input.is-invalid {
 
 /* --- Destino dos backups ------------------------------------------------------------------------ */
 
-.backup-settings {
+.destination-page {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1rem;
+  /* Espaço para a barra de salvar fixa não cobrir o último cartão. */
+  padding-bottom: 4.5rem;
+}
+/* Caminho de subpágina (Backups / Destino) acima do título. */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+}
+.breadcrumb a {
+  color: var(--mt-accent-text);
 }
 /* Mesmo desenho das opções de logo: cartão com borda que acende quando escolhido. */
 .choice-grid {

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { BackupsResponse, SnapshotInfo } from '../../shared/api.ts';
 import { PROVIDER_LABELS, describeInterval, describeRetention } from '../../shared/backup-destination.ts';
-import { BackupSettingsModal } from '../components/BackupSettingsModal.tsx';
 import { Icon } from '../components/icons.tsx';
 import { Alert, Badge, Button, Card, CheckLabel, Empty, Input, JobPanel, Modal, PageHeader, Spinner, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
@@ -22,7 +21,6 @@ export function BackupsPage() {
   const [restoreTarget, setRestoreTarget] = useState<SnapshotInfo>();
   const [confirmText, setConfirmText] = useState('');
   const [safetyBackup, setSafetyBackup] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const toast = useToast();
 
   const backupNow = async () => {
@@ -91,9 +89,9 @@ export function BackupsPage() {
           <Card
             title="Destino"
             actions={
-              <Button size="sm" onClick={() => setSettingsOpen(true)}>
+              <a className="tuc-btn is-outline is-sm" href="#/backups/destino">
                 <Icon name="settings" /> Configurar
-              </Button>
+              </a>
             }
           >
             <dl className="details">
@@ -123,9 +121,9 @@ export function BackupsPage() {
               <Alert tone="warning">
                 <span className="row alert-row">
                   <span>Backups só neste disco: protegem contra erros e grief, mas não contra perda da máquina.</span>
-                  <Button size="sm" variant="primary" onClick={() => setSettingsOpen(true)}>
+                  <a className="tuc-btn is-primary is-sm" href="#/backups/destino">
                     <Icon name="upload" /> Guardar na nuvem
-                  </Button>
+                  </a>
                 </span>
               </Alert>
             )}
@@ -186,13 +184,6 @@ export function BackupsPage() {
           </Card>
         </>
       )}
-
-      <BackupSettingsModal
-        open={settingsOpen}
-        snapshotCount={data?.snapshots.length ?? 0}
-        onClose={() => setSettingsOpen(false)}
-        onSaved={() => void reload()}
-      />
 
       <Modal
         open={!!restoreTarget}

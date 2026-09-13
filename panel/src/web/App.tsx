@@ -6,6 +6,7 @@ import { Button, Modal, Spinner, ToastProvider, useTip } from './components/ui.t
 import { api, UNAUTHORIZED_EVENT } from './lib/api.ts';
 import { useApi } from './lib/hooks.ts';
 import { applyTheme, getStoredTheme, nextTheme, type ThemeMode } from './lib/theme.ts';
+import { BackupDestinationPage } from './pages/BackupDestination.tsx';
 import { BackupsPage } from './pages/Backups.tsx';
 import { ConsolePage } from './pages/Console.tsx';
 import { GameRulesPage } from './pages/GameRules.tsx';
@@ -20,6 +21,8 @@ interface Route {
   label: string;
   icon: IconName;
   component: ComponentType;
+  /** Subpágina: não aparece no menu e mantém o item pai marcado. */
+  parent?: string;
 }
 
 const SECTIONS: { label: string; routes: Route[] }[] = [
@@ -45,7 +48,11 @@ const SECTIONS: { label: string; routes: Route[] }[] = [
   },
 ];
 
-const ROUTES = SECTIONS.flatMap((s) => s.routes);
+const SUBPAGES: Route[] = [
+  { path: 'backups/destino', label: 'Destino dos backups', icon: 'backups', component: BackupDestinationPage, parent: 'backups' },
+];
+
+const ROUTES = [...SECTIONS.flatMap((s) => s.routes), ...SUBPAGES];
 
 function useHashRoute(): string {
   const read = () => window.location.hash.replace(/^#\/?/, '') || 'overview';
@@ -94,6 +101,7 @@ function Shell({ instance, onLogout }: { instance?: string; onLogout: () => void
   const [logoutOpen, setLogoutOpen] = useState(false);
   const logoTip = useTip<HTMLButtonElement>('Aparência: logo e tema');
   const current = ROUTES.find((r) => r.path === route) ?? ROUTES[0]!;
+  const activePath = current.parent ?? current.path;
   const Page = current.component;
 
   const logout = async () => {
@@ -123,8 +131,8 @@ function Shell({ instance, onLogout }: { instance?: string; onLogout: () => void
                 <a
                   key={r.path}
                   href={`#/${r.path}`}
-                  className={`tuc-menu__item ${r.path === current.path ? 'is-active' : ''}`}
-                  aria-current={r.path === current.path ? 'page' : undefined}
+                  className={`tuc-menu__item ${r.path === activePath ? 'is-active' : ''}`}
+                  aria-current={r.path === activePath ? 'page' : undefined}
                   title={r.label}
                 >
                   <span className="tuc-menu__icon">
