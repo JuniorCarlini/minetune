@@ -14,6 +14,8 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 ### Adicionado
 - Site no GitHub Pages com página inicial e changelog, no mesmo visual do painel.
   O changelog do site é gerado a partir deste arquivo a cada push.
+- Imagem de prévia (Open Graph, 1200×630) para links do site no WhatsApp,
+  Discord, X e LinkedIn.
 
 ## [0.1.0] - 2026-09-12
 

@@ -30,6 +30,7 @@ const copy = (from, to) => {
   cpSync(join(ROOT, from), join(OUT, to), { recursive: true });
 };
 copy('site/styles.css', 'styles.css');
+copy('site/og.jpg', 'assets/og.jpg');
 copy('panel/src/web/assets/fonts/Monocraft.ttf', 'assets/fonts/Monocraft.ttf');
 copy('panel/src/web/assets/fonts/Monocraft-Bold.ttf', 'assets/fonts/Monocraft-Bold.ttf');
 copy('panel/src/web/assets/login-cover.webp', 'assets/cover.webp');
