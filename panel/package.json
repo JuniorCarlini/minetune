@@ -1,6 +1,6 @@
 {
   "name": "minetune-panel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Painel de configuração e operação do servidor minetune",

@@ -11,6 +11,14 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 
 ## [Não lançado]
 
+Nada ainda.
+
+## [0.2.0] - 2026-09-13
+
+Painel pensado para quem não é técnico: todas as telas num padrão só, tela Início
+com avisos, versões oficiais do Minecraft, destino dos backups pelo painel e
+site oficial com SEO e GEO.
+
 ### Adicionado
 - Site no GitHub Pages com página inicial e changelog, no mesmo visual do painel.
   O changelog do site é gerado a partir deste arquivo a cada push.
@@ -26,8 +34,7 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 - Aviso quando a versão escolhida precisa de outra imagem de Java, com a troca
   exata do `MC_IMAGE_TAG`, e quando a troca volta para uma versão mais antiga
   que a do mundo.
-
-- Destino dos backups configurável pelo painel (Backups → Destino): disco local,
+- Destino dos backups configurável pelo painel (Backups → Onde guardar): disco local,
   Cloudflare R2, AWS S3, S3 próprio (RustFS/MinIO) ou repositório restic
   avançado, com frequência, retenção, pausa sem jogadores e limite de upload.
 - Botão "Testar conexão", que confere o destino antes de salvar e explica em
@@ -35,7 +42,6 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
   inacessível.
 - Ao salvar, o repositório é criado se o destino estiver vazio e o agendador
   reinicia já com a nova configuração, sem `make up`.
-
 - Tela Início com o estado do servidor em frase, "Como entrar no servidor" com
   endereço para copiar e "Precisa de atenção" juntando os avisos (servidor
   desligado, memória cheia, jogo travando, backup só local ou antigo) com o botão
@@ -141,5 +147,6 @@ Primeira versão: servidor, backups, painel web e documentação.
 - Acesso ao Docker por proxy com lista de permissões: só leitura de status e
   logs e ligar, parar ou reiniciar containers.
 
-[Não lançado]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...HEAD
+[Não lançado]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JuniorCarlini/minetune/releases/tag/v0.1.0

@@ -135,6 +135,18 @@ function renderChangelog(markdown) {
   let paragraph = [];
   let inRelease = false;
   let intro = true;
+  // Onde começa o cartão da versão atual e quantos itens ele tem: "Não lançado" vazio não aparece no site.
+  let current = null;
+
+  const closeRelease = () => {
+    if (!inRelease) return;
+    out.push('</div></article>');
+    if (current.unreleased && current.items === 0) {
+      out.splice(current.start);
+      releases.pop();
+    }
+    inRelease = false;
+  };
 
   const flushParagraph = () => {
     if (paragraph.length) out.push(`<p>${inline(paragraph.join(' '))}</p>`);
@@ -159,13 +171,14 @@ function renderChangelog(markdown) {
         out.push('</div>');
         intro = false;
       }
-      if (inRelease) out.push('</div></article>');
+      closeRelease();
       const [, name, date] = release;
       const unreleased = !date;
       const id = unreleased ? 'nao-lancado' : `v${name}`;
       const isLatest = !unreleased && !releases.some((r) => r.date);
       releases.push({ version: name, date });
       const link = refs.get(name);
+      current = { start: out.length, unreleased, items: 0 };
       out.push(
         `<article class="release${unreleased ? ' is-unreleased' : ''}${isLatest ? ' is-latest' : ''}" id="${id}">`,
         '<header class="release-head">',
@@ -200,6 +213,7 @@ function renderChangelog(markdown) {
       flushParagraph();
       list ??= [];
       list.push(item[1]);
+      if (current) current.items++;
       continue;
     }
 
@@ -217,7 +231,7 @@ function renderChangelog(markdown) {
     paragraph.push(line.trim());
   }
   flush();
-  if (inRelease) out.push('</div></article>');
+  closeRelease();
 
   const html = `<div class="changelog-intro">${out.join('\n')}`;
   return { html, latest: releases.find((r) => r.date), releases };

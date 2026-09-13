@@ -118,7 +118,7 @@ function Shell({ instance, onLogout }: { instance?: string; onLogout: () => void
           </button>
           <div>
             <strong className="mc-title" data-text="Minetune">Minetune</strong>
-            <span className="brand-version">{instance && instance !== 'minetune' ? instance : 'painel'} · v0.1</span>
+            <span className="brand-version">{instance && instance !== 'minetune' ? instance : 'painel'} · v0.2</span>
           </div>
           <ThemeButton />
         </div>
