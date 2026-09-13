@@ -12,7 +12,7 @@
 # =============================================================================
 services:
   playit:
-    image: ghcr.io/playit-cloud/playit-agent:${PLAYIT_IMAGE_TAG:-0.16}
+    image: ghcr.io/playit-cloud/playit-agent:${PLAYIT_IMAGE_TAG:-1.0}
     network_mode: host
     environment:
       SECRET_KEY: ${PLAYIT_SECRET_KEY:?defina PLAYIT_SECRET_KEY no .env}
