@@ -16,6 +16,10 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
   O changelog do site é gerado a partir deste arquivo a cada push.
 - Imagem de prévia (Open Graph, 1200×630) para links do site no WhatsApp,
   Discord, X e LinkedIn.
+- SEO e GEO no site oficial: dados estruturados (software, autor, perguntas
+  frequentes e caminho do changelog), `sitemap.xml`, `robots.txt` liberando
+  buscadores e assistentes de IA, `llms.txt` com o resumo do projeto e seção de
+  perguntas frequentes visível na página.
 - Seletor de versões do Minecraft nas Configurações, com a lista oficial de cada
   software (Paper, Purpur, Fabric, NeoForge e Vanilla), mais recentes primeiro,
   opção de sempre usar a mais recente e versões de teste escondidas por padrão.
