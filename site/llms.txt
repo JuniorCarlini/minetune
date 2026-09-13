@@ -29,6 +29,7 @@ O painel abre em http://localhost:8080 com a senha PANEL_PASSWORD do arquivo .en
 ## Links
 
 - [Site oficial](https://juniorcarlini.github.io/minetune/): apresentação, recursos e perguntas frequentes.
+- [Mapa de seeds](https://juniorcarlini.github.io/minetune/mapa.html): ferramenta grátis que mostra biomas, estruturas (vilas, fortalezas, mansões, cidades ancestrais) e o spawn de qualquer seed do Minecraft Java 1.18 a 26.2, calculados no navegador com o cubiomes.
 - [Changelog](https://juniorcarlini.github.io/minetune/changelog.html): o que mudou em cada versão.
 - [Código no GitHub](https://github.com/JuniorCarlini/minetune): README com o guia completo.
 - [Arquitetura e decisões](https://github.com/JuniorCarlini/minetune/blob/main/docs/ARCHITECTURE.md)

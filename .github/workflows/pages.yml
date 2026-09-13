@@ -10,6 +10,8 @@ on:
       - site/**
       - README.md
       - scripts/build-site.mjs
+      - scripts/build-seedmap.sh
+      - panel/package-lock.json
       - CHANGELOG.md
       - docs/assets/**
       - panel/src/web/assets/**
@@ -35,6 +37,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      # O mapa de seeds usa o Tucano do painel, na versão travada no package-lock.
+      - run: npm ci --prefix panel --ignore-scripts
+      # Gerador do mapa de seeds (cubiomes -> WebAssembly), compilado na imagem do Emscripten.
+      - run: bash scripts/build-seedmap.sh
       - run: node scripts/build-site.mjs
       - uses: actions/upload-pages-artifact@v3
         with:

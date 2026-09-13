@@ -794,3 +794,474 @@ code {
     margin-left: 0;
   }
 }
+
+/* --- Mapa de seeds ------------------------------------------------------------------ */
+.seedmap {
+  display: grid;
+  gap: 1.2rem;
+  padding-block: 28px 84px;
+}
+
+/* Campos em linha que quebram sozinhos: Monocraft é larga e os selects não podem cortar o texto. */
+.seedmap-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.8rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.field {
+  display: grid;
+  gap: 0.35rem;
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.field-seed {
+  flex: 3 1 300px;
+}
+.field-goto {
+  flex: 1.4 1 200px;
+}
+.field[hidden] {
+  display: none;
+}
+
+/* Tucano com as cores do site: mesmos tokens que o painel usa no tema escuro. */
+:root {
+  --tuc-radius: 0;
+  --tuc-radius-md: 0;
+  --tuc-radius-sm: 0;
+  --tuc-radius-xs: 0;
+  --tuc-accent: #5cec01;
+  --tuc-accent-hover: #7df53c;
+  --tuc-accent-fg: #102100;
+  --tuc-accent-text: #5cec01;
+  --tuc-success: #5cec01;
+  --tuc-warning: #ffaa00;
+  --tuc-danger: #ff5555;
+  --tuc-danger-fill: #b3312c;
+  --tuc-bg: #313233;
+  --tuc-fg: #ffffff;
+  --tuc-muted: #b1b2b5;
+  --tuc-subtle: #8c8d90;
+  --tuc-border: #4a4b4d;
+  --tuc-hover: #3d3e40;
+  --tuc-elevated: #2a2b2c;
+  --tuc-font: var(--font);
+}
+/* Botões com o bisel do Minecraft, como no painel. */
+.tuc-btn.is-primary,
+.tuc-btn.is-outline {
+  box-shadow: var(--bevel);
+}
+.tuc-btn.is-primary {
+  font-weight: 600;
+}
+.tuc-btn.tuc-btn:active:not(:disabled) {
+  box-shadow: var(--bevel-pressed);
+  scale: none;
+  translate: 0 1px;
+}
+/* O site pinta todo link de verde; dentro dos botões o Tucano decide a cor. */
+a.tuc-btn {
+  color: inherit;
+}
+.field .tuc-label {
+  margin: 0;
+}
+.field-row {
+  display: flex;
+  gap: 0.4rem;
+}
+.field-row .tuc-input {
+  flex: 1;
+  min-width: 0;
+}
+.field-row .tuc-btn {
+  flex: none;
+}
+
+/* Mapa e coluna lateral com a mesma altura: as listas rolam por dentro em vez de passar do mapa. */
+.seedmap-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.2rem;
+  height: clamp(460px, 74vh, 880px);
+}
+.map-frame {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: #111112;
+  border: 1px solid var(--line);
+  box-shadow: 0 0 0 4px #111112;
+}
+.map-frame canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+.map-frame canvas.is-dragging {
+  cursor: grabbing;
+}
+.map-frame canvas:focus-visible {
+  outline-offset: -3px;
+}
+.map-zoom {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  gap: 6px;
+}
+.map-zoom .tuc-btn {
+  font-size: 1.2rem;
+}
+.map-hud {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(100% - 20px);
+  pointer-events: none;
+}
+.map-hud span {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  background: rgb(17 17 18 / 0.88);
+  border: 1px solid var(--line);
+}
+.hud-biome {
+  color: var(--gold);
+}
+.map-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  background: #111112;
+}
+.map-status[hidden] {
+  display: none;
+}
+.map-status.is-error {
+  color: var(--danger);
+}
+
+/* Caixinha do clique no mapa */
+.map-pop {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  gap: 0.5rem;
+  width: min(310px, calc(100% - 16px));
+  padding: 0.8rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow:
+    0 0 0 3px #111112,
+    0 18px 40px rgb(0 0 0 / 0.5);
+}
+.map-pop[hidden] {
+  display: none;
+}
+.map-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.map-pop-head strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
+}
+.map-pop-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+.map-pop-coords {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+.map-pop .tuc-label {
+  margin: 0;
+}
+.map-pop .tuc-input {
+  font-size: 0.82rem;
+}
+.map-pop-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* Carregamento estilo Minecraft, o mesmo do painel (.mc-loader em panel/src/web/styles.css). */
+.mc-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  color: var(--muted);
+}
+.mc-loader-block {
+  /* Pulo em degraus: sem easing suave, como animação de sprite. */
+  animation: mc-hop 0.8s steps(4, jump-none) infinite;
+}
+.mc-loader-block .pixel-logo {
+  display: block;
+  filter: drop-shadow(0 4px 0 rgb(0 0 0 / 0.28));
+}
+@keyframes mc-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -12px;
+  }
+}
+.mc-loader-bar {
+  display: grid;
+  grid-template-columns: repeat(10, 10px);
+  gap: 3px;
+  padding: 3px;
+  background: var(--page);
+  border: 2px solid var(--line);
+  box-shadow: var(--bevel-pressed);
+}
+.mc-loader-bar span {
+  width: 10px;
+  height: 10px;
+  background: #3d3e40;
+  animation: mc-fill 1.5s steps(1) infinite;
+  animation-delay: calc(var(--i) * 0.12s);
+}
+@keyframes mc-fill {
+  0% {
+    background: #3d3e40;
+  }
+  8%,
+  60% {
+    background: var(--accent);
+  }
+  68%,
+  100% {
+    background: #3d3e40;
+  }
+}
+.mc-loader-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mc-loader-label::after {
+  content: '...';
+  display: inline-block;
+  width: 3ch;
+  overflow: hidden;
+  text-align: left;
+  vertical-align: bottom;
+  animation: mc-ellipsis 1.2s steps(4) infinite;
+}
+@keyframes mc-ellipsis {
+  from {
+    width: 0;
+  }
+  to {
+    width: 4ch;
+  }
+}
+/* Erro: só a mensagem, legível e parada. */
+.map-status.is-error .mc-loader-block,
+.map-status.is-error .mc-loader-bar {
+  display: none;
+}
+.map-status.is-error .mc-loader-label {
+  max-width: 32rem;
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--danger);
+}
+.map-status.is-error .mc-loader-label::after {
+  content: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-loader-block,
+  .mc-loader-bar span,
+  .mc-loader-label::after {
+    animation: none;
+  }
+  .mc-loader-bar span {
+    background: var(--accent);
+  }
+}
+
+.map-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-height: 0;
+}
+.side-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+/* Estruturas tem mais itens: fica com mais espaço que a legenda de biomas. */
+.side-block-structures {
+  flex-grow: 1.4;
+}
+.structure-list,
+.legend {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.structure-icon {
+  flex: none;
+}
+.side-block h2 {
+  padding: 0.7rem 0.9rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  border-bottom: 1px solid var(--line);
+}
+.structure-list {
+  display: grid;
+  padding: 0.35rem;
+}
+.structure-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.structure-item:hover {
+  background: var(--card-2);
+}
+.structure-item:has(input:disabled) {
+  color: var(--subtle);
+  cursor: default;
+}
+.structure-item .tuc-check {
+  flex: none;
+}
+.structure-item .hint {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--subtle);
+  white-space: nowrap;
+}
+.swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #111112;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.legend {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.55rem 0.9rem 0.8rem;
+  list-style: none;
+  font-size: 0.84rem;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-block: 0.1rem;
+}
+/* Mesmo tamanho dos ícones das estruturas (22 px), para as duas listas terem o mesmo ritmo. */
+.legend .swatch,
+.map-pop-icon .swatch {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+}
+.legend .pct {
+  margin-left: auto;
+  color: var(--subtle);
+  font-variant-numeric: tabular-nums;
+}
+.legend-empty {
+  color: var(--subtle);
+}
+
+.seedmap-notes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.note {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 1.2rem;
+  background: var(--card);
+}
+.note h2 {
+  font-size: 0.98rem;
+}
+.note p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1000px) {
+  /* Empilhado: o mapa tem altura própria e as listas ficam lado a lado, com rolagem limitada. */
+  .seedmap-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .map-frame {
+    height: 64vh;
+    min-height: 380px;
+  }
+  .map-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .map-side .btn-share,
+  .map-side > .tuc-btn {
+    grid-column: 1 / -1;
+  }
+  .structure-list,
+  .legend {
+    max-height: 320px;
+  }
+}
+@media (max-width: 760px) {
+  .map-side,
+  .seedmap-notes {
+    grid-template-columns: 1fr;
+  }
+}

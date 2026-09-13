@@ -9,7 +9,7 @@
  * Uso: node scripts/build-site.mjs
  */
 
-import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -38,6 +38,21 @@ copy('docs/assets/logo/rack.svg', 'assets/logo.svg');
 copy('docs/assets/logo/minetune-banner.png', 'assets/banner.png');
 copy('docs/assets/screenshots', 'assets/screenshots');
 
+// Mapa de seeds: a interface fica em site/seedmap; o gerador (cubiomes em WebAssembly)
+// é compilado por scripts/build-seedmap.sh, porque o .wasm não é versionado.
+// Componentes do Tucano, na mesma versão do painel (package-lock), para os controles do mapa.
+copy('panel/node_modules/tucano/dist/tucano.min.css', 'assets/tucano/tucano.min.css');
+copy('panel/node_modules/tucano/dist/tucano.esm.js', 'assets/tucano/tucano.esm.js');
+copy('site/seedmap/app.js', 'seedmap/app.js');
+copy('site/seedmap/worker.js', 'seedmap/worker.js');
+copy('site/seedmap/icons.js', 'seedmap/icons.js');
+for (const file of ['cubiomes.js', 'cubiomes.wasm']) {
+  if (!existsSync(join(ROOT, 'build/seedmap', file))) {
+    throw new Error(`falta build/seedmap/${file}: rode "bash scripts/build-seedmap.sh" antes`);
+  }
+  copy(`build/seedmap/${file}`, `seedmap/${file}`);
+}
+
 // --- Changelog -------------------------------------------------------------------
 const changelog = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
 const { html: changelogHtml, latest, releases } = renderChangelog(changelog);
@@ -53,6 +68,7 @@ const tocHtml = releases
 // --- Páginas -----------------------------------------------------------------------
 const pages = {
   'index.html': (html) => html,
+  'mapa.html': (html) => html,
   'changelog.html': (html) => html.replace('<!-- CHANGELOG -->', changelogHtml).replace('<!-- TOC -->', tocHtml),
 };
 // Data do build no formato do sitemap (AAAA-MM-DD): diz aos buscadores quando o site mudou.
@@ -65,9 +81,9 @@ const fill = (text) =>
     .replaceAll('{{BUILD_DATE}}', buildDate);
 
 for (const [name, transform] of Object.entries(pages)) {
-  const html = fill(transform(readFileSync(join(SITE, name), 'utf8'))).replace(/<i data-icon="([a-zA-Z]+)"><\/i>/g, (_, iconName) =>
-    icon(iconName),
-  );
+  const html = fill(transform(readFileSync(join(SITE, name), 'utf8')))
+    .replace(/<i data-icon="([a-zA-Z]+)"><\/i>/g, (_, iconName) => icon(iconName))
+    .replace(/<i data-pixel="([a-z]+)"><\/i>/g, (_, pixelName) => pixel(pixelName));
   writeFileSync(join(OUT, name), html);
 }
 
@@ -84,6 +100,28 @@ writeFileSync(join(OUT, '.nojekyll'), '');
 console.log(`site gerado em _site/ (versão mais recente: ${latest?.version ?? 'nenhuma'})`);
 
 // =====================================================================================
+
+/**
+ * Desenho em pixel do painel (o bloco de grama do carregamento), lido do logos.tsx:
+ * o .tsx não é importável pelo Node, e copiar a grade criaria uma segunda versão.
+ */
+function pixel(name) {
+  const grids = { grass: 'GRASS_BLOCK' };
+  if (!grids[name]) throw new Error(`desenho em pixel desconhecido no site: ${name}`);
+  const source = readFileSync(join(ROOT, 'panel/src/web/components/logos.tsx'), 'utf8');
+  const grid = source
+    .match(new RegExp(`export const ${grids[name]}: string\\[\\] = \\[([\\s\\S]*?)\\];`))?.[1]
+    .match(/'([^']+)'/g)
+    ?.map((row) => row.slice(1, -1));
+  const palette = Object.fromEntries(
+    [...(source.match(/const PALETTE[^{]*\{([\s\S]*?)\};/)?.[1] ?? '').matchAll(/(\w): '(#[0-9a-fA-F]{3,8})'/g)].map((m) => [m[1], m[2]]),
+  );
+  if (!grid?.length) throw new Error(`não achei ${grids[name]} em logos.tsx`);
+  const rects = grid
+    .flatMap((row, y) => [...row].map((ch, x) => (palette[ch] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${palette[ch]}"/>` : '')))
+    .join('');
+  return `<svg class="pixel-logo" width="40" height="40" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+}
 
 function icon(name) {
   const glyph = ICONS[name];
