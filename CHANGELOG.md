@@ -41,6 +41,10 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 ### Corrigido
 - Na página de Jogadores, o cartão de Operadores vazio deixava um espaço em
   branco embaixo; agora o aviso preenche o cartão como na Whitelist.
+- O seletor de frequência dos backups fechava sozinho logo após abrir, sem dar
+  tempo de escolher.
+- Em monitores largos, o conteúdo do painel parava em 1240px colado à esquerda;
+  agora acompanha a tela até 1680px e fica centralizado.
 
 ## [0.1.0] - 2026-09-12
 
