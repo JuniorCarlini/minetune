@@ -16,6 +16,16 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
   O changelog do site é gerado a partir deste arquivo a cada push.
 - Imagem de prévia (Open Graph, 1200×630) para links do site no WhatsApp,
   Discord, X e LinkedIn.
+- Seletor de versões do Minecraft nas Configurações, com a lista oficial de cada
+  software (Paper, Purpur, Fabric, NeoForge e Vanilla), mais recentes primeiro,
+  opção de sempre usar a mais recente e versões de teste escondidas por padrão.
+- Aviso quando a versão escolhida precisa de outra imagem de Java, com a troca
+  exata do `MC_IMAGE_TAG`, e quando a troca volta para uma versão mais antiga
+  que a do mundo.
+
+### Corrigido
+- Na página de Jogadores, o cartão de Operadores vazio deixava um espaço em
+  branco embaixo; agora o aviso preenche o cartão como na Whitelist.
 
 ## [0.1.0] - 2026-09-12
 
