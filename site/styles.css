@@ -488,6 +488,49 @@ code {
   color: var(--muted);
 }
 
+/* Perguntas frequentes: texto de verdade na página (bom para buscadores e IAs), abre e fecha */
+.faq {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 52rem;
+}
+.faq-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-item summary::after {
+  content: '+';
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--accent-fg);
+  background: var(--accent);
+  box-shadow: var(--bevel);
+}
+.faq-item[open] summary::after {
+  content: '−';
+}
+.faq-item p {
+  padding: 0 1.1rem 1rem;
+  color: var(--muted);
+  max-width: 70ch;
+}
+
 /* Chamada final */
 .cta {
   text-align: center;

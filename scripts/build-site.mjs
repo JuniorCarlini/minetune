@@ -55,13 +55,25 @@ const pages = {
   'index.html': (html) => html,
   'changelog.html': (html) => html.replace('<!-- CHANGELOG -->', changelogHtml).replace('<!-- TOC -->', tocHtml),
 };
-for (const [name, transform] of Object.entries(pages)) {
-  let html = transform(readFileSync(join(SITE, name), 'utf8'));
-  html = html
+// Data do build no formato do sitemap (AAAA-MM-DD): diz aos buscadores quando o site mudou.
+const buildDate = new Date().toISOString().slice(0, 10);
+const fill = (text) =>
+  text
     .replaceAll('{{VERSION}}', latest?.version ?? '')
+    .replaceAll('{{VERSION_ISO}}', latest?.date ?? buildDate)
     .replaceAll('{{VERSION_DATE}}', latest ? formatDate(latest.date) : '')
-    .replace(/<i data-icon="([a-zA-Z]+)"><\/i>/g, (_, iconName) => icon(iconName));
+    .replaceAll('{{BUILD_DATE}}', buildDate);
+
+for (const [name, transform] of Object.entries(pages)) {
+  const html = fill(transform(readFileSync(join(SITE, name), 'utf8'))).replace(/<i data-icon="([a-zA-Z]+)"><\/i>/g, (_, iconName) =>
+    icon(iconName),
+  );
   writeFileSync(join(OUT, name), html);
+}
+
+// SEO e GEO: mapa do site, regras para robôs e o resumo em texto que assistentes de IA leem.
+for (const file of ['robots.txt', 'sitemap.xml', 'llms.txt']) {
+  writeFileSync(join(OUT, file), fill(readFileSync(join(SITE, file), 'utf8')));
 }
 writeFileSync(join(OUT, '.nojekyll'), '');
 

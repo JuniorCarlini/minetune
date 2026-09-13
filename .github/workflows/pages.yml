@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - site/**
+      - README.md
       - scripts/build-site.mjs
       - CHANGELOG.md
       - docs/assets/**

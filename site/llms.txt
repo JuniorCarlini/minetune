@@ -1,0 +1,41 @@
+# Minetune
+
+> Minetune é um projeto para rodar um servidor de Minecraft pronto para produção em Docker, com painel web próprio em português, backups incrementais e criptografados e guias de deploy em casa, numa VPS ou no EasyPanel. Versão atual: {{VERSION}} ({{VERSION_DATE}}).
+
+O Minetune junta, num único `docker compose`, o servidor Minecraft (imagem itzg/minecraft-server), o agendador de backups com restic (itzg/mc-backup), um painel web próprio (Node.js, Hono e React) e um proxy de acesso ao Docker com permissões mínimas. O painel foi pensado para quem não é técnico: usa palavras do jogo, mostra avisos com o botão que resolve e esconde termos técnicos atrás de "Opções avançadas".
+
+## O que ele faz
+
+- Servidor Minecraft Java com Paper (padrão), Purpur, Fabric, NeoForge ou Vanilla, escolhendo a versão pela lista oficial de cada software; Java 25 por padrão, com aviso quando uma versão antiga precisa de outra imagem de Java.
+- Painel web: tela Início com o estado do servidor, endereço para copiar e avisos (servidor desligado, memória cheia, jogo travando, backup só local); jogadores, lista de convidados (whitelist) e administradores (op); todas as regras de jogo da versão em execução; configurações do servidor com validação; plugins e mods do Modrinth; console.
+- Backups com restic: incrementais, deduplicados e criptografados, agendados, manuais e automáticos antes de restauração e atualização. Destinos: disco local, Cloudflare R2, Amazon S3 ou S3 próprio (RustFS, MinIO), configuráveis pelo painel com teste de conexão.
+- Crossplay com Minecraft Bedrock (celular, console e Windows) via Geyser e Floodgate, desligado por padrão.
+- Acesso pela internet por port forward, túnel playit.gg (funciona atrás de CGNAT), VPS como ponte ou EasyPanel.
+- Segurança: painel preso ao localhost por padrão, sessão assinada com limite de tentativas, RCON só na rede interna e proxy do Docker que não permite criar containers.
+
+## Como começar
+
+Requisitos: Docker com Compose v2, make e openssl. Reserve pelo menos 6 GB de RAM.
+
+```
+git clone https://github.com/JuniorCarlini/minetune.git
+cd minetune
+make init
+make up
+```
+
+O painel abre em http://localhost:8080 com a senha PANEL_PASSWORD do arquivo .env, e o jogo em localhost:25565.
+
+## Links
+
+- [Site oficial](https://juniorcarlini.github.io/minetune/): apresentação, recursos e perguntas frequentes.
+- [Changelog](https://juniorcarlini.github.io/minetune/changelog.html): o que mudou em cada versão.
+- [Código no GitHub](https://github.com/JuniorCarlini/minetune): README com o guia completo.
+- [Arquitetura e decisões](https://github.com/JuniorCarlini/minetune/blob/main/docs/ARCHITECTURE.md)
+- [Backups e recuperação](https://github.com/JuniorCarlini/minetune/blob/main/docs/BACKUP.md)
+- [Deploy e acesso pela internet](https://github.com/JuniorCarlini/minetune/blob/main/docs/DEPLOY.md)
+- [Desempenho](https://github.com/JuniorCarlini/minetune/blob/main/docs/PERFORMANCE.md)
+
+## Autor
+
+Criado por Junior Carlini (https://github.com/JuniorCarlini). Minecraft é marca da Mojang Studios e da Microsoft; o Minetune não é oficial nem afiliado a elas.
