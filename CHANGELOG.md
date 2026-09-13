@@ -23,6 +23,21 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
   exata do `MC_IMAGE_TAG`, e quando a troca volta para uma versão mais antiga
   que a do mundo.
 
+- Destino dos backups configurável pelo painel (Backups → Destino): disco local,
+  Cloudflare R2, AWS S3, S3 próprio (RustFS/MinIO) ou repositório restic
+  avançado, com frequência, retenção, pausa sem jogadores e limite de upload.
+- Botão "Testar conexão", que confere o destino antes de salvar e explica em
+  português credencial recusada, bucket inexistente, senha diferente ou endereço
+  inacessível.
+- Ao salvar, o repositório é criado se o destino estiver vazio e o agendador
+  reinicia já com a nova configuração, sem `make up`.
+
+### Alterado
+- O container `backup` passa a carregar `config/backup.env` a cada início. O
+  arquivo tem prioridade sobre o `.env`, é gravado com permissão 600 e fica fora
+  do git. Sem ele, tudo continua vindo do `.env` como antes.
+- Backups manuais respeitam o mesmo limite de upload do agendador.
+
 ### Corrigido
 - Na página de Jogadores, o cartão de Operadores vazio deixava um espaço em
   branco embaixo; agora o aviso preenche o cartão como na Whitelist.

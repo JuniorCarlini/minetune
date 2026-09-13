@@ -132,7 +132,7 @@ seguindo o sistema, e três versões de logo para escolher (clique no logo do me
 | **Configurações** | Tipo e versão do servidor, memória, MOTD, mundo, dificuldade, PvP, distâncias, whitelist e crossplay. Tudo validado antes de salvar. |
 | **Regras do jogo** | Todas as regras que a versão em execução oferece, aplicadas em todas as dimensões. |
 | **Plugins e mods** | Buscar no Modrinth e adicionar ou remover; a lista é separada por loader (Paper, Fabric, NeoForge). |
-| **Backups** | Backup na hora, lista de snapshots e restore seguro (faz um backup antes e desfaz se algo falhar). |
+| **Backups** | Backup na hora, lista de snapshots, restore seguro (faz um backup antes e desfaz se algo falhar) e destino configurável: disco local, R2, S3 ou RustFS, com teste de conexão, frequência e retenção. |
 
 No celular, o painel continua usável: o login mostra só o formulário e o menu vira
 uma barra de ícones no topo.

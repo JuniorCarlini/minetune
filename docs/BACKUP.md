@@ -25,7 +25,26 @@ ops e mundos entram.
 
 ## Destinos
 
-Todos usam as mesmas variáveis no `.env`. Troque e rode `make up`.
+### Pelo painel (recomendado)
+
+Na página **Backups → Destino → Configurar**, escolha onde guardar (disco local,
+Cloudflare R2, AWS S3, S3 próprio como RustFS/MinIO, ou um repositório restic
+qualquer em "Avançado"), a frequência, quantos backups manter e o limite de
+upload. **Testar conexão** confere o destino antes de salvar e diz se ele já tem
+backups ou está vazio. **Salvar e aplicar** cria o repositório se precisar e
+reinicia o agendador.
+
+O painel grava tudo em `config/backup.env` (permissão `600`, ignorado pelo git),
+que tem prioridade sobre o `.env`. O container `backup` relê o arquivo a cada
+início. A `RESTIC_PASSWORD` fica **só** no `.env`: trocar a senha deixaria os
+backups existentes ilegíveis.
+
+Ao trocar de destino, os backups antigos continuam no destino anterior. O
+primeiro backup no novo destino é completo.
+
+### Pelo `.env`
+
+Sem `config/backup.env`, valem as variáveis abaixo. Troque e rode `make up`.
 
 ### Disco local (padrão)
 
