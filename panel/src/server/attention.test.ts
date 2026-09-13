@@ -14,6 +14,7 @@ const status = (overrides: Partial<StatusResponse> = {}): StatusResponse => ({
   resources: { memoryUsed: 3 * 1024 ** 3, memoryLimit: 6 * 1024 ** 3, cpuPercent: 5, cpuCores: 4 },
   tps: [20, 20, 20],
   attention: [],
+  join: { port: 25565 },
   ...overrides,
 });
 

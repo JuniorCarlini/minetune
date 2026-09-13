@@ -75,6 +75,7 @@ export function apiRoutes(services: Services): Hono {
       lastBackup: snapshots[0],
       backupProvider: backupSettings.destination.provider,
       attention: [],
+      join: { publicAddress: config.PUBLIC_ADDRESS || undefined, port: config.MC_PORT },
     };
 
     if (server.state === 'running') {
@@ -204,6 +205,7 @@ export function apiRoutes(services: Services): Hono {
       whitelist: whitelist.map(({ name, uuid }) => ({ name, uuid })),
       ops: ops.map(({ name, uuid, level }) => ({ name, uuid, level })),
       banned: banned.map(({ name, uuid, reason, expires }) => ({ name, uuid, reason, expires })),
+      join: { publicAddress: config.PUBLIC_ADDRESS || undefined, port: config.MC_PORT },
     };
     return c.json(body);
   });

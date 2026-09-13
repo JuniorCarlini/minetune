@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { PlayerAction, PlayersResponse } from '../../shared/api.ts';
+import { joinAddress } from '../../shared/join-address.ts';
 import { Icon } from '../components/icons.tsx';
 import { ActionMenu, Avatar, EmptyState, ListItem, ListView, Notice, Page } from '../components/page.tsx';
 import { Button, Card, Input, Modal, Toggle, useToast } from '../components/ui.tsx';
@@ -65,7 +66,7 @@ export function PlayersPage() {
   const isBusy = (action: PlayerAction, name: string) => busy === `${action}:${name}`;
   const opNames = new Set(data?.ops.map((o) => o.name.toLowerCase()));
   const invitedNames = new Set(data?.whitelist.map((p) => p.name.toLowerCase()));
-  const address = `${window.location.hostname}:25565`;
+  const join = data ? joinAddress(data.join, window.location.hostname) : undefined;
 
   return (
     <Page
@@ -81,7 +82,7 @@ export function PlayersPage() {
 
           <Card title="Jogando agora" description={`${data.online.length} de ${data.max || '—'}`}>
             {data.online.length === 0 ? (
-              <EmptyState icon="players" title="Ninguém jogando agora" text={`Mande o endereço ${address} para seus amigos entrarem.`} />
+              <EmptyState icon="players" title="Ninguém jogando agora" text={join?.scope === 'public' ? `Mande o endereço ${join.address} para seus amigos entrarem.` : 'Veja em Início como seus amigos entram.'} />
             ) : (
               <ListView label="Jogando agora">
                 {data.online.map((name) => {

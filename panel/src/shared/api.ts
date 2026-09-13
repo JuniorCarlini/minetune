@@ -1,5 +1,6 @@
 /** Contratos das respostas da API, compartilhados entre backend e frontend. */
 
+import type { JoinInfo } from './join-address.ts';
 import type { ModrinthEntry } from './modrinth.ts';
 import type { Loader } from './settings.ts';
 
@@ -26,6 +27,7 @@ export interface StatusResponse {
   backupProvider: BackupProvider;
   /** "Precisa de atenção" da tela Início: cada item com a frase e o que resolve. */
   attention: AttentionItem[];
+  join: JoinInfo;
 }
 
 export interface AttentionItem {
@@ -74,6 +76,7 @@ export interface PlayersResponse {
   whitelist: PlayerRef[];
   ops: (PlayerRef & { level?: number })[];
   banned: (PlayerRef & { reason?: string; expires?: string })[];
+  join: JoinInfo;
 }
 
 export type PlayerAction = 'whitelist-add' | 'whitelist-remove' | 'op' | 'deop' | 'kick' | 'ban' | 'pardon';

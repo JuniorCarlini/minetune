@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AttentionItem, ContainerInfo, StatusResponse } from '../../shared/api.ts';
+import { joinAddress } from '../../shared/join-address.ts';
 import { SETTINGS_BY_KEY } from '../../shared/settings.ts';
 import { Icon } from '../components/icons.tsx';
 import { EmptyState, Notice, StatTile } from '../components/page.tsx';
@@ -83,6 +84,7 @@ export function OverviewPage() {
     .join(' · ');
 
   const memPct = data.resources?.memoryLimit ? data.resources.memoryUsed / data.resources.memoryLimit : undefined;
+  const join = joinAddress(data.join, window.location.hostname);
 
   // O Docker mede CPU em "núcleos" (100% = um núcleo, 350% = três e meio). Dividido pelos
   // núcleos disponíveis vira 0–100% da máquina, que é o que uma pessoa entende.
@@ -128,8 +130,13 @@ export function OverviewPage() {
       </section>
 
       <div className="grid two">
-        <Card title="Como entrar no servidor" description="Mande isto para seus amigos">
-          <CopyAddress address={`${window.location.hostname}:25565`} />
+        <Card title="Como entrar no servidor" description={join.scope === 'public' ? 'Mande isto para seus amigos' : undefined}>
+          <CopyAddress address={join.address} />
+          {join.scope !== 'public' && (
+            <Notice tone="warning" title={join.scope === 'lan' ? 'Só funciona na mesma rede (Wi-Fi)' : 'Só funciona neste computador'}>
+              Para amigos de outras casas entrarem, crie um túnel (playit.gg) ou use um domínio e coloque o endereço em PUBLIC_ADDRESS no arquivo .env.
+            </Notice>
+          )}
           <ol className="home-steps">
             <li>Abra o Minecraft Java → Multijogador</li>
             <li>Adicionar servidor e colar o endereço</li>

@@ -115,6 +115,8 @@ services:
       INSTANCE_NAME: ${INSTANCE_NAME:-minetune}
       PANEL_PASSWORD: ${PANEL_PASSWORD:?defina PANEL_PASSWORD no .env (rode make init)}
       PANEL_SESSION_SECRET: ${PANEL_SESSION_SECRET:?defina PANEL_SESSION_SECRET no .env (rode make init)}
+      PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-}
+      MC_PORT: ${MC_PORT:-25565}
       RCON_HOST: mc
       RCON_PASSWORD: ${RCON_PASSWORD}
       DOCKER_API: http://docker-proxy:2375

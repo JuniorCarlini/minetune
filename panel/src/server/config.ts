@@ -13,6 +13,10 @@ const baseSchema = z.object({
 
   DOCKER_API: z.url().default('http://docker-proxy:2375'),
 
+  /** Endereço que os amigos usam (domínio ou túnel); vazio = painel deduz pelo navegador. */
+  PUBLIC_ADDRESS: z.string().default(''),
+  MC_PORT: z.coerce.number().int().default(25565),
+
   RESTIC_REPOSITORY: z.string().min(1, 'RESTIC_REPOSITORY é obrigatório'),
   RESTIC_PASSWORD: z.string().min(1, 'RESTIC_PASSWORD é obrigatório'),
   RESTIC_HOST: z.string().min(1).default('minetune'),
