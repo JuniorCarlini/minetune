@@ -276,7 +276,8 @@ export function BackupDestinationPage() {
 
         <Card title="Frequência e retenção" description="Quando fazer backup e quantos guardar. O restante é apagado após cada backup agendado.">
           <div className="form-grid">
-            <label className="field">
+            {/* div, não label: um <label> repassa o clique ao campo interno e o select do Tucano fecha logo após abrir. */}
+            <div className="field">
               <span className="field-label">Fazer backup</span>
               <TucSelect
                 value={schedule.interval}
@@ -288,7 +289,7 @@ export function BackupDestinationPage() {
                 placeholder="Frequência"
                 onChange={(interval) => interval && updateSchedule({ interval })}
               />
-            </label>
+            </div>
             <label className="field">
               <span className="field-label">Limite de upload (MB/s)</span>
               <Input
