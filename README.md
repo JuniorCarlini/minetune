@@ -25,15 +25,20 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/screenshots/overview.png" width="860" alt="Visão geral do painel Minetune">
+  <img src="docs/assets/screenshots/overview.png" width="860" alt="Tela Início do painel Minetune com o estado do servidor, como entrar e avisos">
 </p>
 
 ---
 
 ## Sobre
 
-O **Minetune** junta tudo o que um servidor Minecraft precisa para rodar de
-verdade, sem improviso:
+O **Minetune** é a forma mais simples de **criar e administrar um servidor de
+Minecraft** (Java e Bedrock) com Docker: um painel web em português, feito para
+quem nunca administrou um servidor, com backups automáticos e caminhos prontos
+para colocar no ar em casa, numa VPS ou no EasyPanel.
+Site oficial: **<https://juniorcarlini.github.io/minetune/>**.
+
+Ele junta tudo o que um servidor Minecraft precisa para rodar de verdade, sem improviso:
 
 - **Servidor otimizado** sobre a imagem [`itzg/minecraft-server`](https://github.com/itzg/docker-minecraft-server):
   Paper, Purpur, Fabric, NeoForge ou Vanilla, com Java 25 e flags de GC ajustadas.
@@ -93,7 +98,7 @@ Pronto:
 | | |
 |---|---|
 | **Servidor** | Paper 26.2 por padrão; Purpur, Fabric, NeoForge ou Vanilla com um clique. Java 25, flags de GC Aikar e memória limitada por container. |
-| **Painel** | Status com gráficos de jogadores, memória, CPU e TPS; propriedades do servidor com validação; **todas as regras de jogo**, detectadas na versão em execução; jogadores (whitelist, op, kick, ban); plugins e mods do Modrinth com busca; backups e restore; console ao vivo. |
+| **Painel** | Feito para quem não é técnico: tela Início com o estado do servidor, endereço para copiar e avisos com o botão que resolve; jogadores, lista de convidados e administradores; configurações em linguagem simples com versões oficiais de cada software; **todas as regras de jogo** da versão em execução; plugins e mods do Modrinth; backups com destino configurável; console. |
 | **Backups** | restic incremental, deduplicado e criptografado. Agendado, manual e automático antes de restore e updates. Retenção configurável. |
 | **Crossplay** | Geyser + Floodgate com um toggle: jogadores Bedrock entram sem conta Java. Desligado por padrão. |
 | **Otimização** | Distâncias de visão e simulação ajustadas, patches do Paper (explosões, redstone Alternate Current, limites de entidades) e Chunky para pré-gerar o mundo. |
@@ -102,8 +107,11 @@ Pronto:
 
 ## 🖥️ O painel
 
-Interface em blocos, com cara de Minecraft: cantos retos, botões com bisel, fonte
-pixelada, ícones pixelados e toggles no estilo do jogo. Tema claro, escuro ou
+Pensado para quem nunca administrou um servidor: toda tela segue o mesmo padrão
+(título com uma frase, ações à direita, avisos com o botão que resolve) e usa
+palavras do jogo, como administradores e lista de convidados. Termos técnicos
+ficam atrás de "Opções avançadas". O visual é em blocos, com cara de Minecraft:
+cantos retos, botões com bisel, fonte e ícones pixelados. Tema claro, escuro ou
 seguindo o sistema, e três versões de logo para escolher (clique no logo do menu).
 
 <table>
@@ -117,22 +125,24 @@ seguindo o sistema, e três versões de logo para escolher (clique no logo do me
   </tr>
   <tr>
     <td><img src="docs/assets/screenshots/plugins.png" alt="Plugins e mods"><p align="center"><sub>Plugins e mods (Modrinth)</sub></p></td>
-    <td><img src="docs/assets/screenshots/backups.png" alt="Backups"><p align="center"><sub>Backups e restore</sub></p></td>
+    <td><img src="docs/assets/screenshots/backups.png" alt="Backups"><p align="center"><sub>Backups e restauração</sub></p></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/assets/screenshots/console.png" alt="Console"><p align="center"><sub>Console ao vivo</sub></p></td>
+    <td><img src="docs/assets/screenshots/backup-destination.png" alt="Onde guardar os backups"><p align="center"><sub>Onde guardar os backups</sub></p></td>
+    <td><img src="docs/assets/screenshots/console.png" alt="Console"><p align="center"><sub>Console (avançado)</sub></p></td>
   </tr>
 </table>
 
 | Página | O que dá para fazer |
 |---|---|
-| **Visão geral** | Ligar, parar e reiniciar; ver jogadores online, memória, CPU e TPS em tempo real; copiar o endereço do servidor; ver o último backup. |
-| **Console** | Acompanhar o log ao vivo e mandar comandos via RCON. |
-| **Jogadores** | Whitelist, operadores, expulsar, banir e desbanir. |
-| **Configurações** | Tipo e versão do servidor, memória, MOTD, mundo, dificuldade, PvP, distâncias, whitelist e crossplay. Tudo validado antes de salvar. |
-| **Regras do jogo** | Todas as regras que a versão em execução oferece, aplicadas em todas as dimensões. |
-| **Plugins e mods** | Buscar no Modrinth e adicionar ou remover; a lista é separada por loader (Paper, Fabric, NeoForge). |
-| **Backups** | Backup na hora, lista de snapshots, restore seguro (faz um backup antes e desfaz se algo falhar) e destino configurável: disco local, R2, S3 ou RustFS, com teste de conexão, frequência e retenção. |
+| **Início** | Ver se o servidor está ligado, ligar, desligar e reiniciar; copiar o endereço para os amigos; jogadores, memória, processador e desempenho em frases simples; "Precisa de atenção" com o botão que resolve cada aviso; último backup. |
+| **Jogadores** | Quem está jogando; tornar administrador, expulsar e banir pelo menu "Mais"; lista de convidados com a chave "Só convidados podem entrar"; desbanir. |
+| **Regras do jogo** | Todas as regras que a versão em execução oferece, com busca e categorias, aplicadas na hora em todas as dimensões. |
+| **Configurações** | Tipo e versão do servidor (lista oficial de cada software), memória, mensagem na lista de servidores, mundo, dificuldade, distâncias, acesso e Bedrock. Tudo validado antes de salvar; opções técnicas só com "Opções avançadas". |
+| **Plugins e mods** | Buscar no Modrinth só o que é compatível e adicionar ou remover; a lista é separada por loader (Paper, Fabric, NeoForge). |
+| **Backups** | Saber no topo se o mundo está protegido; backup na hora; lista de cópias e restauração segura (faz um backup antes e desfaz se algo falhar). |
+| **Onde guardar** | Destino dos backups (este computador, Cloudflare R2, Amazon S3 ou S3 próprio) com teste de conexão, frequência e retenção. |
+| **Console** | No grupo Avançado: registro ao vivo do servidor e comandos, com sugestões. |
 
 No celular, o painel continua usável: o login mostra só o formulário e o menu vira
 uma barra de ícones no topo.
@@ -159,7 +169,7 @@ Principais variáveis do `.env`:
 | `MC_IMAGE_TAG` | `java25` | Java da imagem. Versões antigas do jogo: `java21`, `java17`, `java8`. |
 | `RESTIC_REPOSITORY` | `/backups/restic` | Destino dos backups (local, S3, R2 ou RustFS). |
 | `BACKUP_INTERVAL` | `6h` | Frequência dos backups automáticos. |
-| `BACKUP_RETENTION` | 4 últimos, 7 diários, 4 semanais, 6 mensais | Quantos snapshots manter. |
+| `BACKUP_RETENTION` | 4 últimos, 7 diários, 4 semanais, 6 mensais | Quantas cópias manter. |
 | `COMPOSE_FILE` | `compose.yaml` | Ativa os overlays de RustFS e playit.gg. |
 
 A lista completa, com comentários, está no [`.env.example`](.env.example).

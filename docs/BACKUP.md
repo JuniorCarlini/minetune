@@ -27,7 +27,7 @@ ops e mundos entram.
 
 ### Pelo painel (recomendado)
 
-Na página **Backups → Destino → Configurar**, escolha onde guardar (disco local,
+Na página **Backups → Onde guardar** (ou pelo aviso "Guardar na nuvem"), escolha onde guardar (este computador,
 Cloudflare R2, AWS S3, S3 próprio como RustFS/MinIO, ou um repositório restic
 qualquer em "Avançado"), a frequência, quantos backups manter e o limite de
 upload. **Testar conexão** confere o destino antes de salvar e diz se ele já tem
