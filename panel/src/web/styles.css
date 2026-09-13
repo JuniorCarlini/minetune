@@ -1,0 +1,1827 @@
+/* =============================================================================
+   minetune — layout do painel sobre o tema Tucano.
+
+   Cores, alturas e bordas saem dos tokens --tuc-* (tucano/css). Este arquivo só
+   define a estrutura do painel e o visual "quadradinho": todos os raios em zero.
+   Componentes (botão, campo, select, badge, tabela, menu, modal, toast) são os
+   do Tucano, não há segundo desenho aqui.
+   ============================================================================= */
+
+/*
+ * Fonte pixelada (Monocraft, OFL) para a identidade: títulos, menu, botões,
+ * rótulos e números. Texto corrido continua na fonte do sistema, que lê melhor.
+ */
+@font-face {
+  font-family: 'Monocraft';
+  src: url('./assets/fonts/Monocraft.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Monocraft';
+  src: url('./assets/fonts/Monocraft-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/*
+ * Paleta Minecraft sobre os tokens do Tucano.
+ *   verde    #3C8527  botão "Jogar" do launcher
+ *   escuro   #1E1E1F / #313233  interface do launcher Java
+ *   claro    #D0D1D4 / #E6E8EB  interface do Bedrock
+ *   tons     ouro §6, vermelho §c, redstone, grama
+ */
+:root {
+  /* Visual em blocos: nenhum canto arredondado, no painel e nos componentes. */
+  --tuc-radius: 0;
+  --tuc-radius-md: 0;
+  --tuc-radius-sm: 0;
+  --tuc-radius-xs: 0;
+
+  /* Verde principal #5CEC01. Claro demais para texto branco em cima (fg escuro) e
+     para virar texto sobre fundo claro (--mt-accent-text escurecido). */
+  --tuc-accent: #5cec01;
+  --tuc-accent-hover: #4fd000;
+  --tuc-accent-fg: #102100;
+  --mt-accent-text: #2f7d00;
+  --tuc-success: #2f7d00;
+  --tuc-warning: #b36b00;
+  --tuc-danger: #c62828;
+  --tuc-danger-fill: #b3312c;
+
+  --tuc-bg: #e6e8eb;
+  --tuc-fg: #1e1e1f;
+  --tuc-muted: #4c4d50;
+  --tuc-subtle: #6f7074;
+  --tuc-border: #a8aaae;
+  --tuc-hover: #d6d8dc;
+  --tuc-elevated: #dcdee2;
+
+  /* Monocraft em tudo: interface, campos, componentes do Tucano, código e console. */
+  --tuc-font: 'Monocraft', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Fundo da página um tom abaixo dos cartões (cartão = --tuc-bg). */
+  --mt-page: #c6c7cb;
+  --mt-mono: 'Monocraft', ui-monospace, 'SF Mono', Menlo, monospace;
+  --mt-terminal-bg: #1e1e1f;
+  --mt-terminal-fg: #e6e6e6;
+  --mt-sidebar-w: 15.5rem;
+  /* Bisel dos botões do jogo: luz em cima, sombra embaixo. */
+  --mt-bevel: inset 0 -3px 0 rgb(0 0 0 / 0.28), inset 0 2px 0 rgb(255 255 255 / 0.22);
+  --mt-bevel-pressed: inset 0 3px 0 rgb(0 0 0 / 0.28);
+
+  color-scheme: light;
+  font-family: var(--tuc-font);
+  /* Monocraft é larga: 13px ocupa o espaço que 14px ocupava na fonte do sistema. */
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Campos e botões nativos não herdam fonte por padrão. */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+.dark,
+[data-theme='dark'] {
+  --tuc-accent: #5cec01;
+  --tuc-accent-hover: #7df53c;
+  --tuc-accent-fg: #102100;
+  --mt-accent-text: #5cec01;
+  --tuc-success: #5cec01;
+  --tuc-warning: #ffaa00;
+  --tuc-danger: #ff5555;
+  --tuc-danger-fill: #b3312c;
+
+  --tuc-bg: #313233;
+  --tuc-fg: #ffffff;
+  --tuc-muted: #b1b2b5;
+  --tuc-subtle: #8c8d90;
+  --tuc-border: #4a4b4d;
+  --tuc-hover: #3d3e40;
+  --tuc-elevated: #2a2b2c;
+
+  --mt-page: #1e1e1f;
+  --mt-terminal-bg: #111112;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-tuc-theme='auto'] {
+    --tuc-accent: #5cec01;
+    --tuc-accent-hover: #7df53c;
+    --tuc-accent-fg: #102100;
+    --mt-accent-text: #5cec01;
+    --tuc-success: #5cec01;
+    --tuc-warning: #ffaa00;
+    --tuc-danger: #ff5555;
+    --tuc-danger-fill: #b3312c;
+
+    --tuc-bg: #313233;
+    --tuc-fg: #ffffff;
+    --tuc-muted: #b1b2b5;
+    --tuc-subtle: #8c8d90;
+    --tuc-border: #4a4b4d;
+    --tuc-hover: #3d3e40;
+    --tuc-elevated: #2a2b2c;
+
+    --mt-page: #1e1e1f;
+    --mt-terminal-bg: #111112;
+    color-scheme: dark;
+  }
+}
+
+/*
+ * Onde o Tucano usa o accent como COR DE TEXTO (item ativo, links, etiqueta info),
+ * usamos a variante legível: no claro um verde escuro, no escuro o próprio #5CEC01.
+ */
+.tuc-menu__item.is-active,
+.tuc-menu__item.is-active .tuc-menu__icon,
+.tuc-badge.is-info,
+a:not(.tuc-btn):not(.tuc-menu__item):not(.sidebar-status) {
+  color: var(--mt-accent-text);
+}
+
+/* Botões com o bisel e a sombra de texto da interface do Minecraft. */
+.tuc-btn.is-primary,
+.tuc-btn.is-danger,
+.tuc-btn.is-outline {
+  box-shadow: var(--mt-bevel);
+}
+/* Sombra de texto só no vermelho: o verde claro usa texto escuro, e sombra ali borraria. */
+.tuc-btn.is-danger {
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 0.4);
+}
+.tuc-btn.is-primary {
+  font-weight: 600;
+}
+.tuc-btn.tuc-btn:active:not(:disabled) {
+  box-shadow: var(--mt-bevel-pressed);
+  scale: none;
+  translate: 0 1px;
+}
+.tuc-btn.tuc-btn:focus-visible {
+  box-shadow:
+    0 0 0 3px var(--tuc-accent-ring),
+    var(--mt-bevel);
+}
+.tuc-btn.is-ghost {
+  box-shadow: none;
+}
+
+/* O brilho padrão do fundo do modal é índigo fixo no Tucano (não sai de token): aqui, verde grama. */
+.tuc-modal.is-default::backdrop,
+.tuc-drawer.is-default::backdrop {
+  --tuc-glow-color: rgb(92 236 1 / 0.2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--mt-page);
+  color: var(--tuc-fg);
+}
+
+/* Sem sublinhado em hover: menu, botões-link e links de texto mudam só de cor/fundo. */
+a,
+a:hover {
+  color: var(--tuc-accent);
+  text-decoration: none;
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+h1 {
+  font-size: 1.85rem;
+  font-weight: 700;
+}
+h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+p {
+  margin: 0.2rem 0;
+}
+code {
+  font-family: var(--mt-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  background: var(--tuc-hover);
+  border: 1px solid var(--tuc-border);
+}
+
+.muted {
+  color: var(--tuc-muted);
+}
+.small {
+  font-size: 0.85rem;
+}
+.right {
+  text-align: right;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.text-success {
+  color: var(--tuc-success);
+}
+.text-warning {
+  color: var(--tuc-warning);
+}
+.text-danger {
+  color: var(--tuc-danger);
+}
+
+/* Badge do Tucano tem raio fixo de pílula (não sai de token); no painel, bloco. */
+.tuc-badge {
+  border-radius: var(--tuc-radius-xs);
+}
+/* O pontinho do badge e do submenu vêm com rounded-full fixo: quadrados, como pixel. */
+.tuc-badge::before,
+.tuc-menu__sub .tuc-menu__item::before {
+  border-radius: 0;
+}
+
+/* --- Layout -------------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: var(--mt-sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.1rem 0.85rem 0.85rem;
+  background: var(--tuc-bg);
+  border-right: 1px solid var(--tuc-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.35rem;
+}
+.brand > div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+.brand strong {
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+.brand-version {
+  align-self: flex-start;
+  margin-top: 0.05rem;
+  font-family: var(--mt-mono);
+  font-size: 0.68rem;
+  color: var(--tuc-muted);
+  padding: 0.05rem 0.35rem;
+  background: var(--tuc-hover);
+  border: 1px solid var(--tuc-border);
+}
+.brand-mark {
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.brand .tuc-btn {
+  margin-left: auto;
+}
+
+.sidebar nav.tuc-menu {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  color: var(--tuc-fg);
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+  text-decoration: none;
+}
+.sidebar-status:hover {
+  text-decoration: none;
+  background: var(--tuc-hover);
+}
+.sidebar-status div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+}
+.sidebar-status strong {
+  font-size: 0.85rem;
+}
+.sidebar-status span:not(.status-dot) {
+  font-size: 0.75rem;
+  color: var(--tuc-muted);
+}
+
+.content {
+  width: 100%;
+  max-width: 1240px;
+  padding: 2.25rem clamp(1rem, 3vw, 3rem) 7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.page-header p {
+  margin-top: 0.4rem;
+  max-width: 62ch;
+}
+
+.center-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+.grid.metrics {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* 1px de gap deixa o fundo aparecer como divisória entre os blocos. */
+  gap: 1px;
+  border: 1px solid var(--tuc-border);
+  background: var(--tuc-border);
+}
+@media (max-width: 560px) {
+  .grid.metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .metric {
+    padding: 0.85rem 0.85rem 0;
+  }
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  .metric-detail {
+    white-space: normal;
+    font-size: 0.75rem;
+  }
+  .metric-chart {
+    height: 28px;
+    margin: 0.4rem -0.85rem 0;
+  }
+}
+.grid.two {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    align-content: start;
+  }
+  .sidebar {
+    position: sticky;
+    z-index: 20;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--tuc-border);
+    overflow-x: auto;
+  }
+  .brand > div,
+  .brand .tuc-btn,
+  .sidebar-status,
+  .tuc-menu__section,
+  .sidebar .tuc-menu__label {
+    display: none;
+  }
+  .sidebar nav.tuc-menu {
+    flex-direction: row;
+    overflow: visible;
+  }
+  .content {
+    padding-top: 1.25rem;
+  }
+}
+
+/* --- Status ---------------------------------------------------------------------- */
+
+/* Quadrado, não círculo: combina com o resto do painel. */
+.status-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  background: var(--tuc-subtle);
+}
+.status-success {
+  background: var(--tuc-success);
+  box-shadow: 0 0 0 3px var(--tuc-success-soft);
+  animation: blink 2.4s steps(1) infinite;
+}
+.status-warning {
+  background: var(--tuc-warning);
+  box-shadow: 0 0 0 3px var(--tuc-warning-soft);
+}
+.status-danger {
+  background: var(--tuc-danger);
+  box-shadow: 0 0 0 3px var(--tuc-danger-soft);
+}
+.status-neutral {
+  background: var(--tuc-subtle);
+  box-shadow: 0 0 0 3px var(--tuc-hover);
+}
+@keyframes blink {
+  50% {
+    box-shadow: 0 0 0 5px var(--tuc-success-soft);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-success {
+    animation: none;
+  }
+}
+
+/* --- Cartões ---------------------------------------------------------------------- */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 1.15rem 1.25rem;
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.card-header p {
+  margin-top: 0.2rem;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.55rem 1.5rem;
+  margin: 0;
+}
+.details dt {
+  color: var(--tuc-muted);
+}
+.details dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--tuc-border);
+  border-left-width: 3px;
+  background: var(--tuc-bg);
+}
+.alert strong {
+  font-weight: 600;
+}
+.alert-info {
+  border-left-color: var(--tuc-accent);
+  background: var(--tuc-accent-soft);
+}
+.alert-warning {
+  border-left-color: var(--tuc-warning);
+  background: var(--tuc-warning-soft);
+}
+.alert-danger {
+  border-left-color: var(--tuc-danger);
+  background: var(--tuc-danger-soft);
+}
+.alert-success {
+  border-left-color: var(--tuc-success);
+  background: var(--tuc-success-soft);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--tuc-border);
+  background: var(--tuc-elevated);
+}
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 0.25rem;
+  color: var(--tuc-muted);
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+}
+.empty {
+  color: var(--tuc-muted);
+  text-align: center;
+  padding: 1.25rem 0;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  animation: spin-square 0.9s steps(4) infinite;
+}
+.spinner-lg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 2.5rem auto;
+  color: var(--tuc-accent);
+}
+@keyframes spin-square {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.progress {
+  height: 8px;
+  background: var(--tuc-hover);
+  border: 1px solid var(--tuc-border);
+}
+.progress > div {
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--tuc-accent) 0 6px, var(--tuc-accent-hover) 6px 8px);
+  transition: width 0.3s steps(8);
+}
+
+/* --- Visão geral ------------------------------------------------------------------ */
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1.5rem 1.6rem;
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  border-top: 3px solid var(--hero-accent, var(--tuc-border));
+}
+.hero-success {
+  --hero-accent: var(--tuc-success);
+}
+.hero-warning {
+  --hero-accent: var(--tuc-warning);
+}
+.hero-danger {
+  --hero-accent: var(--tuc-danger);
+}
+.hero-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+.hero-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+}
+.hero-state {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tuc-fg);
+}
+.hero-title {
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  overflow-wrap: anywhere;
+}
+.hero-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 1.75rem;
+  padding: 0 0.6rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--tuc-fg);
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+  white-space: nowrap;
+}
+.chip code {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+button.chip {
+  cursor: pointer;
+}
+button.chip:hover {
+  background: var(--tuc-hover);
+}
+button.chip:focus-visible {
+  outline: 2px solid var(--tuc-accent);
+  outline-offset: 1px;
+}
+.chip-count {
+  font-family: var(--mt-mono);
+  font-size: 0.72rem;
+  color: var(--tuc-muted);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 1rem 1.1rem 0;
+  background: var(--tuc-bg);
+}
+.metric-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+  color: var(--tuc-muted);
+}
+.metric-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.metric-unit {
+  margin-left: 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--tuc-muted);
+}
+.metric-detail {
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.metric-chart {
+  height: 38px;
+  margin: 0.6rem -1.1rem 0;
+}
+.metric-success .metric-value {
+  color: var(--tuc-success);
+}
+.metric-warning .metric-value {
+  color: var(--tuc-warning);
+}
+.metric-danger .metric-value {
+  color: var(--tuc-danger);
+}
+
+.sparkline {
+  display: block;
+  width: 100%;
+  height: 100%;
+  --spark: var(--tuc-accent);
+  shape-rendering: crispEdges;
+}
+.sparkline-success {
+  --spark: var(--tuc-success);
+}
+.sparkline-warning {
+  --spark: var(--tuc-warning);
+}
+.sparkline-danger {
+  --spark: var(--tuc-danger);
+}
+.sparkline-line {
+  fill: none;
+  stroke: var(--spark);
+  stroke-width: 2;
+}
+.sparkline-area {
+  fill: var(--spark);
+  opacity: 0.1;
+}
+
+.backup-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.backup-summary > div:last-child {
+  display: flex;
+  flex-direction: column;
+}
+.backup-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: var(--tuc-warning);
+  background: var(--tuc-warning-soft);
+  border: 1px solid var(--tuc-border);
+}
+.backup-icon.ok {
+  color: var(--tuc-success);
+  background: var(--tuc-success-soft);
+}
+
+/* --- Formulários --------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.field-label {
+  font-weight: 600;
+}
+.field-key {
+  align-self: flex-start;
+  padding: 0;
+  font-size: 0.7rem;
+  color: var(--tuc-subtle);
+  background: none;
+  border: 0;
+}
+.field-help {
+  font-size: 0.85rem;
+  color: var(--tuc-muted);
+}
+.field-error {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--tuc-danger);
+}
+/* Monocraft é larga: 8rem cortava o placeholder "versão (última)". */
+input.tuc-input.input-sm {
+  width: 11rem;
+}
+input.tuc-input.is-invalid {
+  border-color: var(--tuc-danger);
+}
+.check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* --- Configurações ---------------------------------------------------------------------- */
+
+.settings {
+  display: grid;
+  grid-template-columns: 13rem 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+.settings .tuc-menu {
+  position: sticky;
+  top: 1.5rem;
+}
+@media (max-width: 860px) {
+  .settings {
+    grid-template-columns: 1fr;
+  }
+  .settings .tuc-menu {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
+
+.setting-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -1.25rem -1.15rem;
+}
+.setting-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 400px);
+  gap: 2rem;
+  align-items: center;
+  padding: 0.95rem 1.25rem;
+  border-top: 1px solid var(--tuc-border);
+}
+.setting-row.dirty {
+  background: var(--tuc-accent-soft);
+  box-shadow: inset 3px 0 0 var(--tuc-accent);
+}
+.setting-row.invalid {
+  background: var(--tuc-danger-soft);
+  box-shadow: inset 3px 0 0 var(--tuc-danger);
+}
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.setting-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.setting-title label {
+  font-weight: 600;
+}
+.setting-control {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.setting-control > * {
+  width: 100%;
+}
+.setting-control-boolean > * {
+  width: auto;
+}
+@media (max-width: 700px) {
+  .setting-row {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .setting-control {
+    justify-content: flex-start;
+  }
+}
+
+.savebar {
+  position: fixed;
+  z-index: 10;
+  bottom: 1rem;
+  left: calc(50% + var(--mt-sidebar-w) / 2);
+  translate: -50% 0;
+  width: min(760px, calc(100% - 2rem - var(--mt-sidebar-w)));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 0.7rem 0.65rem 1.1rem;
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  box-shadow: var(--tuc-shadow);
+}
+@media (max-width: 860px) {
+  .savebar {
+    left: 50%;
+    width: calc(100% - 2rem);
+  }
+}
+.risk-list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+}
+
+/* --- Regras do jogo ---------------------------------------------------------------------- */
+
+.rules-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0 -0.5rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--mt-page);
+  border-bottom: 1px solid var(--tuc-border);
+}
+.rules-toolbar .tuc-input-group {
+  max-width: 460px;
+}
+.rule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 0;
+  margin: 0 -1.25rem -1.15rem;
+  border-top: 1px solid var(--tuc-border);
+  scroll-margin-top: 10rem;
+}
+.rule-tile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid var(--tuc-border);
+  border-right: 1px solid var(--tuc-border);
+  cursor: default;
+}
+.rule-tile:hover {
+  background: var(--tuc-hover);
+}
+.rule-tile.on {
+  box-shadow: inset 3px 0 0 var(--tuc-success);
+}
+.rule-tile.saving {
+  opacity: 0.6;
+}
+.rule-tile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.rule-tile-label {
+  font-weight: 500;
+  line-height: 1.3;
+}
+.rule-tile-number {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+}
+.rule-tile-number input.tuc-input {
+  width: 6.5rem;
+  text-align: right;
+}
+
+/* --- Jogadores ------------------------------------------------------------------------------- */
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--tuc-border);
+}
+.player-list > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.65rem;
+  border-top: 1px solid var(--tuc-border);
+}
+.player-list > li:first-child {
+  border-top: 0;
+}
+.player {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+}
+/* Cabeça em blocos: iniciais sobre um quadrado 8x8 com sombreado de pixel. */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #fff;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.14) 0 25%, transparent 25% 75%, rgb(0 0 0 / 0.14) 75%) 0 75% / 100% 25% no-repeat,
+    hsl(var(--avatar-hue) 45% 42%);
+  box-shadow:
+    inset 0 -4px 0 rgb(0 0 0 / 0.25),
+    inset 0 4px 0 rgb(255 255 255 / 0.15);
+}
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* --- Plugins ------------------------------------------------------------------------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.list > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--tuc-border);
+}
+.list > li:first-child {
+  border-top: 0;
+}
+.hit {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.hit img,
+.hit-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--tuc-hover);
+  border: 1px solid var(--tuc-border);
+  image-rendering: pixelated;
+}
+
+/* --- Console e jobs ---------------------------------------------------------------------- */
+
+.log {
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 0.8rem;
+  font-family: var(--mt-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--mt-terminal-fg);
+  background: var(--mt-terminal-bg);
+  border: 1px solid var(--tuc-border);
+}
+.terminal {
+  height: 62vh;
+  max-height: none;
+}
+.console-input {
+  flex-wrap: nowrap;
+}
+.console-input input.tuc-input {
+  font-family: var(--mt-mono);
+}
+.prompt {
+  font-family: var(--mt-mono);
+  font-weight: 700;
+  color: var(--tuc-accent);
+}
+
+/* --- Login ------------------------------------------------------------------------------ */
+
+.login {
+  width: min(380px, 100%);
+  gap: 1rem;
+  padding: 1.75rem;
+}
+.login-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+.login-head h1 {
+  margin-top: 0.35rem;
+  font-size: 1.5rem;
+}
+/*
+ * Título no estilo dos logos do Minecraft, ainda como texto: contorno e
+ * profundidade saem do text-shadow; o degradê dourado vem por cima num ::before
+ * com o mesmo texto (background-clip: text deixaria a sombra aparecer através
+ * da letra transparente).
+ */
+.mc-title {
+  --mc-title-outline: #1d1406;
+  --mc-title-depth: #6e4712;
+  position: relative;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: #e3a53c;
+  padding-bottom: 4px;
+  text-shadow:
+    -1px -1px 0 var(--mc-title-outline),
+    1px -1px 0 var(--mc-title-outline),
+    -1px 0 0 var(--mc-title-outline),
+    1px 0 0 var(--mc-title-outline),
+    0 2px 0 var(--mc-title-depth),
+    -1px 2px 0 var(--mc-title-outline),
+    1px 2px 0 var(--mc-title-outline),
+    0 3px 0 var(--mc-title-depth),
+    -1px 3px 0 var(--mc-title-outline),
+    1px 3px 0 var(--mc-title-outline),
+    0 4px 0 var(--mc-title-outline),
+    -1px 4px 0 var(--mc-title-outline),
+    1px 4px 0 var(--mc-title-outline);
+}
+/* No menu lateral: menor e sem o espaçamento negativo do .brand strong. */
+.brand strong.mc-title {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0;
+  padding-bottom: 3px;
+}
+.mc-title::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  text-shadow: none;
+  background: linear-gradient(#fff1a6 10%, #f7cf5c 50%, #e3a53c 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  pointer-events: none;
+}
+
+/* --- Logo e aparência --------------------------------------------------------------------- */
+
+.pixel-logo {
+  display: block;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.brand-logo {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.brand-logo:hover .pixel-logo {
+  translate: 0 -1px;
+}
+.brand-logo:focus-visible {
+  outline: 2px solid var(--tuc-accent);
+  outline-offset: 2px;
+}
+.logo-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+@media (max-width: 40rem) {
+  .logo-options {
+    grid-template-columns: 1fr;
+  }
+}
+.logo-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1rem 0.75rem;
+  font: inherit;
+  text-align: center;
+  color: var(--tuc-fg);
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+  cursor: pointer;
+}
+.logo-option:hover {
+  background: var(--tuc-hover);
+}
+.logo-option .pixel-logo {
+  margin-bottom: 0.35rem;
+}
+.logo-option span {
+  font-size: 0.78rem;
+  color: var(--tuc-muted);
+}
+.logo-option.is-selected {
+  border-color: var(--tuc-accent);
+  box-shadow: inset 0 0 0 1px var(--tuc-accent);
+  background: var(--tuc-accent-soft);
+}
+.logo-option:focus-visible {
+  outline: 2px solid var(--tuc-accent);
+  outline-offset: 2px;
+}
+
+/* --- Interruptor estilo Minecraft (Bedrock) ----------------------------------------------------- */
+
+:root {
+  --mc-switch-border: #1e1e1f;
+  --mc-switch-off: #8f9195;
+  --mc-switch-knob: #d0d1d4;
+}
+.dark,
+[data-theme='dark'] {
+  --mc-switch-border: #0b0b0c;
+  --mc-switch-off: #48494a;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-tuc-theme='auto'] {
+    --mc-switch-border: #0b0b0c;
+    --mc-switch-off: #48494a;
+  }
+}
+
+.mc-switch {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 46px;
+  height: 26px;
+  vertical-align: middle;
+}
+.mc-switch input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.mc-switch.is-disabled input {
+  cursor: not-allowed;
+}
+.mc-switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--mc-switch-off);
+  border: 2px solid var(--mc-switch-border);
+  box-shadow: inset 0 3px 0 rgb(0 0 0 / 0.28);
+}
+/* Marcas do Bedrock: "I" à esquerda quando ligado, "O" à direita quando desligado. */
+.mc-switch-mark {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+}
+.mc-switch-on {
+  left: 7px;
+  width: 2px;
+  height: 10px;
+  background: var(--tuc-accent-fg);
+  opacity: 0;
+}
+.mc-switch-off {
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid rgb(255 255 255 / 0.55);
+}
+.mc-switch-knob {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 22px;
+  background: var(--mc-switch-knob);
+  border-right: 2px solid var(--mc-switch-border);
+  box-shadow:
+    inset -2px -3px 0 rgb(0 0 0 / 0.3),
+    inset 2px 2px 0 rgb(255 255 255 / 0.7);
+  /* Desliza em degraus, como sprite. */
+  transition: translate 0.12s steps(3, jump-end);
+}
+.mc-switch input:checked + .mc-switch-track {
+  background: var(--tuc-accent);
+}
+.mc-switch input:checked + .mc-switch-track .mc-switch-on {
+  opacity: 1;
+}
+.mc-switch input:checked + .mc-switch-track .mc-switch-off {
+  opacity: 0;
+}
+.mc-switch input:checked + .mc-switch-track .mc-switch-knob {
+  translate: 22px 0;
+  border-right: 0;
+  border-left: 2px solid var(--mc-switch-border);
+}
+.mc-switch input:hover + .mc-switch-track .mc-switch-knob {
+  background: #e6e8eb;
+}
+.mc-switch input:focus-visible + .mc-switch-track {
+  outline: 2px solid var(--tuc-accent);
+  outline-offset: 2px;
+}
+.mc-switch.is-disabled {
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-switch-knob {
+    transition: none;
+  }
+}
+
+/* --- Login dividido: formulário + cena pixel art ------------------------------------------------ */
+
+.login-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+/* Crédito colado no rodapé da metade do formulário, na mesma borda esquerda do campo. */
+.login-credit {
+  position: absolute;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, calc(100% - 4rem));
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--tuc-muted);
+}
+.login-credit__made {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.login-credit__heart {
+  display: inline-flex;
+  color: #e5383b;
+  animation: login-heartbeat 1.6s steps(1) infinite;
+}
+@keyframes login-heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.25);
+  }
+  24% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-credit__heart {
+    animation: none;
+  }
+}
+.login-credit .tuc-btn {
+  text-decoration: none;
+}
+.login-pane {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 2rem;
+  background: var(--tuc-bg);
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: min(340px, 100%);
+}
+/* Logo e título seguem a mesma borda esquerda do rótulo e do campo. */
+/* Logo à esquerda do nome, na mesma linha. */
+.login-form .login-head {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  margin-bottom: 0.75rem;
+}
+.login-form .login-head h1 {
+  margin-top: 0;
+}
+/*
+ * Capa noturna (paisagem 3:2) numa metade quase retrato: o corte puxa para a
+ * direita para manter o Steve e o rack "SERVIDOR ONLINE" em cena.
+ */
+.login-art {
+  background: #0b1030 url('./assets/login-cover.webp') 86% center / cover no-repeat;
+}
+@media (max-width: 860px) {
+  /* No celular a arte só empurrava o formulário para baixo; fica só o login. */
+  .login-split {
+    grid-template-columns: 1fr;
+  }
+  .login-art {
+    display: none;
+  }
+}
+
+/* --- Carregamento estilo Minecraft ------------------------------------------------------------- */
+
+.mc-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 3.5rem auto;
+  color: var(--tuc-muted);
+}
+.mc-loader-block {
+  /* Pulo em degraus: sem easing suave, como animação de sprite. */
+  animation: mc-hop 0.8s steps(4, jump-none) infinite;
+}
+.mc-loader-block .pixel-logo {
+  filter: drop-shadow(0 4px 0 rgb(0 0 0 / 0.28));
+}
+@keyframes mc-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -12px;
+  }
+}
+.mc-loader-bar {
+  display: grid;
+  grid-template-columns: repeat(10, 10px);
+  gap: 3px;
+  padding: 3px;
+  background: var(--mt-page);
+  border: 2px solid var(--tuc-border);
+  box-shadow: var(--mt-bevel-pressed);
+}
+.mc-loader-bar span {
+  width: 10px;
+  height: 10px;
+  background: var(--tuc-hover);
+  animation: mc-fill 1.5s steps(1) infinite;
+  animation-delay: calc(var(--i) * 0.12s);
+}
+@keyframes mc-fill {
+  0% {
+    background: var(--tuc-hover);
+  }
+  8%,
+  60% {
+    background: var(--tuc-accent);
+  }
+  68%,
+  100% {
+    background: var(--tuc-hover);
+  }
+}
+.mc-loader-label {
+  font-family: var(--mt-pixel);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mc-loader-label::after {
+  content: '...';
+  display: inline-block;
+  width: 3ch;
+  text-align: left;
+  animation: mc-ellipsis 1.2s steps(4) infinite;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+@keyframes mc-ellipsis {
+  from {
+    width: 0;
+  }
+  to {
+    width: 4ch;
+  }
+}
+
+/* Carregando dentro de botão: três pixels acendendo em sequência. */
+.spinner {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-right: 10px;
+  background: currentColor;
+  rotate: none;
+  box-shadow:
+    6px 0 0 transparent,
+    12px 0 0 transparent;
+  animation: mc-dots 0.9s steps(1) infinite;
+}
+@keyframes mc-dots {
+  33% {
+    box-shadow:
+      6px 0 0 currentColor,
+      12px 0 0 transparent;
+  }
+  66%,
+  100% {
+    box-shadow:
+      6px 0 0 currentColor,
+      12px 0 0 currentColor;
+  }
+}
+
+/* --- Transição entre páginas -------------------------------------------------------------------- */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: page-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .mc-loader-block,
+  .mc-loader-bar span,
+  .mc-loader-label::after,
+  .spinner {
+    animation: none;
+  }
+  .mc-loader-bar span:nth-child(-n + 6) {
+    background: var(--tuc-accent);
+  }
+}
+
+/* --- Rodapé do menu: status do servidor + sair ------------------------------------------------ */
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.sidebar-logout {
+  width: 100%;
+  /* Fora do .tuc-menu o <button> não recebe o reset do Tucano e mostraria o fundo e a borda do navegador. */
+  appearance: none;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--mt-pixel);
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+}
+.sidebar-logout:hover {
+  background: var(--tuc-hover);
+}
+.sidebar-logout:focus-visible {
+  outline: 2px solid var(--tuc-accent);
+  outline-offset: -2px;
+}
+.sidebar-logout:hover {
+  color: var(--tuc-danger);
+}
+.sidebar-logout:hover .tuc-menu__icon {
+  color: var(--tuc-danger);
+}
+@media (max-width: 860px) {
+  .sidebar-footer {
+    flex-direction: row;
+    margin-left: auto;
+  }
+  .sidebar-logout {
+    width: auto;
+  }
+}
+
+/* --- Ícones pixelados (RuneIcons) ------------------------------------------------------------ */
+
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+/* O Tucano reserva 16px para o ícone do menu; os pixelados leem melhor em 20. */
+.tuc-menu__icon {
+  width: 20px;
+  height: 20px;
+}
+.tuc-menu__icon .icon {
+  width: 20px;
+  height: 20px;
+}
+/* Nos botões o Tucano força o tamanho do svg por variável; 16px é o mínimo nítido. */
+.tuc-btn {
+  --tuc-btn-icon: 16px;
+}
+
+/*
+ * Ícones que não são nossos (X e seta do Select, fechar do toast, X nativo da
+ * busca) vinham com traço fino de 14px, estranhos ao lado dos pixelados. O SVG
+ * original fica escondido e o pixelado entra por máscara (--mt-icon-* em
+ * lib/icon-masks.ts), pintado com currentColor.
+ */
+.tuc-select__arrow svg,
+.tuc-select__clear svg,
+.tuc-toast__close svg {
+  display: none;
+}
+.tuc-select__arrow {
+  display: grid;
+  place-items: center;
+}
+.tuc-select__arrow::before,
+.tuc-select__clear::before,
+.tuc-toast__close::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: var(--mt-icon-x) center / contain no-repeat;
+  mask: var(--mt-icon-x) center / contain no-repeat;
+}
+.tuc-select__arrow::before {
+  width: 16px;
+  height: 16px;
+  -webkit-mask-image: var(--mt-icon-chevron);
+  mask-image: var(--mt-icon-chevron);
+}
+/* Todo X é um botão de verdade: borda, fundo e o bisel dos outros botões. */
+.tuc-select.has-value .tuc-select__clear,
+.tuc-toast__close.tuc-btn.is-sm {
+  color: var(--tuc-muted);
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  box-shadow: var(--mt-bevel);
+}
+.tuc-select.has-value .tuc-select__clear:hover,
+.tuc-toast__close.tuc-btn.is-sm:hover {
+  color: var(--tuc-fg);
+  background: var(--tuc-hover);
+}
+/* Dentro do campo o botão ocupava quase toda a altura e parecia um segundo campo; menor, vira acessório. */
+.tuc-select.has-value .tuc-select__clear {
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+}
+.tuc-select.has-value .tuc-select__clear::before {
+  width: 12px;
+  height: 12px;
+}
+/* X e seta com o mesmo tamanho dos outros ícones (16px, grade com margem própria). */
+.tuc-select__arrow::before,
+.tuc-toast__close::before {
+  width: 16px;
+  height: 16px;
+}
+.tuc-toast__close.tuc-btn.is-sm {
+  width: 30px;
+  height: 30px;
+}
+.tuc-modal__close.tuc-btn.is-sm {
+  --tuc-btn-icon: 16px;
+  width: 32px;
+  height: 32px;
+}
+.search-input .search-clear {
+  --tuc-btn-icon: 16px;
+}
+
+/* Busca: o X nativo sai; entra o botão .search-clear do SearchInput. */
+input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+.search-input .search-clear {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  translate: 0 -50%;
+  width: 28px;
+  height: 28px;
+}
+.search-input .search-clear:active:not(:disabled) {
+  translate: 0 calc(-50% + 1px);
+}
+.search-input:has(.search-clear) input.tuc-input.tuc-input {
+  padding-right: 2.75rem;
+}
+
+/* --- Fonte pixelada ------------------------------------------------------------------------ */
+
+:root {
+  --mt-pixel: 'Monocraft', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+h1,
+h2,
+.brand strong,
+.tuc-menu,
+.tuc-btn,
+.tuc-badge,
+.tuc-modal__title,
+.tuc-table thead th,
+.chip,
+.hero-state,
+.metric-label,
+.metric-value,
+.field-label,
+.setting-title label,
+.rule-tile-label,
+.logo-option strong,
+.sidebar-status strong {
+  font-family: var(--mt-pixel);
+  letter-spacing: 0;
+}
+
+/* Monocraft é larga: tamanhos um pouco menores para caber no mesmo espaço. */
+h1 {
+  font-size: 1.55rem;
+}
+.hero-title {
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+}
+h2,
+.tuc-modal__title {
+  font-size: 0.9rem;
+}
+.tuc-menu {
+  font-size: 0.8rem;
+}
+.tuc-btn {
+  font-size: 0.78rem;
+}
+.tuc-btn.is-sm {
+  font-size: 0.72rem;
+}
+.tuc-badge {
+  font-size: 0.68rem;
+}
+.metric-value {
+  font-size: 1.7rem;
+}
+.metric-label,
+.hero-state {
+  font-size: 0.7rem;
+}
+.field-label,
+.setting-title label,
+.rule-tile-label {
+  font-size: 0.82rem;
+}
+.brand strong {
+  font-size: 0.95rem;
+}
+
+/* Conteúdo React dentro do modal do Tucano. */
+.tuc-modal__body .field {
+  margin-top: 0.25rem;
+}
