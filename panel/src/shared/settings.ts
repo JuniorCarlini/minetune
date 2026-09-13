@@ -6,7 +6,7 @@
  * itzg/minecraft-server (que as converte para server.properties).
  */
 
-export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'memory';
+export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'memory' | 'version';
 
 export interface SelectOption {
   value: string;
@@ -85,9 +85,9 @@ export const SETTINGS: SettingField[] = [
     key: 'VERSION',
     label: 'Versão do Minecraft',
     group: 'server',
-    type: 'text',
+    type: 'version',
     placeholder: '26.2',
-    help: 'Fixe uma versão. Atualizar converte o mundo e não tem volta; LATEST atualiza sozinho.',
+    help: 'Lista oficial do software escolhido. Fixar uma versão evita atualizações surpresa; atualizar converte o mundo e não tem volta.',
     danger: 'Atualizar converte o mundo para o novo formato e não é possível voltar sem backup.',
   },
   {
@@ -330,10 +330,9 @@ export function validateSetting(field: SettingField, value: string): string | nu
       return field.options?.some((o) => o.value === value) ? null : 'Opção inválida';
     case 'memory':
       return MEMORY_RE.test(value) ? null : 'Use o formato 4G ou 3072M';
+    case 'version':
+      return /^(LATEST|SNAPSHOT|[0-9][0-9A-Za-z.+-]*)$/.test(value) ? null : 'Use LATEST, SNAPSHOT ou um número de versão (ex.: 26.2)';
     case 'text':
-      if (field.key === 'VERSION' && !/^(LATEST|SNAPSHOT|[0-9][0-9A-Za-z.+-]*)$/.test(value)) {
-        return 'Use LATEST, SNAPSHOT ou um número de versão (ex.: 26.2)';
-      }
       return null;
   }
 }

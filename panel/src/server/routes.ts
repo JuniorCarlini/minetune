@@ -18,6 +18,8 @@ import type {
 import { GAMERULES_BY_NAME, validateGameRuleValue } from '../shared/gamerules.ts';
 import { parseModrinthEntry, type ModrinthEntry } from '../shared/modrinth.ts';
 import { SETTINGS_BY_KEY, loaderForType, parseMemory } from '../shared/settings.ts';
+import { isServerType, javaFromImage, requiredJava, type ServerType, type VersionsResponse } from '../shared/versions.ts';
+import { fetchVersions, type RawVersion } from './versions.ts';
 import { ValidationError } from './config-store.ts';
 import type { Services } from './context.ts';
 import { ConflictError } from './jobs.ts';
@@ -130,6 +132,30 @@ export function apiRoutes(services: Services): Hono {
       response.jobId = job.id;
     }
     return c.json(response);
+  });
+
+  // --- Versões disponíveis ---------------------------------------------------------------
+  // Uma hora de cache por software: as listas mudam poucas vezes por semana e as
+  // APIs oficiais não precisam de uma chamada a cada abertura da página.
+  const versionLists = new Map<ServerType, ReturnType<typeof cache<RawVersion[]>>>();
+
+  api.get('/versions', async (c) => {
+    const type = (c.req.query('type') ?? '').toUpperCase();
+    if (!isServerType(type)) return c.json({ error: 'Software de servidor inválido' }, 400);
+
+    let list = versionLists.get(type);
+    if (!list) versionLists.set(type, (list = cache(60 * 60_000, () => fetchVersions(type))));
+
+    const server = await docker.info('server').catch(() => null);
+    const body: VersionsResponse = { type, imageJava: javaFromImage(server?.image), latest: null, versions: [] };
+    try {
+      const raw = await list.get();
+      body.versions = raw.map((v) => ({ ...v, java: requiredJava(v.id) }));
+      body.latest = raw.find((v) => v.stable)?.id ?? null;
+    } catch (err) {
+      body.error = (err as Error).message;
+    }
+    return c.json(body);
   });
 
   // --- Regras de jogo -----------------------------------------------------------------

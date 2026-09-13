@@ -905,6 +905,39 @@ input.tuc-input.is-invalid {
 .setting-control-boolean > * {
   width: auto;
 }
+
+/* Seletor de versão: select, alternância de versões de teste e avisos logo abaixo. */
+.version-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.version-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+.version-note {
+  display: block;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  border-left: 3px solid var(--tuc-border);
+  background: var(--tuc-elevated);
+}
+.version-note.muted {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.version-note.is-warning {
+  border-left-color: var(--tuc-warning);
+}
+.version-note.is-danger {
+  border-left-color: var(--tuc-danger);
+}
 @media (max-width: 700px) {
   .setting-row {
     grid-template-columns: 1fr;

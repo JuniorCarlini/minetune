@@ -9,6 +9,7 @@ import {
   type SettingGroupId,
 } from '../../shared/settings.ts';
 import { Icon } from '../components/icons.tsx';
+import { VersionPicker } from '../components/VersionPicker.tsx';
 import { Alert, Button, Card, Input, JobPanel, Modal, PageHeader, Spinner, Toggle, TucSelect, useToast } from '../components/ui.tsx';
 import { ApiError, api } from '../lib/api.ts';
 import { formatBytes } from '../lib/format.ts';
@@ -120,6 +121,8 @@ export function SettingsPage() {
                 dirty={dirty.includes(field.key)}
                 error={localErrors[field.key] ?? serverErrors[field.key]}
                 memoryLimit={field.key === 'MEMORY' ? data.memoryLimitBytes : undefined}
+                serverType={values.TYPE ?? ''}
+                savedValue={data.values[field.key] ?? ''}
                 onChange={(value) => set(field.key, value)}
               />
             ))}
@@ -185,6 +188,8 @@ function SettingInput({
   dirty,
   error,
   memoryLimit,
+  serverType,
+  savedValue,
   onChange,
 }: {
   field: SettingField;
@@ -192,6 +197,8 @@ function SettingInput({
   dirty: boolean;
   error?: string;
   memoryLimit?: number;
+  serverType: string;
+  savedValue: string;
   onChange: (value: string) => void;
 }) {
   const id = `setting-${field.key}`;
@@ -208,6 +215,11 @@ function SettingInput({
       break;
     case 'select':
       control = <TucSelect id={id} value={value} options={field.options!} placeholder="Padrão do servidor" onChange={onChange} />;
+      break;
+    case 'version':
+      control = (
+        <VersionPicker id={id} serverType={serverType} value={value} savedValue={savedValue} invalid={!!error} onChange={onChange} />
+      );
       break;
     default:
       control = (
