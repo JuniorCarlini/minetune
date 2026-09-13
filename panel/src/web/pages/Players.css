@@ -1,0 +1,22 @@
+/* Chave "Só convidados podem entrar": texto à esquerda, interruptor à direita, clicável inteira. */
+.invite-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+  cursor: pointer;
+}
+.invite-switch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-weight: 600;
+}
+.invite-switch-text span {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--tuc-muted);
+}

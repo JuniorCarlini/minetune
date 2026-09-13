@@ -1,0 +1,13 @@
+/* Plugins e mods: caixinha de ícone para itens sem imagem e controles do modo avançado. */
+.plugin-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--mt-accent-text);
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+}
+.plugin-version {
+  width: 9rem;
+}

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Icon } from '../components/icons.tsx';
-import { Alert, Button, Card, CheckLabel, Input, PageHeader, useToast } from '../components/ui.tsx';
+import { Notice, Page } from '../components/page.tsx';
+import { Button, Card, CheckLabel, Input, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
 
 const MAX_LINES = 1500;
 const ANSI = /\x1b\[[0-9;]*[A-Za-z]/g;
 /** Conexões RCON do painel e do agendador de backup: úteis para debug, ruído no dia a dia. */
 const RCON_NOISE = /\[RCON (Listener|Client) [^\]]*\]: Thread RCON Client/;
+/** Os pedidos mais comuns: preenchem o campo para a pessoa conferir antes de enviar. */
+const SUGGESTIONS = ['say Bem-vindos!', 'time set day', 'weather clear', 'list'];
 
 export function ConsolePage() {
   const [lines, setLines] = useState<string[]>([]);
@@ -31,7 +34,7 @@ export function ConsolePage() {
     };
     source.addEventListener('error', (event) => {
       const data = (event as MessageEvent).data as string | undefined;
-      setStreamError(data || 'Conexão com os logs perdida, tentando reconectar...');
+      setStreamError(data || 'Conexão com o registro perdida, tentando reconectar...');
     });
     return () => source.close();
   }, []);
@@ -68,19 +71,20 @@ export function ConsolePage() {
   };
 
   return (
-    <>
-      <PageHeader title="Console" description="Logs ao vivo e comandos via RCON (sem a barra inicial)." />
-      {streamError && <Alert tone="warning">{streamError}</Alert>}
+    <Page title="Console" description="Registro do servidor e comandos, para quem já conhece os comandos do Minecraft.">
+      <Notice tone="warning">Comandos agem direto no servidor. Para jogadores e regras, use as telas Jogadores e Regras do jogo.</Notice>
+      {streamError && <Notice tone="warning">{streamError}</Notice>}
+
       <Card
         title={
           <span className="row">
-            <span className={`status-dot ${streamError ? 'status-warning' : 'status-success'}`} /> Logs do servidor
+            <span className={`status-dot ${streamError ? 'status-warning' : 'status-success'}`} /> Registro do servidor
           </span>
         }
         actions={
           <>
             <CheckLabel checked={hideNoise} onChange={setHideNoise}>
-              <span className="small muted">Ocultar conexões RCON</span>
+              <span className="small muted">Ocultar conexões do painel</span>
             </CheckLabel>
             <CheckLabel checked={follow} onChange={setFollow}>
               <span className="small muted">Rolar automaticamente</span>
@@ -94,10 +98,12 @@ export function ConsolePage() {
         <form className="row console-input" onSubmit={send}>
           <span className="prompt">&gt;</span>
           <Input
+            id="console-command"
             value={command}
             onChange={(e) => setCommand(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="ex.: say Olá!   time set day   chunky radius 3000"
+            placeholder="Digite um comando, sem a barra /"
+            aria-label="Comando"
             autoComplete="off"
             spellCheck={false}
           />
@@ -105,7 +111,23 @@ export function ConsolePage() {
             <Icon name="send" /> Enviar
           </Button>
         </form>
+        <div className="chips" role="group" aria-label="Comandos sugeridos">
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              className="chip"
+              onClick={() => {
+                setCommand(suggestion);
+                // Input do painel não repassa ref: foca pelo id.
+                document.getElementById('console-command')?.focus();
+              }}
+            >
+              <code>{suggestion}</code>
+            </button>
+          ))}
+        </div>
       </Card>
-    </>
+    </Page>
   );
 }

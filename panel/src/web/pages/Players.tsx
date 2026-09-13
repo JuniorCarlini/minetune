@@ -1,20 +1,19 @@
 import { useState, type FormEvent } from 'react';
 import type { PlayerAction, PlayersResponse } from '../../shared/api.ts';
-import { Icon, type IconName } from '../components/icons.tsx';
-import { Alert, Badge, Button, Card, Input, Modal, PageHeader, Spinner, useToast } from '../components/ui.tsx';
+import { Icon } from '../components/icons.tsx';
+import { ActionMenu, Avatar, EmptyState, ListItem, ListView, Notice, Page } from '../components/page.tsx';
+import { Button, Card, Input, Modal, Toggle, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
 import { useApi } from '../lib/hooks.ts';
+import './Players.css';
 
-/** Cabeça em blocos com a inicial e uma cor estável derivada do nick. */
-function Avatar({ name }: { name: string }) {
-  let hash = 0;
-  for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return (
-    <span className="avatar" style={{ '--avatar-hue': hash % 360 } as React.CSSProperties} aria-hidden>
-      {name.replace(/^\./, '').charAt(0).toUpperCase()}
-    </span>
-  );
-}
+/** Nível de permissão do Minecraft dito pelo que o administrador pode fazer. */
+const LEVEL_LABEL: Record<number, string> = {
+  1: 'ignora a proteção do spawn',
+  2: 'comandos de trapaça',
+  3: 'pode expulsar e banir',
+  4: 'todos os comandos',
+};
 
 export function PlayersPage() {
   const { data, error, reload } = useApi<PlayersResponse>('/players', 10_000);
@@ -38,121 +37,165 @@ export function PlayersPage() {
     }
   };
 
-  const addToWhitelist = async (event: FormEvent) => {
+  const setInvitesOnly = async (enabled: boolean) => {
+    setBusy('whitelist');
+    try {
+      const res = await api.put<{ enabled: boolean; appliedNow: boolean }>('/players/whitelist', { enabled });
+      toast.success(`${enabled ? 'Agora só convidados podem entrar.' : 'Qualquer pessoa pode entrar.'}${res.appliedNow ? '' : ' Vale quando o servidor ligar.'}`);
+      await reload();
+    } catch (err) {
+      toast.error(err);
+    } finally {
+      setBusy(undefined);
+    }
+  };
+
+  const invite = async (event: FormEvent) => {
     event.preventDefault();
     await run('whitelist-add', newName.trim());
     setNewName('');
   };
 
-  if (error) return <Alert tone="danger">{error.message}</Alert>;
-  if (!data) return <Spinner />;
-
-  const offline = !data.serverOnline;
-  const isBusy = (action: PlayerAction, name: string) => busy === `${action}:${name}`;
-  const opNames = new Set(data.ops.map((o) => o.name.toLowerCase()));
   const closeReason = () => {
     setReasonFor(undefined);
     setReason('');
   };
 
+  const offline = data ? !data.serverOnline : false;
+  const isBusy = (action: PlayerAction, name: string) => busy === `${action}:${name}`;
+  const opNames = new Set(data?.ops.map((o) => o.name.toLowerCase()));
+  const address = `${window.location.hostname}:25565`;
+
   return (
-    <>
-      <PageHeader title="Jogadores" description="Ações executadas no servidor em tempo real via RCON." />
-      {offline && <Alert tone="warning">Servidor offline: as listas abaixo são somente leitura.</Alert>}
+    <Page
+      title="Jogadores"
+      description="Quem está jogando, quem pode entrar e quem é administrador."
+      loading={!data && !error}
+      error={!data ? error?.message : undefined}
+      onRetry={reload}
+    >
+      {data && (
+        <>
+          {offline && <Notice tone="warning">Servidor desligado: dá para ver as listas, mas as mudanças só funcionam com ele ligado.</Notice>}
 
-      <Card
-        title={
-          <span className="row">
-            Online agora <Badge tone={data.online.length > 0 ? 'success' : 'neutral'}>{`${data.online.length} / ${data.max || '—'}`}</Badge>
-          </span>
-        }
-      >
-        {data.online.length === 0 ? (
-          <EmptyState icon="players" title="Ninguém online" text={`Conecte em ${window.location.hostname}:25565 para aparecer aqui.`} />
-        ) : (
-          <ul className="player-list">
-            {data.online.map((name) => (
-              <li key={name}>
-                <span className="player">
-                  <Avatar name={name} />
-                  <span className="row">
-                    {name}
-                    {opNames.has(name.toLowerCase()) && <Badge tone="info">op</Badge>}
-                  </span>
+          <Card title="Jogando agora" description={`${data.online.length} de ${data.max || '—'}`}>
+            {data.online.length === 0 ? (
+              <EmptyState icon="players" title="Ninguém jogando agora" text={`Mande o endereço ${address} para seus amigos entrarem.`} />
+            ) : (
+              <ListView label="Jogando agora">
+                {data.online.map((name) => {
+                  const isOp = opNames.has(name.toLowerCase());
+                  return (
+                    <ListItem
+                      key={name}
+                      leading={<Avatar name={name} />}
+                      title={name}
+                      detail={isOp ? 'administrador' : undefined}
+                      actions={
+                        <ActionMenu
+                          busy={['op', 'deop', 'kick', 'ban'].some((a) => isBusy(a as PlayerAction, name))}
+                          items={[
+                            isOp
+                              ? { label: 'Remover administrador', icon: 'shieldOff', onSelect: () => run('deop', name) }
+                              : { label: 'Tornar administrador', icon: 'shield', onSelect: () => run('op', name) },
+                            { label: 'Expulsar', icon: 'kick', tone: 'danger', onSelect: () => setReasonFor({ action: 'kick', name }) },
+                            { label: 'Banir', icon: 'ban', tone: 'danger', onSelect: () => setReasonFor({ action: 'ban', name }) },
+                          ]}
+                        />
+                      }
+                    />
+                  );
+                })}
+              </ListView>
+            )}
+          </Card>
+
+          <div className="grid two">
+            <Card title="Lista de convidados" description="whitelist">
+              <label className="invite-switch">
+                <span className="invite-switch-text">
+                  Só convidados podem entrar
+                  <span>{data.whitelistEnabled ? 'Quem não estiver na lista não entra.' : 'Desligado: qualquer pessoa pode entrar.'}</span>
                 </span>
-                <div className="row">
-                  {opNames.has(name.toLowerCase()) ? (
-                    <Button size="sm" onClick={() => run('deop', name)} loading={isBusy('deop', name)}>
-                      <Icon name="shieldOff" /> Remover op
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => run('op', name)} loading={isBusy('op', name)}>
-                      <Icon name="shield" /> Tornar op
-                    </Button>
-                  )}
-                  <Button size="sm" onClick={() => setReasonFor({ action: 'kick', name })}>
-                    <Icon name="kick" /> Expulsar
-                  </Button>
-                  <Button size="sm" variant="danger" onClick={() => setReasonFor({ action: 'ban', name })}>
-                    <Icon name="ban" /> Banir
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+                <Toggle label="Só convidados podem entrar" checked={data.whitelistEnabled} disabled={busy === 'whitelist'} onChange={setInvitesOnly} />
+              </label>
+              <form className="inline-form" onSubmit={invite}>
+                <Input placeholder="Nick do jogador" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={offline} aria-label="Nick do jogador" />
+                <Button type="submit" variant="primary" disabled={offline || !newName.trim()} loading={isBusy('whitelist-add', newName.trim())}>
+                  <Icon name="userPlus" /> Convidar
+                </Button>
+              </form>
+              {data.whitelist.length === 0 ? (
+                <EmptyState icon="rules" title="Ninguém convidado ainda" text="Digite o nick acima e toque em Convidar." />
+              ) : (
+                <ListView label="Lista de convidados">
+                  {data.whitelist.map((p) => (
+                    <ListItem
+                      key={p.name}
+                      leading={<Avatar name={p.name} />}
+                      title={p.name}
+                      actions={
+                        <Button size="sm" variant="ghost" disabled={offline} onClick={() => run('whitelist-remove', p.name)} loading={isBusy('whitelist-remove', p.name)}>
+                          <Icon name="kick" /> Remover
+                        </Button>
+                      }
+                    />
+                  ))}
+                </ListView>
+              )}
+            </Card>
 
-      <div className="grid two">
-        <Card title="Whitelist" description="Só vale com a whitelist ativa (Configurações → Acesso).">
-          <form className="inline-form" onSubmit={addToWhitelist}>
-            <Input placeholder="Nick do jogador" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={offline} />
-            <Button type="submit" variant="primary" disabled={offline || !newName.trim()} loading={isBusy('whitelist-add', newName.trim())}>
-              <Icon name="userPlus" /> Adicionar
-            </Button>
-          </form>
-          <PlayerList
-            players={data.whitelist}
-            empty={<EmptyState icon="rules" title="Whitelist vazia" text="Adicione nicks acima." />}
-            action={(name) => (
-              <Button size="sm" variant="ghost" disabled={offline} onClick={() => run('whitelist-remove', name)} loading={isBusy('whitelist-remove', name)}>
-                <Icon name="kick" /> Remover
-              </Button>
+            <Card title="Administradores" description="podem usar comandos">
+              {data.ops.length === 0 ? (
+                <EmptyState icon="shield" title="Nenhum administrador" text="Use Mais → Tornar administrador em quem está jogando." />
+              ) : (
+                <ListView label="Administradores">
+                  {data.ops.map((p) => (
+                    <ListItem
+                      key={p.name}
+                      leading={<Avatar name={p.name} />}
+                      title={p.name}
+                      detail={p.level ? LEVEL_LABEL[p.level] : undefined}
+                      actions={
+                        <Button size="sm" variant="ghost" disabled={offline} onClick={() => run('deop', p.name)} loading={isBusy('deop', p.name)}>
+                          <Icon name="shieldOff" /> Remover
+                        </Button>
+                      }
+                    />
+                  ))}
+                </ListView>
+              )}
+            </Card>
+          </div>
+
+          <Card title="Banidos">
+            {data.banned.length === 0 ? (
+              <EmptyState icon="check" title="Ninguém banido" text="Tudo tranquilo por aqui." />
+            ) : (
+              <ListView label="Banidos">
+                {data.banned.map((p) => (
+                  <ListItem
+                    key={p.name}
+                    leading={<Avatar name={p.name} />}
+                    title={p.name}
+                    detail={p.reason}
+                    actions={
+                      <Button size="sm" variant="ghost" disabled={offline} onClick={() => run('pardon', p.name)} loading={isBusy('pardon', p.name)}>
+                        <Icon name="unban" /> Desbanir
+                      </Button>
+                    }
+                  />
+                ))}
+              </ListView>
             )}
-          />
-        </Card>
-
-        <Card title="Operadores" description="Jogadores com permissão de comandos administrativos.">
-          <PlayerList
-            players={data.ops}
-            empty={<EmptyState icon="settings" title="Nenhum operador" text="Torne alguém op pela lista de jogadores online." />}
-            detail={(p) => `nível ${(p as { level?: number }).level ?? '?'}`}
-            action={(name) => (
-              <Button size="sm" variant="ghost" disabled={offline} onClick={() => run('deop', name)} loading={isBusy('deop', name)}>
-                <Icon name="shieldOff" /> Remover
-              </Button>
-            )}
-          />
-        </Card>
-      </div>
-
-      <Card title="Banidos">
-        <PlayerList
-          players={data.banned}
-          empty={<EmptyState icon="check" title="Ninguém banido" text="Tudo tranquilo por aqui." />}
-          detail={(p) => (p as { reason?: string }).reason ?? ''}
-          action={(name) => (
-            <Button size="sm" variant="ghost" disabled={offline} onClick={() => run('pardon', name)} loading={isBusy('pardon', name)}>
-              <Icon name="unban" /> Desbanir
-            </Button>
-          )}
-        />
-      </Card>
+          </Card>
+        </>
+      )}
 
       <Modal
         open={!!reasonFor}
-        title={reasonFor?.action === 'ban' ? `Banir ${reasonFor.name}` : `Expulsar ${reasonFor?.name ?? ''}`}
-        text={reasonFor?.action === 'ban' ? 'O jogador não conseguirá entrar até ser desbanido.' : 'O jogador é desconectado e pode voltar.'}
+        title={reasonFor?.action === 'ban' ? `Banir ${reasonFor.name}?` : `Expulsar ${reasonFor?.name ?? ''}?`}
+        text={reasonFor?.action === 'ban' ? 'A pessoa não consegue mais entrar até ser desbanida.' : 'A pessoa é desconectada, mas pode entrar de novo.'}
         tone="danger"
         size="sm"
         onClose={closeReason}
@@ -163,13 +206,14 @@ export function PlayersPage() {
             </Button>
             <Button
               variant="danger"
+              loading={!!reasonFor && isBusy(reasonFor.action, reasonFor.name)}
               onClick={async () => {
                 if (!reasonFor) return;
                 await run(reasonFor.action, reasonFor.name, reason);
                 closeReason();
               }}
             >
-              <Icon name={reasonFor?.action === 'ban' ? 'ban' : 'kick'} /> Confirmar
+              <Icon name={reasonFor?.action === 'ban' ? 'ban' : 'kick'} /> {reasonFor?.action === 'ban' ? 'Banir' : 'Expulsar'}
             </Button>
           </>
         }
@@ -179,47 +223,6 @@ export function PlayersPage() {
           <Input value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} />
         </label>
       </Modal>
-    </>
-  );
-}
-
-function EmptyState({ icon, title, text }: { icon: IconName; title: string; text: string }) {
-  return (
-    <div className="empty-state">
-      <span className="empty-icon">
-        <Icon name={icon} size={18} />
-      </span>
-      <strong>{title}</strong>
-      <span className="muted small">{text}</span>
-    </div>
-  );
-}
-
-function PlayerList({
-  players,
-  empty,
-  detail,
-  action,
-}: {
-  players: { name: string }[];
-  empty: React.ReactNode;
-  detail?: (player: { name: string }) => string;
-  action: (name: string) => React.ReactNode;
-}) {
-  if (players.length === 0) return <>{empty}</>;
-  return (
-    <ul className="player-list">
-      {players.map((p) => (
-        <li key={p.name}>
-          <span className="player">
-            <Avatar name={p.name} />
-            <span>
-              {p.name} {detail && <span className="muted small">{detail(p)}</span>}
-            </span>
-          </span>
-          {action(p.name)}
-        </li>
-      ))}
-    </ul>
+    </Page>
   );
 }

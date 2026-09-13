@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { GameRulesResponse } from '../../shared/api.ts';
-import { GAMERULE_CATEGORIES, GAMERULES_BY_NAME, validateGameRuleValue, type GameRuleDef } from '../../shared/gamerules.ts';
+import { GAMERULE_CATEGORIES, GAMERULES_BY_NAME, validateGameRuleValue, type GameRuleCategory, type GameRuleDef } from '../../shared/gamerules.ts';
 import { Icon } from '../components/icons.tsx';
-import { Alert, Badge, Button, Card, Input, PageHeader, SearchInput, Spinner, Toggle, useToast } from '../components/ui.tsx';
+import { EmptyState, OptionRow, Page, useAdvancedMode } from '../components/page.tsx';
+import { Badge, Button, Card, Input, SearchInput, Toggle, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
 import { useApi } from '../lib/hooks.ts';
+import './GameRules.css';
 
 export function GameRulesPage() {
   const { data, error, loading, reload } = useApi<GameRulesResponse>('/gamerules');
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string>();
   const [search, setSearch] = useState('');
+  const [category, setCategory] = useState<GameRuleCategory | 'all'>('all');
+  const [advanced] = useAdvancedMode();
   const toast = useToast();
 
   useEffect(() => {
@@ -23,7 +27,7 @@ export function GameRulesPage() {
     setSaving(rule.name);
     try {
       await api.put(`/gamerules/${rule.name}`, { value });
-      toast.success(`${rule.label}: ${value === 'true' ? 'ativado' : value === 'false' ? 'desativado' : value}`);
+      toast.success(`${rule.label}: ${value === 'true' ? 'ligada' : value === 'false' ? 'desligada' : value}`);
     } catch (err) {
       setValues((v) => ({ ...v, [rule.name]: previous ?? '' }));
       toast.error(err);
@@ -32,84 +36,78 @@ export function GameRulesPage() {
     }
   };
 
-  const header = (
-    <PageHeader
-      title="Regras do jogo"
-      description="Aplicadas na hora via /gamerule, em todas as dimensões. Ficam salvas no mundo."
-      actions={
-        <Button onClick={reload} loading={loading}>
-          <Icon name="refresh" /> Recarregar
-        </Button>
-      }
-    />
-  );
-
-  if (error) {
-    return (
-      <>
-        {header}
-        <Alert tone="warning" title="Servidor precisa estar online">
-          As regras são lidas e alteradas diretamente no servidor em execução. ({error.message})
-        </Alert>
-      </>
-    );
-  }
-  if (!data) return <Spinner />;
-
+  const available = (data?.rules ?? []).map((r) => GAMERULES_BY_NAME.get(r.name)).filter((r): r is GameRuleDef => !!r);
   const term = search.trim().toLowerCase();
-  const rules = data.rules
-    .map((r) => GAMERULES_BY_NAME.get(r.name)!)
-    .filter((rule) => !term || rule.label.toLowerCase().includes(term) || rule.name.includes(term));
-  const categories = GAMERULE_CATEGORIES.map((c) => ({ ...c, rules: rules.filter((r) => r.category === c.id) })).filter((c) => c.rules.length > 0);
-  const enabled = data.rules.filter((r) => values[r.name] === 'true').length;
+  const matching = available.filter((rule) => !term || rule.label.toLowerCase().includes(term) || rule.name.includes(term));
+  const categories = GAMERULE_CATEGORIES.map((c) => ({ ...c, rules: matching.filter((r) => r.category === c.id) })).filter((c) => c.rules.length > 0);
+  const shown = category === 'all' ? categories : categories.filter((c) => c.id === category);
+  const enabled = available.filter((r) => values[r.name] === 'true').length;
 
   return (
-    <>
-      {header}
-
-      <div className="rules-toolbar">
-        <SearchInput placeholder="Buscar regra por nome ou comando..." value={search} onValueChange={setSearch} />
-        <div className="chips">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className="chip"
-              onClick={() => document.getElementById(`rules-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            >
-              {c.label} <span className="chip-count">{c.rules.length}</span>
-            </button>
-          ))}
-        </div>
-        <span className="row muted small">
-          {data.rules.length} regras detectadas · {enabled} ativadas
-          <Badge plain>{data.naming === 'modern' ? 'nomes 1.21.11+' : 'nomes legados'}</Badge>
-        </span>
-      </div>
-
-      {categories.length === 0 && <Alert tone="info">Nenhuma regra encontrada para "{search}".</Alert>}
-
-      {categories.map((category) => (
-        <Card key={category.id} title={category.label}>
-          <div id={`rules-${category.id}`} className="rule-grid">
-            {category.rules.map((rule) => (
-              <RuleTile
-                key={rule.name}
-                rule={rule}
-                value={values[rule.name] ?? ''}
-                serverName={data.rules.find((r) => r.name === rule.name)!.serverName}
-                saving={saving === rule.name}
-                onApply={(value) => apply(rule, value)}
-              />
-            ))}
+    <Page
+      title="Regras do jogo"
+      description="Mudam na hora, para todo mundo, sem reiniciar."
+      actions={
+        <Button onClick={reload} loading={loading && !!data}>
+          <Icon name="refresh" /> Atualizar
+        </Button>
+      }
+      loading={!data && !error}
+      error={error ? 'O servidor precisa estar ligado para ler e mudar as regras.' : undefined}
+      onRetry={reload}
+    >
+      {data && (
+        <Card>
+          <div className="rules-filter">
+            <SearchInput placeholder="Buscar regra…" value={search} onValueChange={setSearch} />
+            <div className="chips" role="group" aria-label="Categorias">
+              <button type="button" className={`chip ${category === 'all' ? 'is-active' : ''}`} aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
+                Todas <span className="chip-count">{matching.length}</span>
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`chip ${category === c.id ? 'is-active' : ''}`}
+                  aria-pressed={category === c.id}
+                  onClick={() => setCategory(c.id)}
+                >
+                  {c.label} <span className="chip-count">{c.rules.length}</span>
+                </button>
+              ))}
+            </div>
+            <span className="row muted small">
+              {available.length} regras · {enabled} ligadas
+              {advanced && <Badge plain>{data.naming === 'modern' ? 'nomes 1.21.11+' : 'nomes legados'}</Badge>}
+            </span>
           </div>
+
+          {shown.length === 0 ? (
+            <EmptyState icon="search" title="Nenhuma regra encontrada" text={term ? `Nada com "${search}". Tente outra palavra.` : undefined} />
+          ) : (
+            shown.map((c) => (
+              <section key={c.id}>
+                <h3 className="rules-category">{c.label}</h3>
+                {c.rules.map((rule) => (
+                  <RuleRow
+                    key={rule.name}
+                    rule={rule}
+                    value={values[rule.name] ?? ''}
+                    serverName={data.rules.find((r) => r.name === rule.name)!.serverName}
+                    saving={saving === rule.name}
+                    onApply={(value) => apply(rule, value)}
+                  />
+                ))}
+              </section>
+            ))
+          )}
         </Card>
-      ))}
-    </>
+      )}
+    </Page>
   );
 }
 
-function RuleTile({
+function RuleRow({
   rule,
   value,
   serverName,
@@ -124,43 +122,38 @@ function RuleTile({
 }) {
   const [text, setText] = useState(value);
   useEffect(() => setText(value), [value]);
+  const id = `rule-${rule.name}`;
   const error = rule.type === 'int' ? validateGameRuleValue(rule, text) : null;
-  const on = rule.type === 'bool' && value === 'true';
 
-  const body = (
-    <div className="rule-tile-info">
-      <span className="rule-tile-label">{rule.label}</span>
-      <code className="field-key">{serverName}</code>
-      {rule.help && <span className="field-help">{rule.help}</span>}
-    </div>
-  );
-
-  if (rule.type === 'bool') {
-    return (
-      <label className={`rule-tile ${on ? 'on' : ''} ${saving ? 'saving' : ''}`}>
-        {body}
-        <Toggle label={rule.label} checked={on} disabled={saving} onChange={(checked) => onApply(String(checked))} />
-      </label>
-    );
-  }
-
-  return (
-    <div className={`rule-tile ${saving ? 'saving' : ''}`}>
-      {body}
+  const control =
+    rule.type === 'bool' ? (
+      <Toggle label={rule.label} checked={value === 'true'} disabled={saving} onChange={(checked) => onApply(String(checked))} />
+    ) : (
       <form
-        className="rule-tile-number"
+        className="rules-number"
         onSubmit={(e) => {
           e.preventDefault();
           if (!error && text !== value) onApply(text);
         }}
       >
-        <Input type="number" min={rule.min} max={rule.max} value={text} invalid={!!error} title={error ?? undefined} onChange={(e) => setText(e.target.value)} />
+        <Input id={id} type="number" min={rule.min} max={rule.max} value={text} invalid={!!error} onChange={(e) => setText(e.target.value)} />
         {text !== value && (
           <Button size="sm" variant="primary" type="submit" loading={saving} disabled={!!error}>
             <Icon name="check" /> Aplicar
           </Button>
         )}
       </form>
-    </div>
+    );
+
+  return (
+    <OptionRow
+      htmlFor={rule.type === 'int' ? id : undefined}
+      title={rule.label}
+      description={rule.help}
+      technical={serverName}
+      error={error ?? undefined}
+      highlight={rule.type === 'int' && text !== value}
+      control={control}
+    />
   );
 }

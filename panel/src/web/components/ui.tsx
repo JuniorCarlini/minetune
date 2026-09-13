@@ -84,18 +84,6 @@ export function Spinner({ label = 'Carregando' }: { label?: string }) {
 
 // --- Estrutura -------------------------------------------------------------------------------
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
-  return (
-    <header className="page-header">
-      <div>
-        <h1>{title}</h1>
-        {description && <p className="muted">{description}</p>}
-      </div>
-      {actions && <div className="row">{actions}</div>}
-    </header>
-  );
-}
-
 export function Card({
   title,
   description,
@@ -132,10 +120,6 @@ export function Alert({ tone = 'info', title, children }: { tone?: Tone; title?:
       {children && <div>{children}</div>}
     </div>
   );
-}
-
-export function Empty({ children }: { children: ReactNode }) {
-  return <p className="empty">{children}</p>;
 }
 
 // --- Campos --------------------------------------------------------------------------------

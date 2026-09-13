@@ -2,16 +2,18 @@ import { useState } from 'react';
 import type { BackupsResponse, SnapshotInfo } from '../../shared/api.ts';
 import { PROVIDER_LABELS, describeInterval, describeRetention } from '../../shared/backup-destination.ts';
 import { Icon } from '../components/icons.tsx';
-import { Alert, Badge, Button, Card, CheckLabel, Empty, Input, JobPanel, Modal, PageHeader, Spinner, useToast } from '../components/ui.tsx';
+import { EmptyState, Notice, Page, useAdvancedMode } from '../components/page.tsx';
+import { Badge, Button, Card, CheckLabel, Input, JobPanel, Modal, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
 import { formatBytes, formatDateTime, timeAgo } from '../lib/format.ts';
 import { useApi } from '../lib/hooks.ts';
 
+/** Tags do restic em palavras de quem usa: de onde veio cada cópia. */
 const TAG_LABELS: Record<string, string> = {
   manual: 'manual',
   'pre-restore': 'antes de restaurar',
   'pre-update': 'antes de atualizar',
-  'pre-config-change': 'antes de mudar config',
+  'pre-config-change': 'antes de mudar configuração',
 };
 
 export function BackupsPage() {
@@ -21,6 +23,7 @@ export function BackupsPage() {
   const [restoreTarget, setRestoreTarget] = useState<SnapshotInfo>();
   const [confirmText, setConfirmText] = useState('');
   const [safetyBackup, setSafetyBackup] = useState(true);
+  const [advanced] = useAdvancedMode();
   const toast = useToast();
 
   const backupNow = async () => {
@@ -54,141 +57,130 @@ export function BackupsPage() {
     }
   };
 
+  const backupButton = (
+    <Button variant="primary" onClick={backupNow} loading={starting && !restoreTarget}>
+      <Icon name="upload" /> Fazer backup agora
+    </Button>
+  );
+
   return (
     <>
-      <PageHeader
+      <Page
         title="Backups"
-        description="Snapshots incrementais e criptografados com restic. Agendados automaticamente e sob demanda."
+        description="Cópias do mundo para voltar no tempo se algo der errado."
         actions={
           <>
-            <Button onClick={reload} loading={loading}>
+            <Button onClick={reload} loading={loading && !!data}>
               <Icon name="refresh" /> Atualizar
             </Button>
-            <Button variant="primary" onClick={backupNow} loading={starting && !restoreTarget}>
-              <Icon name="upload" /> Fazer backup agora
-            </Button>
+            {backupButton}
           </>
         }
-      />
-
-      {jobId && (
-        <JobPanel
-          jobId={jobId}
-          onFinish={(job) => {
-            if (job.status === 'succeeded') toast.success(job.kind === 'restore' ? 'Restauração concluída' : 'Backup concluído');
-            void reload();
-          }}
-        />
-      )}
-
-      {error && <Alert tone="danger" title="Erro ao acessar o repositório">{error.message}</Alert>}
-      {!data && !error && <Spinner />}
-
-      {data && (
-        <>
-          <Card
-            title="Destino"
-            actions={
-              <a className="tuc-btn is-outline is-sm" href="#/backups/destino">
-                <Icon name="settings" /> Configurar
-              </a>
-            }
-          >
-            <dl className="details">
-              <dt>Onde</dt>
-              <dd>
-                <Badge tone={data.provider === 'local' ? 'warning' : 'success'}>{PROVIDER_LABELS[data.provider]}</Badge>
-              </dd>
-              <dt>Repositório</dt>
-              <dd>
-                <code>{data.repository}</code>
-              </dd>
-              <dt>Frequência</dt>
-              <dd>
-                {describeInterval(data.schedule.interval)}
-                {data.schedule.pauseIfNoPlayers && <span className="muted small"> · pula quando ninguém joga</span>}
-              </dd>
-              <dt>Retenção</dt>
-              <dd>{describeRetention(data.schedule)}</dd>
-              {data.schedule.uploadLimitMb > 0 && (
-                <>
-                  <dt>Upload</dt>
-                  <dd>até {data.schedule.uploadLimitMb} MB/s</dd>
-                </>
-              )}
-            </dl>
-            {data.provider === 'local' && (
-              <Alert tone="warning">
-                <span className="row alert-row">
-                  <span>Backups só neste disco: protegem contra erros e grief, mas não contra perda da máquina.</span>
+        loading={!data && !error}
+        error={!data ? error?.message : undefined}
+        onRetry={reload}
+      >
+        {data && (
+          <>
+            {data.provider === 'local' ? (
+              <Notice
+                tone="warning"
+                title="Backups só neste computador"
+                action={
                   <a className="tuc-btn is-primary is-sm" href="#/backups/destino">
                     <Icon name="upload" /> Guardar na nuvem
                   </a>
-                </span>
-              </Alert>
-            )}
-          </Card>
-
-          <Card title={`Snapshots (${data.snapshots.length})`}>
-            {data.snapshots.length === 0 ? (
-              <Empty>Nenhum backup ainda.</Empty>
+                }
+              >
+                Se o disco falhar, o mundo e os backups se perdem juntos.
+              </Notice>
             ) : (
-              <div className="tuc-table-wrap">
-                <table className="tuc-table">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Origem</th>
-                      <th className="is-number">Tamanho</th>
-                      <th>ID</th>
-                      <th className="tuc-table__actions">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.snapshots.map((s) => (
-                      <tr key={s.id}>
-                        <td>
-                          <span className="tuc-table__user">
-                            <span>
-                              {formatDateTime(s.time)}
-                              <span className="tuc-table__sub">{timeAgo(s.time)}</span>
-                            </span>
-                          </span>
-                        </td>
-                        <td>
-                          {s.tags.length === 0 ? (
-                            <Badge>agendado</Badge>
-                          ) : (
-                            s.tags.map((t) => (
-                              <Badge key={t} tone="info">
-                                {TAG_LABELS[t] ?? t}
-                              </Badge>
-                            ))
-                          )}
-                        </td>
-                        <td className="is-number">{formatBytes(s.sizeBytes)}</td>
-                        <td>
-                          <code>{s.shortId}</code>
-                        </td>
-                        <td className="tuc-table__actions">
-                          <Button size="sm" onClick={() => setRestoreTarget(s)}>
-                            <Icon name="download" /> Restaurar
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Notice
+                tone="success"
+                title="Protegido fora deste computador"
+                action={
+                  <a className="tuc-btn is-outline is-sm" href="#/backups/destino">
+                    <Icon name="settings" /> Onde guardar
+                  </a>
+                }
+              >
+                {`${PROVIDER_LABELS[data.provider]} · ${describeInterval(data.schedule.interval)} · guarda ${describeRetention(data.schedule)}`}
+              </Notice>
             )}
-          </Card>
-        </>
-      )}
+
+            {jobId && (
+              <JobPanel
+                jobId={jobId}
+                onFinish={(job) => {
+                  if (job.status === 'succeeded') toast.success(job.kind === 'restore' ? 'Restauração concluída' : 'Backup concluído');
+                  void reload();
+                }}
+              />
+            )}
+
+            <Card title="Cópias de segurança" description={`${data.snapshots.length} ${data.snapshots.length === 1 ? 'cópia' : 'cópias'}`}>
+              {data.snapshots.length === 0 ? (
+                <EmptyState icon="backups" title="Nenhuma cópia ainda" text="A primeira cópia automática sai alguns minutos depois que o servidor liga." action={backupButton} />
+              ) : (
+                <div className="tuc-table-wrap">
+                  <table className="tuc-table">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th className="is-number">Tamanho</th>
+                        {advanced && <th>ID</th>}
+                        <th className="tuc-table__actions">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.snapshots.map((s) => (
+                        <tr key={s.id}>
+                          <td>
+                            <span className="tuc-table__user">
+                              <span>
+                                {formatDateTime(s.time)}
+                                <span className="tuc-table__sub">{timeAgo(s.time)}</span>
+                              </span>
+                            </span>
+                          </td>
+                          <td>
+                            {s.tags.length === 0 ? (
+                              <Badge>automático</Badge>
+                            ) : (
+                              s.tags.map((t) => (
+                                <Badge key={t} tone="info">
+                                  {TAG_LABELS[t] ?? t}
+                                </Badge>
+                              ))
+                            )}
+                          </td>
+                          <td className="is-number">{formatBytes(s.sizeBytes)}</td>
+                          {advanced && (
+                            <td>
+                              <code>{s.shortId}</code>
+                            </td>
+                          )}
+                          <td className="tuc-table__actions">
+                            <Button size="sm" onClick={() => setRestoreTarget(s)}>
+                              <Icon name="download" /> Restaurar
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+      </Page>
 
       <Modal
         open={!!restoreTarget}
-        title="Restaurar backup"
-        text={restoreTarget ? `Snapshot ${restoreTarget.shortId} de ${formatDateTime(restoreTarget.time)}` : undefined}
+        title="Restaurar esta cópia"
+        text={restoreTarget ? `Cópia de ${formatDateTime(restoreTarget.time)}` : undefined}
         tone="danger"
         onClose={closeRestore}
         footer={
@@ -202,11 +194,9 @@ export function BackupsPage() {
           </>
         }
       >
-        <p>
-          O servidor será <strong>parado</strong>, o mundo atual substituído pelo snapshot e o servidor iniciado novamente.
-        </p>
+        <p>O servidor desliga, o mundo atual é trocado por esta cópia e o servidor liga de novo.</p>
         <CheckLabel checked={safetyBackup} onChange={setSafetyBackup}>
-          Fazer backup do estado atual antes (recomendado)
+          Fazer uma cópia do mundo atual antes (recomendado)
         </CheckLabel>
         <label className="field">
           <span className="field-label">

@@ -1,0 +1,14 @@
+/* Grupos de configuração como fileira de botões (antes era um menu lateral). */
+.settings-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.settings-groups .chip.is-active {
+  color: var(--tuc-accent-fg);
+  background: var(--tuc-accent);
+  border-color: var(--tuc-accent);
+}
+.settings-groups .chip.is-active .chip-count {
+  color: var(--tuc-accent-fg);
+}

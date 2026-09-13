@@ -9,11 +9,13 @@ import {
   type SettingGroupId,
 } from '../../shared/settings.ts';
 import { Icon } from '../components/icons.tsx';
+import { AdvancedToggle, EmptyState, Notice, OptionRow, Page, useAdvancedMode } from '../components/page.tsx';
 import { VersionPicker } from '../components/VersionPicker.tsx';
-import { Alert, Button, Card, Input, JobPanel, Modal, PageHeader, Spinner, Toggle, TucSelect, useToast } from '../components/ui.tsx';
+import { Badge, Button, Card, Input, JobPanel, Modal, TucSelect, Toggle, useToast } from '../components/ui.tsx';
 import { ApiError, api } from '../lib/api.ts';
 import { formatBytes } from '../lib/format.ts';
 import { useApi } from '../lib/hooks.ts';
+import './Settings.css';
 
 type Apply = 'none' | 'restart' | 'backup-and-restart';
 
@@ -25,6 +27,7 @@ export function SettingsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState<Apply>();
   const [jobId, setJobId] = useState<string | null>(null);
+  const [advanced] = useAdvancedMode();
   const toast = useToast();
 
   const values = useMemo(() => ({ ...data?.values, ...draft }), [data, draft]);
@@ -38,12 +41,6 @@ export function SettingsPage() {
     return errors;
   }, [dirty, draft]);
   const risky = dirty.map((key) => SETTINGS_BY_KEY.get(key)!).filter((field) => field.danger);
-
-  if (error) return <Alert tone="danger" title="Erro ao carregar configurações">{error.message}</Alert>;
-  if (!data) return <Spinner />;
-
-  const isVisible = (field: SettingField) =>
-    !field.visibleWhen || field.visibleWhen.values.includes((values[field.visibleWhen.key] ?? '').toUpperCase());
 
   const set = (key: string, value: string) => {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -73,8 +70,15 @@ export function SettingsPage() {
     else void save(apply);
   };
 
+  const isApplicable = (field: SettingField) =>
+    !field.visibleWhen || field.visibleWhen.values.includes((values[field.visibleWhen.key] ?? '').toUpperCase());
+  // Opção avançada com alteração não salva continua visível: esconder o que a pessoa mudou confunde.
+  const isVisible = (field: SettingField) => isApplicable(field) && (advanced || !field.advanced || dirty.includes(field.key));
+
   const currentGroup = SETTING_GROUPS.find((g) => g.id === group)!;
-  const fields = SETTINGS.filter((f) => f.group === group && isVisible(f));
+  const groupFields = SETTINGS.filter((f) => f.group === group && isApplicable(f));
+  const fields = groupFields.filter(isVisible);
+  const hiddenAdvanced = groupFields.length - fields.length;
   const changesByGroup = new Map<SettingGroupId, number>();
   for (const key of dirty) {
     const g = SETTINGS_BY_KEY.get(key)!.group;
@@ -83,102 +87,125 @@ export function SettingsPage() {
   const hasErrors = Object.keys(localErrors).length > 0;
 
   return (
-    <>
-      <PageHeader title="Configurações" description="Salvas em config/server.env. Aplicadas quando o servidor reinicia." />
+    <Page
+      title="Configurações"
+      description="Como o servidor funciona. Algumas mudanças pedem reiniciar."
+      actions={<AdvancedToggle />}
+      loading={!data && !error}
+      error={error?.message}
+      onRetry={reload}
+    >
+      {data && (
+        <>
+          {jobId && (
+            <JobPanel
+              jobId={jobId}
+              onFinish={(job) => (job.status === 'succeeded' ? toast.success('Configurações aplicadas') : toast.error(job.error))}
+            />
+          )}
 
-      {jobId && (
-        <JobPanel
-          jobId={jobId}
-          onFinish={(job) => (job.status === 'succeeded' ? toast.success('Configurações aplicadas') : toast.error(job.error))}
-        />
-      )}
+          {advanced && data.unmanaged.length > 0 && (
+            <Notice tone="info" title="Variáveis extras no server.env">
+              Preservadas ao salvar e editáveis só no arquivo: <code>{data.unmanaged.join(', ')}</code>
+            </Notice>
+          )}
 
-      {data.unmanaged.length > 0 && (
-        <Alert tone="info">
-          Variáveis extras no server.env, preservadas e editáveis só no arquivo: <code>{data.unmanaged.join(', ')}</code>
-        </Alert>
-      )}
-
-      <div className="settings">
-        <nav className="tuc-menu" aria-label="Grupos de configuração">
-          <div className="tuc-menu__section">Grupos</div>
-          {SETTING_GROUPS.map((g) => (
-            <button key={g.id} type="button" className={`tuc-menu__item ${g.id === group ? 'is-active' : ''}`} onClick={() => setGroup(g.id)}>
-              {g.label}
-              {changesByGroup.has(g.id) && <span className="tuc-menu__count">{changesByGroup.get(g.id)}</span>}
-            </button>
-          ))}
-        </nav>
-
-        <Card title={currentGroup.label} description={currentGroup.description}>
-          <div className="setting-rows">
-            {fields.length === 0 && <p className="muted" style={{ padding: '1rem 1.25rem' }}>Nenhuma opção disponível para o software atual.</p>}
-            {fields.map((field) => (
-              <SettingInput
-                key={field.key}
-                field={field}
-                value={values[field.key] ?? ''}
-                dirty={dirty.includes(field.key)}
-                error={localErrors[field.key] ?? serverErrors[field.key]}
-                memoryLimit={field.key === 'MEMORY' ? data.memoryLimitBytes : undefined}
-                serverType={values.TYPE ?? ''}
-                savedValue={data.values[field.key] ?? ''}
-                onChange={(value) => set(field.key, value)}
-              />
+          <nav className="settings-groups" aria-label="Grupos de configuração">
+            {SETTING_GROUPS.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                className={`chip ${g.id === group ? 'is-active' : ''}`}
+                aria-pressed={g.id === group}
+                onClick={() => setGroup(g.id)}
+              >
+                {g.label}
+                {changesByGroup.has(g.id) && <span className="chip-count">{changesByGroup.get(g.id)}</span>}
+              </button>
             ))}
-          </div>
-        </Card>
-      </div>
+          </nav>
 
-      {dirty.length > 0 && (
-        <div className="savebar">
-          <span>
-            <strong>{dirty.length}</strong> alteração(ões) não salva(s)
-          </span>
-          <div className="row">
-            <Button variant="ghost" onClick={() => setDraft({})} disabled={!!saving}>
-              <Icon name="undo" /> Descartar
-            </Button>
-            <Button onClick={() => requestSave('none')} loading={saving === 'none'} disabled={hasErrors || !!saving}>
-              <Icon name="save" /> Só salvar
-            </Button>
-            <Button variant="primary" onClick={() => requestSave('restart')} loading={saving === 'restart'} disabled={hasErrors || !!saving}>
-              <Icon name="restart" /> Salvar e reiniciar
-            </Button>
-          </div>
-        </div>
+          <Card title={currentGroup.label} description={currentGroup.description}>
+            {fields.length === 0 ? (
+              <EmptyState
+                icon="settings"
+                title="Nada para ajustar aqui"
+                text={
+                  hiddenAdvanced > 0
+                    ? `Há ${hiddenAdvanced} opção(ões) avançada(s) neste grupo. Ligue "Opções avançadas" no topo para ver.`
+                    : 'Nenhuma opção deste grupo vale para o tipo de servidor atual.'
+                }
+              />
+            ) : (
+              <div>
+                {fields.map((field) => (
+                  <SettingInput
+                    key={field.key}
+                    field={field}
+                    value={values[field.key] ?? ''}
+                    dirty={dirty.includes(field.key)}
+                    error={localErrors[field.key] ?? serverErrors[field.key]}
+                    memoryLimit={field.key === 'MEMORY' ? data.memoryLimitBytes : undefined}
+                    serverType={values.TYPE ?? ''}
+                    savedValue={data.values[field.key] ?? ''}
+                    onChange={(value) => set(field.key, value)}
+                  />
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {dirty.length > 0 && (
+            <div className="savebar">
+              <span>
+                <strong>{dirty.length}</strong> alteração(ões) · precisa reiniciar para valer
+              </span>
+              <div className="row">
+                <Button variant="ghost" onClick={() => setDraft({})} disabled={!!saving}>
+                  <Icon name="undo" /> Descartar
+                </Button>
+                <Button onClick={() => requestSave('none')} loading={saving === 'none'} disabled={hasErrors || !!saving}>
+                  <Icon name="save" /> Só salvar
+                </Button>
+                <Button variant="primary" onClick={() => requestSave('restart')} loading={saving === 'restart'} disabled={hasErrors || !!saving}>
+                  <Icon name="restart" /> Salvar e reiniciar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <Modal
+            open={confirmOpen}
+            title="Confirmar mudanças com risco"
+            text="Recomendado fazer um backup antes de reiniciar com essas mudanças."
+            tone="warning"
+            onClose={() => setConfirmOpen(false)}
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+                  <Icon name="x" /> Cancelar
+                </Button>
+                <Button onClick={() => save('none')} loading={saving === 'none'}>
+                  <Icon name="save" /> Só salvar
+                </Button>
+                <Button variant="primary" onClick={() => save('backup-and-restart')} loading={saving === 'backup-and-restart'}>
+                  <Icon name="upload" /> Backup, salvar e reiniciar
+                </Button>
+              </>
+            }
+          >
+            <ul className="risk-list">
+              {risky.map((field) => (
+                <li key={field.key}>
+                  <strong>{field.label}</strong>: {data.values[field.key] || 'padrão'} → {draft[field.key] || 'padrão'}
+                  <p className="muted small">{field.danger}</p>
+                </li>
+              ))}
+            </ul>
+          </Modal>
+        </>
       )}
-
-      <Modal
-        open={confirmOpen}
-        title="Confirmar alterações sensíveis"
-        text="Recomendado: fazer um backup antes de reiniciar com essas mudanças."
-        tone="warning"
-        onClose={() => setConfirmOpen(false)}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
-              <Icon name="x" /> Cancelar
-            </Button>
-            <Button onClick={() => save('none')} loading={saving === 'none'}>
-              <Icon name="save" /> Só salvar
-            </Button>
-            <Button variant="primary" onClick={() => save('backup-and-restart')} loading={saving === 'backup-and-restart'}>
-              <Icon name="upload" /> Backup, salvar e reiniciar
-            </Button>
-          </>
-        }
-      >
-        <ul className="risk-list">
-          {risky.map((field) => (
-            <li key={field.key}>
-              <strong>{field.label}</strong>: {data.values[field.key] || 'padrão'} → {draft[field.key] || 'padrão'}
-              <p className="muted small">{field.danger}</p>
-            </li>
-          ))}
-        </ul>
-      </Modal>
-    </>
+    </Page>
   );
 }
 
@@ -217,9 +244,7 @@ function SettingInput({
       control = <TucSelect id={id} value={value} options={field.options!} placeholder="Padrão do servidor" onChange={onChange} />;
       break;
     case 'version':
-      control = (
-        <VersionPicker id={id} serverType={serverType} value={value} savedValue={savedValue} invalid={!!error} onChange={onChange} />
-      );
+      control = <VersionPicker id={id} serverType={serverType} value={value} savedValue={savedValue} invalid={!!error} onChange={onChange} />;
       break;
     default:
       control = (
@@ -237,27 +262,32 @@ function SettingInput({
       );
   }
 
+  const description =
+    field.help || memoryLimit ? `${field.help ?? ''}${memoryLimit ? ` Limite da máquina: ${formatBytes(memoryLimit)}.` : ''}`.trim() : undefined;
+
   return (
-    <div className={`setting-row ${dirty ? 'dirty' : ''} ${error ? 'invalid' : ''}`}>
-      <div className="setting-info">
-        <div className="setting-title">
-          <label htmlFor={id}>{field.label}</label>
-          {field.danger && <span className="tuc-badge is-warning is-plain">sensível</span>}
-          {dirty && <span className="tuc-badge is-info is-plain">alterado</span>}
-        </div>
-        {error ? (
-          <span className="field-error">{error}</span>
-        ) : (
-          (field.help || memoryLimit) && (
-            <span className="field-help">
-              {field.help}
-              {memoryLimit ? ` Limite atual do container: ${formatBytes(memoryLimit)}.` : ''}
-            </span>
-          )
-        )}
-        <code className="field-key">{field.key}</code>
-      </div>
-      <div className={`setting-control setting-control-${field.type}`}>{control}</div>
-    </div>
+    <OptionRow
+      htmlFor={field.type === 'boolean' ? undefined : id}
+      title={field.label}
+      description={description}
+      technical={field.key}
+      highlight={dirty}
+      error={error}
+      badges={
+        <>
+          {field.danger && (
+            <Badge tone="warning" plain>
+              com risco
+            </Badge>
+          )}
+          {dirty && (
+            <Badge tone="info" plain>
+              alterado
+            </Badge>
+          )}
+        </>
+      }
+      control={control}
+    />
   );
 }

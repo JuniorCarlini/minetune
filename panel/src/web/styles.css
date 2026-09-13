@@ -348,6 +348,7 @@ code {
  * metade da tela vazia. Acima disso as linhas ficariam longas demais para ler.
  */
 .content {
+  min-width: 0;
   width: 100%;
   max-width: 1680px;
   margin-inline: auto;
@@ -381,32 +382,7 @@ code {
   display: grid;
   gap: 1rem;
 }
-.grid.metrics {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  /* 1px de gap deixa o fundo aparecer como divisória entre os blocos. */
-  gap: 1px;
-  border: 1px solid var(--tuc-border);
-  background: var(--tuc-border);
-}
-@media (max-width: 560px) {
-  .grid.metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .metric {
-    padding: 0.85rem 0.85rem 0;
-  }
-  .metric-value {
-    font-size: 1.5rem;
-  }
-  .metric-detail {
-    white-space: normal;
-    font-size: 0.75rem;
-  }
-  .metric-chart {
-    height: 28px;
-    margin: 0.4rem -0.85rem 0;
-  }
-}
+
 .grid.two {
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
 }
@@ -512,22 +488,6 @@ code {
   margin-top: 0.2rem;
 }
 
-.details {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.55rem 1.5rem;
-  margin: 0;
-}
-.details dt {
-  color: var(--tuc-muted);
-}
-.details dd {
-  margin: 0;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-weight: 500;
-}
-
 .alert {
   display: flex;
   flex-direction: column;
@@ -577,11 +537,6 @@ code {
   background: var(--tuc-bg);
   border: 1px solid var(--tuc-border);
 }
-.empty {
-  color: var(--tuc-muted);
-  text-align: center;
-  padding: 1.25rem 0;
-}
 
 .spinner {
   display: inline-block;
@@ -614,7 +569,7 @@ code {
   transition: width 0.3s steps(8);
 }
 
-/* --- Visão geral ------------------------------------------------------------------ */
+/* --- Início (bloco de estado) ------------------------------------------------------------- */
 
 .hero {
   display: flex;
@@ -648,12 +603,6 @@ code {
   gap: 0.6rem;
   font-size: 0.8rem;
   color: var(--tuc-muted);
-}
-.hero-state {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--tuc-fg);
 }
 .hero-title {
   font-size: clamp(1.5rem, 3vw, 2.1rem);
@@ -703,111 +652,6 @@ button.chip:focus-visible {
   color: var(--tuc-muted);
 }
 
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 1rem 1.1rem 0;
-  background: var(--tuc-bg);
-}
-.metric-head {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 0.35rem;
-  color: var(--tuc-muted);
-}
-.metric-label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.metric-value {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-}
-.metric-unit {
-  margin-left: 0.3rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--tuc-muted);
-}
-.metric-detail {
-  font-size: 0.8rem;
-  color: var(--tuc-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.metric-chart {
-  height: 38px;
-  margin: 0.6rem -1.1rem 0;
-}
-.metric-success .metric-value {
-  color: var(--tuc-success);
-}
-.metric-warning .metric-value {
-  color: var(--tuc-warning);
-}
-.metric-danger .metric-value {
-  color: var(--tuc-danger);
-}
-
-.sparkline {
-  display: block;
-  width: 100%;
-  height: 100%;
-  --spark: var(--tuc-accent);
-  shape-rendering: crispEdges;
-}
-.sparkline-success {
-  --spark: var(--tuc-success);
-}
-.sparkline-warning {
-  --spark: var(--tuc-warning);
-}
-.sparkline-danger {
-  --spark: var(--tuc-danger);
-}
-.sparkline-line {
-  fill: none;
-  stroke: var(--spark);
-  stroke-width: 2;
-}
-.sparkline-area {
-  fill: var(--spark);
-  opacity: 0.1;
-}
-
-.backup-summary {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-.backup-summary > div:last-child {
-  display: flex;
-  flex-direction: column;
-}
-.backup-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  color: var(--tuc-warning);
-  background: var(--tuc-warning-soft);
-  border: 1px solid var(--tuc-border);
-}
-.backup-icon.ok {
-  color: var(--tuc-success);
-  background: var(--tuc-success-soft);
-}
-
 /* --- Formulários --------------------------------------------------------------------- */
 
 .field {
@@ -850,77 +694,6 @@ input.tuc-input.is-invalid {
   user-select: none;
 }
 
-/* --- Configurações ---------------------------------------------------------------------- */
-
-.settings {
-  display: grid;
-  grid-template-columns: 13rem 1fr;
-  gap: 1.25rem;
-  align-items: start;
-}
-.settings .tuc-menu {
-  position: sticky;
-  top: 1.5rem;
-}
-@media (max-width: 860px) {
-  .settings {
-    grid-template-columns: 1fr;
-  }
-  .settings .tuc-menu {
-    position: static;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-}
-
-.setting-rows {
-  display: flex;
-  flex-direction: column;
-  margin: 0 -1.25rem -1.15rem;
-}
-.setting-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 400px);
-  gap: 2rem;
-  align-items: center;
-  padding: 0.95rem 1.25rem;
-  border-top: 1px solid var(--tuc-border);
-}
-.setting-row.dirty {
-  background: var(--tuc-accent-soft);
-  box-shadow: inset 3px 0 0 var(--tuc-accent);
-}
-.setting-row.invalid {
-  background: var(--tuc-danger-soft);
-  box-shadow: inset 3px 0 0 var(--tuc-danger);
-}
-.setting-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
-}
-.setting-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.setting-title label {
-  font-weight: 600;
-}
-.setting-control {
-  display: flex;
-  justify-content: flex-end;
-  min-width: 0;
-}
-.setting-control > * {
-  width: 100%;
-}
-.setting-control-boolean > * {
-  width: auto;
-}
-
 /* Seletor de versão: select, alternância de versões de teste e avisos logo abaixo. */
 .version-picker {
   display: flex;
@@ -953,15 +726,8 @@ input.tuc-input.is-invalid {
 .version-note.is-danger {
   border-left-color: var(--tuc-danger);
 }
-@media (max-width: 700px) {
-  .setting-row {
-    grid-template-columns: 1fr;
-    gap: 0.6rem;
-  }
-  .setting-control {
-    justify-content: flex-start;
-  }
-}
+
+/* --- Configurações: barra de salvar e confirmação ------------------------------------------ */
 
 .savebar {
   position: fixed;
@@ -990,99 +756,8 @@ input.tuc-input.is-invalid {
   margin: 0 0 0.75rem;
   padding-left: 1.2rem;
 }
-
-/* --- Regras do jogo ---------------------------------------------------------------------- */
-
-.rules-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  margin: 0 -0.5rem;
-  padding: 0.75rem 0.5rem;
-  background: var(--mt-page);
-  border-bottom: 1px solid var(--tuc-border);
-}
-.rules-toolbar .tuc-input-group {
-  max-width: 460px;
-}
-.rule-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 0;
-  margin: 0 -1.25rem -1.15rem;
-  border-top: 1px solid var(--tuc-border);
-  scroll-margin-top: 10rem;
-}
-.rule-tile {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.8rem 1.25rem;
-  border-bottom: 1px solid var(--tuc-border);
-  border-right: 1px solid var(--tuc-border);
-  cursor: default;
-}
-.rule-tile:hover {
-  background: var(--tuc-hover);
-}
-.rule-tile.on {
-  box-shadow: inset 3px 0 0 var(--tuc-success);
-}
-.rule-tile.saving {
-  opacity: 0.6;
-}
-.rule-tile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-.rule-tile-label {
-  font-weight: 500;
-  line-height: 1.3;
-}
-.rule-tile-number {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
-}
-.rule-tile-number input.tuc-input {
-  width: 6.5rem;
-  text-align: right;
-}
-
 /* --- Jogadores ------------------------------------------------------------------------------- */
 
-.player-list {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border: 1px solid var(--tuc-border);
-}
-.player-list > li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0.65rem;
-  border-top: 1px solid var(--tuc-border);
-}
-.player-list > li:first-child {
-  border-top: 0;
-}
-.player {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-weight: 600;
-}
 /* Cabeça em blocos: iniciais sobre um quadrado 8x8 com sombreado de pixel. */
 .avatar {
   display: grid;
@@ -1103,42 +778,6 @@ input.tuc-input.is-invalid {
 .inline-form {
   display: flex;
   gap: 0.5rem;
-}
-
-/* --- Plugins ------------------------------------------------------------------------------- */
-
-.list {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.list > li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.7rem 0;
-  border-top: 1px solid var(--tuc-border);
-}
-.list > li:first-child {
-  border-top: 0;
-}
-.hit {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
-  min-width: 0;
-}
-.hit img,
-.hit-icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  background: var(--tuc-hover);
-  border: 1px solid var(--tuc-border);
-  image-rendering: pixelated;
 }
 
 /* --- Console e jobs ---------------------------------------------------------------------- */
@@ -1307,6 +946,308 @@ input.tuc-input.is-invalid {
   outline-offset: 2px;
 }
 
+/* --- Estrutura padrão das telas (components/page.tsx) ------------------------------------------ */
+
+.page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: -0.35rem;
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+}
+.crumbs-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.crumbs a {
+  color: var(--mt-accent-text);
+}
+.empty-action {
+  margin-top: 0.6rem;
+}
+
+/* Aviso: frase à esquerda, botão que resolve à direita. */
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--tuc-border);
+  border-left-width: 4px;
+  background: var(--tuc-bg);
+}
+.notice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 18rem;
+}
+.notice-text strong {
+  font-weight: 700;
+}
+.notice-action {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.notice-info {
+  border-left-color: var(--tuc-accent);
+}
+.notice-success {
+  border-left-color: var(--tuc-success);
+  background: var(--tuc-success-soft);
+}
+.notice-warning {
+  border-left-color: var(--tuc-warning);
+  background: var(--tuc-warning-soft);
+}
+.notice-danger {
+  border-left-color: var(--tuc-danger);
+  background: var(--tuc-danger-soft);
+}
+
+/* Linha de lista única: jogadores, plugins, busca, cópias de segurança. */
+.list-view {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--tuc-border);
+}
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-top: 1px solid var(--tuc-border);
+  min-width: 0;
+}
+.list-item:first-child {
+  border-top: 0;
+}
+.list-item-leading {
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.list-item-leading img {
+  width: 32px;
+  height: 32px;
+  image-rendering: auto;
+}
+.list-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.list-item-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.list-item-detail {
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.list-item-badges,
+.list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+@media (max-width: 560px) {
+  .list-item {
+    flex-wrap: wrap;
+  }
+  .list-item-actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: calc(32px + 0.75rem);
+  }
+}
+
+/* Linha de opção: Configurações e Regras do jogo. */
+.option-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 22rem);
+  gap: 0.6rem 1.5rem;
+  align-items: center;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--tuc-border);
+}
+.option-row:first-child {
+  border-top: 0;
+  padding-top: 0.2rem;
+}
+.option-row.is-highlight {
+  box-shadow: inset 3px 0 0 var(--tuc-accent);
+  padding-left: 0.75rem;
+}
+.option-row.is-invalid {
+  box-shadow: inset 3px 0 0 var(--tuc-danger);
+  padding-left: 0.75rem;
+}
+.option-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.option-row-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+.option-row-control {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+/*
+ * Campos e selects ocupam a coluna do controle. O interruptor fica fora: "width: auto"
+ * nele zera a largura (as peças internas são absolutas) e o desenho se desfaz. O select
+ * nativo escondido do Tucano também fica fora, senão estoura a tela no celular.
+ */
+.option-row-control > :not(.mc-switch):not(.row):not(.tuc-select-native) {
+  width: 100%;
+}
+@media (max-width: 700px) {
+  .option-row {
+    grid-template-columns: 1fr;
+  }
+  .option-row-control {
+    justify-content: flex-start;
+  }
+}
+
+.advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+/* Menu "Mais" das ações de um item. */
+.action-menu {
+  position: relative;
+  display: inline-flex;
+}
+.action-menu-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 13rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
+}
+.action-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  color: var(--tuc-fg);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.action-menu-item:hover,
+.action-menu-item:focus-visible {
+  background: var(--tuc-hover);
+  outline: none;
+}
+.action-menu-item.is-danger {
+  color: var(--tuc-danger);
+}
+.action-menu-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Números em frase (tela Início). */
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  min-width: 0;
+}
+.stat-tile-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tuc-muted);
+}
+.stat-tile-value {
+  font-size: 1.35rem;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.stat-tile-detail {
+  font-size: 0.8rem;
+  color: var(--tuc-muted);
+}
+.stat-success .stat-tile-value {
+  color: var(--mt-accent-text);
+}
+.stat-warning .stat-tile-value {
+  color: var(--tuc-warning);
+}
+.stat-danger .stat-tile-value {
+  color: var(--tuc-danger);
+}
+.stat-bar {
+  display: block;
+  height: 8px;
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+}
+.stat-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--tuc-accent);
+}
+.stat-warning .stat-bar > span {
+  background: var(--tuc-warning);
+}
+.stat-danger .stat-bar > span {
+  background: var(--tuc-danger);
+}
+
 /* --- Destino dos backups ------------------------------------------------------------------------ */
 
 .destination-page {
@@ -1315,18 +1256,6 @@ input.tuc-input.is-invalid {
   gap: 1rem;
   /* Espaço para a barra de salvar fixa não cobrir o último cartão. */
   padding-bottom: 4.5rem;
-}
-/* Caminho de subpágina (Backups / Destino) acima do título. */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-  font-size: 0.8rem;
-  color: var(--tuc-muted);
-}
-.breadcrumb a {
-  color: var(--mt-accent-text);
 }
 /* Mesmo desenho das opções de logo: cartão com borda que acende quando escolhido. */
 .choice-grid {
@@ -1388,11 +1317,6 @@ input.tuc-input.is-invalid {
   .retention-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-/* Texto e botão lado a lado dentro de um Alert (quebra no celular). */
-.alert-row {
-  justify-content: space-between;
-  width: 100%;
 }
 
 /* --- Interruptor estilo Minecraft (Bedrock) ----------------------------------------------------- */
@@ -1906,12 +1830,7 @@ h2,
 .tuc-modal__title,
 .tuc-table thead th,
 .chip,
-.hero-state,
-.metric-label,
-.metric-value,
 .field-label,
-.setting-title label,
-.rule-tile-label,
 .logo-option strong,
 .sidebar-status strong {
   font-family: var(--mt-pixel);
@@ -1941,16 +1860,7 @@ h2,
 .tuc-badge {
   font-size: 0.68rem;
 }
-.metric-value {
-  font-size: 1.7rem;
-}
-.metric-label,
-.hero-state {
-  font-size: 0.7rem;
-}
-.field-label,
-.setting-title label,
-.rule-tile-label {
+.field-label {
   font-size: 0.82rem;
 }
 .brand strong {

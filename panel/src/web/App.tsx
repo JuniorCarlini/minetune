@@ -27,29 +27,29 @@ interface Route {
 
 const SECTIONS: { label: string; routes: Route[] }[] = [
   {
+    label: 'Principal',
+    routes: [
+      { path: 'overview', label: 'Início', icon: 'dashboard', component: OverviewPage },
+      { path: 'players', label: 'Jogadores', icon: 'players', component: PlayersPage },
+      { path: 'gamerules', label: 'Regras do jogo', icon: 'rules', component: GameRulesPage },
+    ],
+  },
+  {
     label: 'Servidor',
     routes: [
-      { path: 'overview', label: 'Visão geral', icon: 'dashboard', component: OverviewPage },
-      { path: 'console', label: 'Console', icon: 'console', component: ConsolePage },
-      { path: 'players', label: 'Jogadores', icon: 'players', component: PlayersPage },
-    ],
-  },
-  {
-    label: 'Jogo',
-    routes: [
       { path: 'settings', label: 'Configurações', icon: 'settings', component: SettingsPage },
-      { path: 'gamerules', label: 'Regras do jogo', icon: 'rules', component: GameRulesPage },
       { path: 'plugins', label: 'Plugins e mods', icon: 'plugins', component: PluginsPage },
+      { path: 'backups', label: 'Backups', icon: 'backups', component: BackupsPage },
     ],
   },
   {
-    label: 'Dados',
-    routes: [{ path: 'backups', label: 'Backups', icon: 'backups', component: BackupsPage }],
+    label: 'Avançado',
+    routes: [{ path: 'console', label: 'Console', icon: 'console', component: ConsolePage }],
   },
 ];
 
 const SUBPAGES: Route[] = [
-  { path: 'backups/destino', label: 'Destino dos backups', icon: 'backups', component: BackupDestinationPage, parent: 'backups' },
+  { path: 'backups/destino', label: 'Onde guardar os backups', icon: 'backups', component: BackupDestinationPage, parent: 'backups' },
 ];
 
 const ROUTES = [...SECTIONS.flatMap((s) => s.routes), ...SUBPAGES];
