@@ -1,0 +1,50 @@
+# Publica o site (site/ + CHANGELOG.md + assets do repositório) no GitHub Pages.
+# O HTML do changelog é gerado a partir do CHANGELOG.md a cada push, então o
+# site nunca fica atrás do arquivo.
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - scripts/build-site.mjs
+      - CHANGELOG.md
+      - docs/assets/**
+      - panel/src/web/assets/**
+      - panel/src/web/components/rune-icons.generated.ts
+      - panel/src/web/components/pixel-glyphs.ts
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/build-site.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
