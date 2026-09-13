@@ -22,6 +22,17 @@ export interface StatusResponse {
   tps?: number[];
   game: { type: string; version: string; motd: string };
   lastBackup?: SnapshotInfo;
+  backupProvider: BackupProvider;
+  /** "Precisa de atenção" da tela Início: cada item com a frase e o que resolve. */
+  attention: AttentionItem[];
+}
+
+export interface AttentionItem {
+  id: 'server-stopped' | 'server-unhealthy' | 'backup-local' | 'backup-old' | 'memory' | 'performance';
+  tone: 'warning' | 'danger';
+  title: string;
+  text: string;
+  action?: { label: string; href?: string; server?: 'start' };
 }
 
 export interface SettingsResponse {
@@ -54,6 +65,8 @@ export interface PlayerRef {
 }
 
 export interface PlayersResponse {
+  /** Só convidados podem entrar (ENABLE_WHITELIST). */
+  whitelistEnabled: boolean;
   serverOnline: boolean;
   online: string[];
   max: number;

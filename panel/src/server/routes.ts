@@ -4,6 +4,7 @@ import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import type {
+  AttentionItem,
   BackupSettingsResponse,
   BackupTestResponse,
   BackupsResponse,
@@ -65,12 +66,15 @@ export function apiRoutes(services: Services): Hono {
     ]);
     // Nunca espera o restic: usa o que já está em cache e atualiza em segundo plano.
     const snapshots = cached.peek() ?? [];
+    const { settings: backupSettings } = await backupConfig.settings();
 
     const status: StatusResponse = {
       server,
       backup,
       game: { type: values.TYPE ?? 'VANILLA', version: values.VERSION ?? 'LATEST', motd: values.MOTD ?? '' },
       lastBackup: snapshots[0],
+      backupProvider: backupSettings.destination.provider,
+      attention: [],
     };
 
     if (server.state === 'running') {
@@ -83,6 +87,7 @@ export function apiRoutes(services: Services): Hono {
       status.players = parseList(list) ?? undefined;
       status.tps = parseTps(tps);
     }
+    status.attention = attentionItems(status, cached.peek() !== undefined);
     return c.json(status);
   });
 
@@ -192,6 +197,7 @@ export function apiRoutes(services: Services): Hono {
       readJsonList<PlayerRef & { reason?: string; expires?: string }>(join(config.DATA_DIR, 'banned-players.json')),
     ]);
     const body: PlayersResponse = {
+      whitelistEnabled: (await store.readSettings()).values.ENABLE_WHITELIST === 'true',
       serverOnline: list !== null,
       online: list?.names ?? [],
       max: list?.max ?? 0,
@@ -221,6 +227,18 @@ export function apiRoutes(services: Services): Hono {
       pardon: `pardon ${name}`,
     };
     return c.json({ output: await rcon.command(commands[action]) });
+  });
+
+  // "Só convidados podem entrar": grava no server.env (vale após reiniciar) e, com o
+  // servidor ligado, aplica na hora via /whitelist on|off para não exigir reinício.
+  api.put('/players/whitelist', async (c) => {
+    const { enabled } = z.object({ enabled: z.boolean() }).parse(await c.req.json());
+    await store.updateSettings({ ENABLE_WHITELIST: String(enabled) });
+    const appliedNow = await rcon
+      .command(`whitelist ${enabled ? 'on' : 'off'}`)
+      .then(() => true)
+      .catch(() => false);
+    return c.json({ enabled, appliedNow });
   });
 
   // --- Plugins e mods (Modrinth) --------------------------------------------------------------
@@ -413,6 +431,56 @@ export function apiRoutes(services: Services): Hono {
   );
 
   return api;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const PERFORMANCE_DOCS = 'https://github.com/JuniorCarlini/minetune/blob/main/docs/PERFORMANCE.md';
+
+/**
+ * Avisos da tela Início, em ordem de gravidade. Cada um diz o problema em
+ * linguagem comum e aponta o que resolve; se nada estiver errado, a lista vem vazia.
+ */
+export function attentionItems(status: StatusResponse, snapshotsKnown: boolean): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  const { server } = status;
+
+  if (server.state === 'missing') {
+    items.push({ id: 'server-stopped', tone: 'danger', title: 'Servidor não encontrado', text: 'O container do Minecraft não existe. Rode make up na máquina do servidor.' });
+  } else if (server.state !== 'running') {
+    items.push({
+      id: 'server-stopped',
+      tone: 'warning',
+      title: 'Servidor desligado',
+      text: 'Ninguém consegue entrar enquanto ele estiver desligado.',
+      action: { label: 'Ligar servidor', server: 'start' },
+    });
+  } else if (server.health === 'unhealthy') {
+    items.push({ id: 'server-unhealthy', tone: 'danger', title: 'Servidor com problemas', text: 'Ele está ligado, mas não responde. Veja o que aconteceu no console.', action: { label: 'Abrir console', href: '#/console' } });
+  }
+
+  const memory = status.resources?.memoryLimit ? status.resources.memoryUsed / status.resources.memoryLimit : undefined;
+  if (memory !== undefined && memory > 0.9) {
+    items.push({ id: 'memory', tone: 'danger', title: 'Memória quase cheia', text: 'O servidor pode travar ou desligar sozinho.', action: { label: 'Ajustar memória', href: '#/settings' } });
+  }
+
+  const tps = status.tps?.[0];
+  if (tps !== undefined && tps < 15) {
+    items.push({ id: 'performance', tone: 'warning', title: 'O jogo está travando', text: 'O servidor não está dando conta. Menos distância de visão costuma resolver.', action: { label: 'Ver como melhorar', href: PERFORMANCE_DOCS } });
+  }
+
+  if (status.backupProvider === 'local') {
+    items.push({ id: 'backup-local', tone: 'warning', title: 'Backups só neste computador', text: 'Se o disco falhar, o mundo e os backups se perdem juntos.', action: { label: 'Guardar na nuvem', href: '#/backups/destino' } });
+  }
+  if (snapshotsKnown && (!status.lastBackup || Date.now() - new Date(status.lastBackup.time).getTime() > 2 * DAY_MS)) {
+    items.push({
+      id: 'backup-old',
+      tone: 'warning',
+      title: status.lastBackup ? 'Último backup há mais de 2 dias' : 'Nenhum backup ainda',
+      text: 'Faça um backup agora para não perder o progresso recente.',
+      action: { label: 'Ir para backups', href: '#/backups' },
+    });
+  }
+  return items;
 }
 
 async function readJsonList<T>(path: string): Promise<T[]> {

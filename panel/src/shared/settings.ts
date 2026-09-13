@@ -42,16 +42,18 @@ export interface SettingField {
   visibleWhen?: { key: string; values: string[] };
   /** Mudança com risco para o mundo: o painel pede confirmação e sugere backup. */
   danger?: string;
+  /** Só aparece com "Opções avançadas" ligado: termos técnicos ou fácil de quebrar o servidor. */
+  advanced?: boolean;
 }
 
 export const SETTING_GROUPS: SettingGroup[] = [
-  { id: 'server', label: 'Servidor', description: 'Software, versão e recursos da JVM' },
-  { id: 'world', label: 'Mundo', description: 'Geração e identidade do mundo' },
-  { id: 'gameplay', label: 'Jogabilidade', description: 'Modo de jogo, dificuldade e comportamento' },
-  { id: 'performance', label: 'Desempenho', description: 'Distâncias, rede e otimizações' },
-  { id: 'access', label: 'Acesso e segurança', description: 'Quem entra e com quais permissões' },
-  { id: 'crossplay', label: 'Crossplay Bedrock', description: 'Jogadores de celular/console via Geyser' },
-  { id: 'resourcepack', label: 'Resource pack', description: 'Pacote de recursos enviado aos jogadores' },
+  { id: 'server', label: 'Básico', description: 'Versão, tipo, nome e tamanho do servidor' },
+  { id: 'world', label: 'Mundo', description: 'Como o mapa é criado e até onde vai' },
+  { id: 'gameplay', label: 'Jogabilidade', description: 'Modo de jogo, dificuldade e o que é permitido' },
+  { id: 'performance', label: 'Desempenho', description: 'Quanto o servidor carrega para não travar' },
+  { id: 'access', label: 'Acesso', description: 'Quem pode entrar e o que administradores podem fazer' },
+  { id: 'crossplay', label: 'Bedrock', description: 'Jogadores de celular, console e Windows' },
+  { id: 'resourcepack', label: 'Pacote de texturas', description: 'Texturas e sons enviados a quem entra' },
 ];
 
 const bool = (key: string, label: string, group: SettingGroupId, help?: string): SettingField => ({
@@ -69,17 +71,18 @@ export const SETTINGS: SettingField[] = [
   // --- Servidor ---
   {
     key: 'TYPE',
-    label: 'Software do servidor',
+    label: 'Tipo de servidor',
     group: 'server',
     type: 'select',
     options: [
-      { value: 'PAPER', label: 'Paper — plugins, melhor desempenho (recomendado)' },
-      { value: 'PURPUR', label: 'Purpur — Paper com opções extras' },
-      { value: 'FABRIC', label: 'Fabric — mods' },
-      { value: 'NEOFORGE', label: 'NeoForge — mods' },
-      { value: 'VANILLA', label: 'Vanilla — oficial da Mojang' },
+      { value: 'PAPER', label: 'Paper — aceita plugins, mais rápido (recomendado)' },
+      { value: 'PURPUR', label: 'Purpur — Paper com mais opções' },
+      { value: 'FABRIC', label: 'Fabric — aceita mods' },
+      { value: 'NEOFORGE', label: 'NeoForge — aceita mods' },
+      { value: 'VANILLA', label: 'Vanilla — oficial, sem plugins nem mods' },
     ],
-    danger: 'Trocar o software torna os plugins/mods atuais incompatíveis e pode afetar o mundo.',
+    help: 'Define se o servidor aceita plugins ou mods.',
+    danger: 'Trocar o tipo deixa os plugins ou mods atuais sem funcionar e pode afetar o mundo.',
   },
   {
     key: 'VERSION',
@@ -87,32 +90,38 @@ export const SETTINGS: SettingField[] = [
     group: 'server',
     type: 'version',
     placeholder: '26.2',
-    help: 'Lista oficial do software escolhido. Fixar uma versão evita atualizações surpresa; atualizar converte o mundo e não tem volta.',
+    help: 'A mesma versão que os jogadores usam no jogo. Atualizar converte o mundo e não tem volta.',
     danger: 'Atualizar converte o mundo para o novo formato e não é possível voltar sem backup.',
   },
   {
     key: 'MEMORY',
-    label: 'Memória da JVM (heap)',
+    label: 'Memória do servidor',
     group: 'server',
     type: 'memory',
     placeholder: '4G',
-    help: 'Ex.: 4G ou 3072M. Deixe 1–1.5 GB de folga abaixo do limite do container (MC_MEMORY_LIMIT).',
+    help: 'Quanto o Minecraft pode usar, ex.: 4G. Deixe 1 a 1,5 GB livres abaixo do limite da máquina.',
   },
-  bool('USE_AIKAR_FLAGS', 'Flags de JVM otimizadas (Aikar)', 'server', 'Ajustes de garbage collector que reduzem travadas. Seguro em x86 e ARM.'),
-  bool(
-    'USE_MEOWICE_FLAGS',
-    'Flags MeowIce (experimental)',
-    'server',
-    'Variante mais agressiva das flags Aikar. Derrubou a JVM em ARM64 nos testes; use só em x86 e observe.',
-  ),
-  { key: 'MOTD', label: 'Mensagem na lista de servidores (MOTD)', group: 'server', type: 'text' },
-  { key: 'MAX_PLAYERS', label: 'Máximo de jogadores', group: 'server', type: 'number', min: 1, max: 1000 },
-  bool(
-    'ONLINE_MODE',
-    'Modo online (contas oficiais)',
-    'server',
-    'Desligado, qualquer um entra com qualquer nick. Só desligue atrás de um proxy (Velocity) ou em LAN.',
-  ),
+  { ...bool('USE_AIKAR_FLAGS', 'Ajustes de memória contra travadas (Aikar)', 'server', 'Reduz pequenas travadas. Recomendado ligado.'), advanced: true },
+  {
+    ...bool(
+      'USE_MEOWICE_FLAGS',
+      'Ajustes de memória experimentais (MeowIce)',
+      'server',
+      'Variante mais agressiva dos ajustes Aikar. Derrubou o servidor em ARM64 nos testes; use só em x86 e observe.',
+    ),
+    advanced: true,
+  },
+  { key: 'MOTD', label: 'Mensagem na lista de servidores', group: 'server', type: 'text', help: 'Texto que aparece embaixo do nome do servidor no jogo.' },
+  { key: 'MAX_PLAYERS', label: 'Máximo de jogadores', group: 'server', type: 'number', min: 1, max: 1000, help: 'Quantas pessoas podem jogar ao mesmo tempo.' },
+  {
+    ...bool(
+      'ONLINE_MODE',
+      'Exigir conta oficial do Minecraft',
+      'server',
+      'Desligado, qualquer um entra com qualquer nick. Só desligue atrás de um proxy (Velocity) ou em rede local.',
+    ),
+    advanced: true,
+  },
 
   // --- Mundo ---
   {
@@ -121,16 +130,16 @@ export const SETTINGS: SettingField[] = [
     group: 'world',
     type: 'text',
     placeholder: 'world',
-    help: 'Pasta do mundo. Um nome novo cria outro mundo; o atual continua salvo.',
+    help: 'Um nome novo cria outro mundo; o atual continua guardado.',
     danger: 'O servidor passará a carregar outro mundo.',
   },
-  { key: 'SEED', label: 'Seed', group: 'world', type: 'text', help: 'Só vale na criação do mundo.' },
+  { key: 'SEED', label: 'Semente do mapa (seed)', group: 'world', type: 'text', help: 'Gera sempre o mesmo mapa. Só vale ao criar um mundo novo.' },
   {
     key: 'LEVEL_TYPE',
     label: 'Tipo de mundo',
     group: 'world',
     type: 'select',
-    help: 'Só vale na criação do mundo.',
+    help: 'Só vale ao criar um mundo novo.',
     options: [
       { value: 'minecraft:normal', label: 'Normal' },
       { value: 'minecraft:large_biomes', label: 'Biomas grandes' },
@@ -141,15 +150,15 @@ export const SETTINGS: SettingField[] = [
   },
   bool('GENERATE_STRUCTURES', 'Gerar estruturas (vilas, templos...)', 'world'),
   bool('ALLOW_NETHER', 'Permitir Nether', 'world'),
-  { key: 'MAX_WORLD_SIZE', label: 'Raio máximo do mundo (blocos)', group: 'world', type: 'number', min: 1, max: 29999984 },
+  { key: 'MAX_WORLD_SIZE', label: 'Tamanho máximo do mapa (blocos)', group: 'world', type: 'number', min: 1, max: 29999984, help: 'Distância do centro até a borda do mundo.', advanced: true },
   {
     key: 'SPAWN_PROTECTION',
-    label: 'Proteção do spawn (blocos)',
+    label: 'Área protegida no nascimento (blocos)',
     group: 'world',
     type: 'number',
     min: 0,
     max: 1000,
-    help: '0 desativa. Não-operadores não constroem nesse raio.',
+    help: 'Só administradores constroem perto do ponto de nascimento. 0 desativa.',
   },
 
   // --- Jogabilidade ---
@@ -178,13 +187,13 @@ export const SETTINGS: SettingField[] = [
       { value: 'hard', label: 'Difícil' },
     ],
   },
-  bool('HARDCORE', 'Hardcore', 'gameplay', 'Morreu, vira espectador.'),
-  bool('PVP', 'PvP', 'gameplay', 'Nas versões novas também existe a regra de jogo "pvp".'),
-  bool('ALLOW_FLIGHT', 'Permitir voo', 'gameplay', 'Evita kick por "voo" em jogadores com elytra lenta ou mods de movimento.'),
-  bool('ENABLE_COMMAND_BLOCK', 'Blocos de comando', 'gameplay'),
+  bool('HARDCORE', 'Hardcore', 'gameplay', 'Morreu uma vez, só assiste. Não dá para renascer.'),
+  bool('PVP', 'Jogadores podem se atacar (PvP)', 'gameplay'),
+  bool('ALLOW_FLIGHT', 'Não expulsar por "voar"', 'gameplay', 'Evita expulsões falsas com elytra ou mods de movimento.'),
+  bool('ENABLE_COMMAND_BLOCK', 'Blocos de comando', 'gameplay', 'Permite usar blocos que executam comandos.'),
   {
     key: 'PLAYER_IDLE_TIMEOUT',
-    label: 'Kick por inatividade (minutos)',
+    label: 'Expulsar quem ficar parado (minutos)',
     group: 'gameplay',
     type: 'number',
     min: 0,
@@ -195,29 +204,30 @@ export const SETTINGS: SettingField[] = [
   // --- Desempenho ---
   {
     key: 'VIEW_DISTANCE',
-    label: 'Distância de visão (chunks)',
+    label: 'Distância de visão',
     group: 'performance',
     type: 'number',
     min: 2,
     max: 32,
-    help: 'Chunks enviados ao jogador. Pesa em RAM e banda.',
+    help: 'Até onde cada jogador enxerga, em chunks. Maior usa mais memória e internet.',
   },
   {
     key: 'SIMULATION_DISTANCE',
-    label: 'Distância de simulação (chunks)',
+    label: 'Distância de atividade',
     group: 'performance',
     type: 'number',
     min: 2,
     max: 32,
-    help: 'Chunks com mobs, redstone e plantações ativos. É o que mais pesa na CPU.',
+    help: 'Até onde criaturas, redstone e plantações funcionam, em chunks. É o que mais pesa.',
   },
   {
     key: 'ENTITY_BROADCAST_RANGE_PERCENTAGE',
-    label: 'Alcance de exibição de entidades (%)',
+    label: 'Alcance de exibição de criaturas (%)',
     group: 'performance',
     type: 'number',
     min: 10,
     max: 1000,
+    advanced: true,
   },
   {
     key: 'NETWORK_COMPRESSION_THRESHOLD',
@@ -226,37 +236,38 @@ export const SETTINGS: SettingField[] = [
     type: 'number',
     min: -1,
     max: 65535,
-    help: 'Padrão 256. Aumente se a CPU for o gargalo e a banda sobrar.',
+    help: 'Padrão 256. Aumente se o processador for o gargalo e a internet sobrar.',
+    advanced: true,
   },
   {
     key: 'PAUSE_WHEN_EMPTY_SECONDS',
-    label: 'Pausar servidor vazio após (segundos)',
+    label: 'Pausar quando ninguém joga (segundos)',
     group: 'performance',
     type: 'number',
     min: 0,
     max: 86400,
-    help: 'Para de processar ticks quando não há jogadores. 0 desativa.',
+    help: 'O servidor para de processar o mundo vazio e economiza energia. 0 desativa.',
   },
   {
     ...bool(
       'APPLY_PAPER_OPTIMIZATIONS',
-      'Otimizações do Paper (minetune)',
+      'Otimizações do Minetune para Paper',
       'performance',
-      'Aplica config/patches/paper: explosões otimizadas, redstone Alternate Current, limites de entidades salvas.',
+      'Explosões e redstone mais leves e limite de itens no chão. Recomendado ligado.',
     ),
     visibleWhen: { key: 'TYPE', values: PLUGIN_TYPES },
   },
-  bool('SYNC_CHUNK_WRITES', 'Escrita síncrona de chunks', 'performance', 'Mais seguro contra queda de energia, mais lento no disco.'),
+  { ...bool('SYNC_CHUNK_WRITES', 'Gravar o mapa com mais segurança', 'performance', 'Protege contra queda de energia, mas deixa o disco mais lento.'), advanced: true },
 
   // --- Acesso ---
-  bool('ENABLE_WHITELIST', 'Lista de permitidos (whitelist)', 'access', 'Só jogadores na whitelist entram. Gerencie em "Jogadores".'),
-  bool('ENFORCE_WHITELIST', 'Expulsar quem sair da whitelist', 'access'),
-  bool('ENFORCE_SECURE_PROFILE', 'Exigir chat assinado (Mojang)', 'access'),
-  bool('PREVENT_PROXY_CONNECTIONS', 'Bloquear conexões via proxy/VPN', 'access'),
-  bool('HIDE_ONLINE_PLAYERS', 'Esconder jogadores online na lista de servidores', 'access'),
+  bool('ENABLE_WHITELIST', 'Só convidados podem entrar', 'access', 'Quem não estiver na lista de convidados não entra. A lista fica em Jogadores.'),
+  bool('ENFORCE_WHITELIST', 'Expulsar quem for removido da lista de convidados', 'access'),
+  { ...bool('ENFORCE_SECURE_PROFILE', 'Exigir chat assinado pela Mojang', 'access'), advanced: true },
+  { ...bool('PREVENT_PROXY_CONNECTIONS', 'Bloquear quem entra por VPN', 'access'), advanced: true },
+  bool('HIDE_ONLINE_PLAYERS', 'Esconder quem está jogando na lista de servidores', 'access'),
   {
     key: 'OP_PERMISSION_LEVEL',
-    label: 'Nível de permissão dos operadores',
+    label: 'Poder dos administradores',
     group: 'access',
     type: 'select',
     options: [
@@ -274,6 +285,7 @@ export const SETTINGS: SettingField[] = [
     min: 0,
     max: 100000,
     help: '0 desativa. Protege contra clientes que inundam o servidor.',
+    advanced: true,
   },
 
   // --- Crossplay ---
@@ -282,15 +294,15 @@ export const SETTINGS: SettingField[] = [
       'BEDROCK_CROSSPLAY',
       'Aceitar jogadores Bedrock',
       'crossplay',
-      'Instala Geyser + Floodgate. Jogadores Bedrock conectam na porta UDP 19132 e não precisam de conta Java.',
+      'Deixa jogadores de celular, console e Windows entrarem sem conta Java. Usa a porta 19132.',
     ),
     visibleWhen: { key: 'TYPE', values: MODDED_OR_PLUGIN_TYPES },
   },
 
   // --- Resource pack ---
-  { key: 'RESOURCE_PACK', label: 'URL do resource pack', group: 'resourcepack', type: 'text', placeholder: 'https://...' },
-  { key: 'RESOURCE_PACK_SHA1', label: 'SHA-1 do resource pack', group: 'resourcepack', type: 'text' },
-  bool('RESOURCE_PACK_ENFORCE', 'Obrigatório', 'resourcepack', 'Quem recusar o pacote é desconectado.'),
+  { key: 'RESOURCE_PACK', label: 'Link do pacote de texturas', group: 'resourcepack', type: 'text', placeholder: 'https://...', help: 'Link direto para o arquivo .zip.' },
+  { key: 'RESOURCE_PACK_SHA1', label: 'Código de verificação (SHA-1)', group: 'resourcepack', type: 'text', advanced: true },
+  bool('RESOURCE_PACK_ENFORCE', 'Pacote obrigatório', 'resourcepack', 'Quem recusar o pacote é desconectado.'),
   { key: 'RESOURCE_PACK_PROMPT', label: 'Mensagem ao oferecer o pacote', group: 'resourcepack', type: 'text' },
 ];
 
