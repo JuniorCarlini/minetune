@@ -12,6 +12,8 @@ export interface ContainerInfo {
   image?: string;
 }
 
+import type { BackupProvider, BackupSchedule, BackupSettings } from './backup-destination.ts';
+
 export interface StatusResponse {
   server: ContainerInfo;
   backup: ContainerInfo;
@@ -86,8 +88,23 @@ export interface SnapshotInfo {
 
 export interface BackupsResponse {
   repository: string;
-  schedule: { interval: string; retention: string };
+  provider: BackupProvider;
+  schedule: BackupSchedule;
+  /** true quando destino e agenda vêm do config/backup.env salvo pelo painel. */
+  managedByPanel: boolean;
   snapshots: SnapshotInfo[];
+}
+
+export interface BackupSettingsResponse {
+  settings: BackupSettings;
+  /** Existe segredo salvo (nunca é enviado ao navegador). */
+  hasSecret: boolean;
+  managedByPanel: boolean;
+}
+
+export interface BackupTestResponse {
+  /** ok = repositório existente e legível; empty = destino acessível, sem repositório ainda. */
+  status: 'ok' | 'empty';
 }
 
 export type JobKind = 'backup' | 'restore' | 'apply-settings';

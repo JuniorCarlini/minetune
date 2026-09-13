@@ -52,7 +52,7 @@ export class Operations {
       }
 
       await this.restic.ensureRepository(ctx.log);
-      ctx.log(`Criando snapshot em ${this.restic.repositoryLabel} (tag: ${tag})...`);
+      ctx.log(`Criando snapshot em ${await this.restic.repositoryLabel()} (tag: ${tag})...`);
       const { snapshotId, dataAdded } = await this.restic.backup([tag], ctx.log, ctx.progress);
       ctx.log(`Snapshot ${snapshotId.slice(0, 8)} criado (${formatBytes(dataAdded)} novos após deduplicação).`);
       return snapshotId;

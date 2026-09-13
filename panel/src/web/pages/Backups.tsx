@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { BackupsResponse, SnapshotInfo } from '../../shared/api.ts';
+import { PROVIDER_LABELS, describeInterval, describeRetention } from '../../shared/backup-destination.ts';
+import { BackupSettingsModal } from '../components/BackupSettingsModal.tsx';
 import { Icon } from '../components/icons.tsx';
 import { Alert, Badge, Button, Card, CheckLabel, Empty, Input, JobPanel, Modal, PageHeader, Spinner, useToast } from '../components/ui.tsx';
 import { api } from '../lib/api.ts';
@@ -20,6 +22,7 @@ export function BackupsPage() {
   const [restoreTarget, setRestoreTarget] = useState<SnapshotInfo>();
   const [confirmText, setConfirmText] = useState('');
   const [safetyBackup, setSafetyBackup] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const toast = useToast();
 
   const backupNow = async () => {
@@ -85,22 +88,45 @@ export function BackupsPage() {
 
       {data && (
         <>
-          <Card title="Destino">
+          <Card
+            title="Destino"
+            actions={
+              <Button size="sm" onClick={() => setSettingsOpen(true)}>
+                <Icon name="settings" /> Configurar
+              </Button>
+            }
+          >
             <dl className="details">
+              <dt>Onde</dt>
+              <dd>
+                <Badge tone={data.provider === 'local' ? 'warning' : 'success'}>{PROVIDER_LABELS[data.provider]}</Badge>
+              </dd>
               <dt>Repositório</dt>
               <dd>
                 <code>{data.repository}</code>
               </dd>
               <dt>Frequência</dt>
-              <dd>{data.schedule.interval ? `a cada ${data.schedule.interval}` : '—'}</dd>
-              <dt>Retenção</dt>
               <dd>
-                <code>{data.schedule.retention || '—'}</code>
+                {describeInterval(data.schedule.interval)}
+                {data.schedule.pauseIfNoPlayers && <span className="muted small"> · pula quando ninguém joga</span>}
               </dd>
+              <dt>Retenção</dt>
+              <dd>{describeRetention(data.schedule)}</dd>
+              {data.schedule.uploadLimitMb > 0 && (
+                <>
+                  <dt>Upload</dt>
+                  <dd>até {data.schedule.uploadLimitMb} MB/s</dd>
+                </>
+              )}
             </dl>
-            {data.repository.startsWith('/') && (
+            {data.provider === 'local' && (
               <Alert tone="warning">
-                Repositório local: protege contra erros e corrupção, mas não contra perda do disco. Configure um destino S3/R2 no .env.
+                <span className="row alert-row">
+                  <span>Backups só neste disco: protegem contra erros e grief, mas não contra perda da máquina.</span>
+                  <Button size="sm" variant="primary" onClick={() => setSettingsOpen(true)}>
+                    <Icon name="upload" /> Guardar na nuvem
+                  </Button>
+                </span>
               </Alert>
             )}
           </Card>
@@ -160,6 +186,13 @@ export function BackupsPage() {
           </Card>
         </>
       )}
+
+      <BackupSettingsModal
+        open={settingsOpen}
+        snapshotCount={data?.snapshots.length ?? 0}
+        onClose={() => setSettingsOpen(false)}
+        onSaved={() => void reload()}
+      />
 
       <Modal
         open={!!restoreTarget}

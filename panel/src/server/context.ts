@@ -1,3 +1,4 @@
+import { BackupConfig } from './backup-config.ts';
 import type { BaseConfig, PanelConfig } from './config.ts';
 import { ConfigStore } from './config-store.ts';
 import { DockerClient } from './docker.ts';
@@ -12,6 +13,7 @@ export interface Services {
   docker: DockerClient;
   rcon: RconClient;
   restic: Restic;
+  backupConfig: BackupConfig;
   store: ConfigStore;
   operations: Operations;
   jobs: JobRunner;
@@ -20,12 +22,14 @@ export interface Services {
 export function createServices(config: BaseConfig | PanelConfig): Services {
   const docker = new DockerClient(config.DOCKER_API, config.INSTANCE_NAME);
   const rcon = new RconClient({ host: config.RCON_HOST, port: config.RCON_PORT, password: config.RCON_PASSWORD });
-  const restic = new Restic(config);
+  const backupConfig = new BackupConfig(config.CONFIG_DIR, config);
+  const restic = new Restic(config, async () => (await backupConfig.effective()).env);
   return {
     config,
     docker,
     rcon,
     restic,
+    backupConfig,
     store: new ConfigStore(config.CONFIG_DIR),
     operations: new Operations(config, docker, rcon, restic),
     jobs: new JobRunner(new OperationLock(config.DATA_DIR)),

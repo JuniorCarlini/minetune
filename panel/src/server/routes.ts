@@ -4,6 +4,8 @@ import { Hono, type Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import type {
+  BackupSettingsResponse,
+  BackupTestResponse,
   BackupsResponse,
   ModrinthListResponse,
   ModrinthSearchHit,
@@ -19,7 +21,12 @@ import { GAMERULES_BY_NAME, validateGameRuleValue } from '../shared/gamerules.ts
 import { parseModrinthEntry, type ModrinthEntry } from '../shared/modrinth.ts';
 import { SETTINGS_BY_KEY, loaderForType, parseMemory } from '../shared/settings.ts';
 import { isServerType, javaFromImage, requiredJava, type ServerType, type VersionsResponse } from '../shared/versions.ts';
+import { BACKUP_PROVIDERS, validateBackupSettings } from '../shared/backup-destination.ts';
+import { explainBackupError } from './backup-config.ts';
 import { fetchVersions, type RawVersion } from './versions.ts';
+
+/** Destino de backup inacessível ou recusado: erro do usuário, não do painel. */
+class BackupDestinationError extends Error {}
 import { ValidationError } from './config-store.ts';
 import type { Services } from './context.ts';
 import { ConflictError } from './jobs.ts';
@@ -31,7 +38,7 @@ const JVM_OVERHEAD_BYTES = 768 * 1024 ** 2;
 const PLAYER_NAME = /^\.?[A-Za-z0-9_]{1,32}$/;
 
 export function apiRoutes(services: Services): Hono {
-  const { docker, rcon, restic, store, operations, jobs, config } = services;
+  const { docker, rcon, restic, backupConfig, store, operations, jobs, config } = services;
   const api = new Hono();
 
   const cached = cache<SnapshotInfo[]>(60_000, () => restic.snapshots());
@@ -41,6 +48,7 @@ export function apiRoutes(services: Services): Hono {
   api.onError((err, c) => {
     if (err instanceof ValidationError) return c.json({ error: 'Valores inválidos', fields: err.fields }, 400);
     if (err instanceof ConflictError) return c.json({ error: err.message }, 409);
+    if (err instanceof BackupDestinationError) return c.json({ error: err.message }, 422);
     if (err instanceof z.ZodError) return c.json({ error: 'Requisição inválida', issues: err.issues }, 400);
     // Servidor parado é um estado esperado, não um erro do painel: sem stack trace no log.
     if (err instanceof RconError) return c.json({ error: 'Servidor offline ou inacessível via RCON' }, 503);
@@ -270,13 +278,90 @@ export function apiRoutes(services: Services): Hono {
 
   // --- Backups ---------------------------------------------------------------------------------
   api.get('/backups', async (c) => {
+    const [{ settings, managedByPanel }, snapshots, repository] = await Promise.all([
+      backupConfig.settings(),
+      restic.snapshots(),
+      restic.repositoryLabel(),
+    ]);
     const body: BackupsResponse = {
-      repository: restic.repositoryLabel,
-      schedule: { interval: config.BACKUP_INTERVAL, retention: config.BACKUP_RETENTION },
-      snapshots: await restic.snapshots(),
+      repository,
+      provider: settings.destination.provider,
+      schedule: settings.schedule,
+      managedByPanel,
+      snapshots,
     };
     cached.set(body.snapshots);
     return c.json(body);
+  });
+
+  // Destino, agenda e retenção (config/backup.env). O segredo nunca volta para o navegador.
+  api.get('/backups/settings', async (c) => {
+    const body: BackupSettingsResponse = await backupConfig.settings();
+    return c.json(body);
+  });
+
+  const destinationSchema = z.object({
+    provider: z.enum(BACKUP_PROVIDERS),
+    accountId: z.string().max(64).default(''),
+    endpoint: z.string().max(256).default(''),
+    region: z.string().max(64).default(''),
+    bucket: z.string().max(128).default(''),
+    prefix: z.string().max(256).default(''),
+    accessKeyId: z.string().max(256).default(''),
+    repository: z.string().max(512).default(''),
+  });
+  const backupSettingsBody = z.object({
+    destination: destinationSchema,
+    schedule: z.object({
+      interval: z.string().max(16),
+      keepLast: z.number(),
+      keepDaily: z.number(),
+      keepWeekly: z.number(),
+      keepMonthly: z.number(),
+      pauseIfNoPlayers: z.boolean(),
+      uploadLimitMb: z.number(),
+    }),
+    secretAccessKey: z.string().max(256).optional(),
+  });
+
+  /** Valida e devolve as variáveis candidatas e o estado do destino (ok/empty). */
+  const checkBackupSettings = async (raw: unknown) => {
+    const input = backupSettingsBody.parse(raw);
+    const errors = validateBackupSettings(input, { hasSecret: await backupConfig.canKeepSecret(input) });
+    if (Object.keys(errors).length > 0) throw new ValidationError(errors);
+    const env = await backupConfig.candidate(input);
+    try {
+      return { env, status: await restic.check(env) };
+    } catch (err) {
+      throw new BackupDestinationError(explainBackupError((err as Error).message));
+    }
+  };
+
+  api.post('/backups/settings/test', async (c) => {
+    const { status } = await checkBackupSettings(await c.req.json());
+    const body: BackupTestResponse = { status };
+    return c.json(body);
+  });
+
+  api.put('/backups/settings', async (c) => {
+    const { env, status } = await checkBackupSettings(await c.req.json());
+    let initialized = false;
+    if (status === 'empty') {
+      try {
+        await restic.init(env);
+        initialized = true;
+      } catch (err) {
+        throw new BackupDestinationError(explainBackupError((err as Error).message));
+      }
+    }
+    await backupConfig.save(env);
+    cached.invalidate();
+
+    // O agendador só relê o arquivo ao iniciar.
+    const scheduler = await docker.info('backup').catch(() => null);
+    const restartedScheduler = scheduler?.state === 'running';
+    if (restartedScheduler) await docker.action('backup', 'restart', 30);
+    return c.json({ restartedScheduler, initialized });
   });
 
   api.post('/backups', async (c) => {
