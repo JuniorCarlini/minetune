@@ -64,6 +64,7 @@ export function PlayersPage() {
   const offline = data ? !data.serverOnline : false;
   const isBusy = (action: PlayerAction, name: string) => busy === `${action}:${name}`;
   const opNames = new Set(data?.ops.map((o) => o.name.toLowerCase()));
+  const invitedNames = new Set(data?.whitelist.map((p) => p.name.toLowerCase()));
   const address = `${window.location.hostname}:25565`;
 
   return (
@@ -85,16 +86,20 @@ export function PlayersPage() {
               <ListView label="Jogando agora">
                 {data.online.map((name) => {
                   const isOp = opNames.has(name.toLowerCase());
+                  const isInvited = invitedNames.has(name.toLowerCase());
                   return (
                     <ListItem
                       key={name}
                       leading={<Avatar name={name} />}
                       title={name}
-                      detail={isOp ? 'administrador' : undefined}
+                      detail={[isOp && 'administrador', isInvited && 'convidado'].filter(Boolean).join(' · ') || undefined}
                       actions={
                         <ActionMenu
-                          busy={['op', 'deop', 'kick', 'ban'].some((a) => isBusy(a as PlayerAction, name))}
+                          busy={['op', 'deop', 'kick', 'ban', 'whitelist-add', 'whitelist-remove'].some((a) => isBusy(a as PlayerAction, name))}
                           items={[
+                            isInvited
+                              ? { label: 'Tirar dos convidados', icon: 'kick', onSelect: () => run('whitelist-remove', name) }
+                              : { label: 'Adicionar aos convidados', icon: 'userPlus', onSelect: () => run('whitelist-add', name) },
                             isOp
                               ? { label: 'Remover administrador', icon: 'shieldOff', onSelect: () => run('deop', name) }
                               : { label: 'Tornar administrador', icon: 'shield', onSelect: () => run('op', name) },
