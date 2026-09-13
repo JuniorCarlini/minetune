@@ -20,7 +20,8 @@
   <a href="#-backups">Backups</a> ·
   <a href="#-deploy-e-acesso-pela-internet">Deploy</a> ·
   <a href="#-documentação">Documentação</a> ·
-  <a href="CHANGELOG.md">Changelog</a>
+  <a href="https://juniorcarlini.github.io/minetune/changelog.html">Changelog</a> ·
+  <a href="https://juniorcarlini.github.io/minetune/">Site</a>
 </p>
 
 <p align="center">

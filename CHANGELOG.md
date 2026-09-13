@@ -11,7 +11,9 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 
 ## [Não lançado]
 
-Nada ainda.
+### Adicionado
+- Site no GitHub Pages com página inicial e changelog, no mesmo visual do painel.
+  O changelog do site é gerado a partir deste arquivo a cada push.
 
 ## [0.1.0] - 2026-09-12
 
