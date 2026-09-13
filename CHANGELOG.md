@@ -32,7 +32,27 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 - Ao salvar, o repositório é criado se o destino estiver vazio e o agendador
   reinicia já com a nova configuração, sem `make up`.
 
+- Tela Início com o estado do servidor em frase, "Como entrar no servidor" com
+  endereço para copiar e "Precisa de atenção" juntando os avisos (servidor
+  desligado, memória cheia, jogo travando, backup só local ou antigo) com o botão
+  que resolve cada um.
+- Chave "Só convidados podem entrar" direto na página de Jogadores, aplicada na
+  hora com o servidor ligado.
+- "Opções avançadas": nomes técnicos e ajustes fáceis de quebrar ficam escondidos
+  até a pessoa ligar a opção.
+
 ### Alterado
+- Todas as telas seguem o mesmo padrão: caminho nas subpáginas, título com uma
+  frase, ações da página à direita, avisos com o botão que resolve, cartões e
+  barra de salvar só em formulários. Carregamento e erro aparecem no lugar do
+  conteúdo, com "Tentar de novo", sem sumir com o título.
+- Menu reorganizado pelo que a pessoa faz: Principal (Início, Jogadores, Regras
+  do jogo), Servidor (Configurações, Plugins e mods, Backups) e Avançado (Console).
+- Textos em linguagem de jogador: administradores em vez de op, lista de
+  convidados em vez de whitelist, desempenho em vez de TPS, cópias de segurança
+  em vez de snapshots.
+- Jogadores: expulsar e banir ficam no menu "Mais" de cada pessoa.
+- Regras do jogo: busca e categorias filtram dentro do próprio cartão.
 - O container `backup` passa a carregar `config/backup.env` a cada início. O
   arquivo tem prioridade sobre o `.env`, é gravado com permissão 600 e fica fora
   do git. Sem ele, tudo continua vindo do `.env` como antes.
