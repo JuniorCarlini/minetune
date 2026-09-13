@@ -1,0 +1,13 @@
+# Segredos e estado local — nunca versionar
+.env
+data/
+backups/
+
+# Painel
+panel/node_modules/
+panel/dist/
+
+# SO / editores
+.DS_Store
+.idea/
+.vscode/
