@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Minetune — servidor Minecraft em Docker com painel web</title>
+    <meta name="description" content="Servidor Minecraft pronto para produção em Docker, com painel web próprio, backups criptografados e deploy em casa, VPS ou EasyPanel." />
+    <meta property="og:title" content="Minetune" />
+    <meta property="og:description" content="Servidor Minecraft pronto para produção em Docker, com painel web próprio." />
+    <meta property="og:image" content="assets/banner.png" />
+    <meta name="theme-color" content="#1e1e1f" />
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="topbar">
+      <div class="wrap">
+        <a class="brand" href="./">
+          <img src="assets/logo.svg" alt="" />
+          <span class="mc-title" data-text="Minetune">Minetune</span>
+        </a>
+        <nav class="nav" aria-label="Principal">
+          <a class="hide-sm" href="#recursos">Recursos</a>
+          <a class="hide-sm" href="#comecar">Começar</a>
+          <a href="changelog.html">Changelog</a>
+          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="hero">
+        <div class="wrap">
+          <img class="hero-logo" src="assets/logo.svg" alt="" />
+          <h1 class="mc-title" data-text="Minetune">Minetune</h1>
+          <p class="hero-lead">
+            Servidor Minecraft pronto para produção em Docker, com painel web próprio, backups criptografados e deploy em casa, numa VPS ou no EasyPanel.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#comecar"><i data-icon="play"></i> Começar agora</a>
+            <a class="btn" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> Ver no GitHub</a>
+          </div>
+          <div class="hero-meta">
+            <a class="chip" href="changelog.html#v{{VERSION}}"><i data-icon="cube"></i> <strong>v{{VERSION}}</strong> · {{VERSION_DATE}}</a>
+            <span class="chip">Minecraft <strong>26.2</strong></span>
+            <span class="chip">Java <strong>25</strong></span>
+            <span class="chip">Paper · Purpur · Fabric · NeoForge</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="wrap showcase">
+        <div class="window">
+          <div class="window-bar"><span></span><span></span><span></span><em>Minetune · Visão geral</em></div>
+          <img src="assets/screenshots/overview.png" width="1440" height="900" alt="Visão geral do painel Minetune com status do servidor e gráficos de jogadores, memória, CPU e TPS" />
+        </div>
+      </div>
+
+      <section class="section" id="recursos">
+        <div class="wrap">
+          <div class="section-head">
+            <span class="eyebrow"><i data-icon="check"></i> O que vem pronto</span>
+            <h2>Tudo o que um servidor precisa para rodar de verdade</h2>
+            <p>Sem improviso: servidor otimizado, painel para configurar sem editar arquivos, backups que saem da máquina e caminhos claros para abrir para a internet.</p>
+          </div>
+          <div class="features">
+            <article class="feature">
+              <span class="feature-icon"><i data-icon="cube"></i></span>
+              <h3>Servidor otimizado</h3>
+              <p>Paper 26.2 por padrão, ou Purpur, Fabric, NeoForge e Vanilla. Java 25, flags Aikar e patches de desempenho.</p>
+            </article>
+            <article class="feature">
+              <span class="feature-icon"><i data-icon="dashboard"></i></span>
+              <h3>Painel web próprio</h3>
+              <p>Status com gráficos, configurações validadas, regras do jogo, jogadores, plugins do Modrinth e console ao vivo.</p>
+            </article>
+            <article class="feature">
+              <span class="feature-icon"><i data-icon="backups"></i></span>
+              <h3>Backups criptografados</h3>
+              <p>restic incremental e deduplicado, agendado ou na hora, com restore seguro que desfaz a troca se algo falhar.</p>
+            </article>
+            <article class="feature">
+              <span class="feature-icon"><i data-icon="players"></i></span>
+              <h3>Crossplay com Bedrock</h3>
+              <p>Geyser e Floodgate com um toggle: celular, console e Windows entram sem conta Java.</p>
+            </article>
+            <article class="feature">
+              <span class="feature-icon"><i data-icon="shield"></i></span>
+              <h3>Seguro por padrão</h3>
+              <p>Painel só no localhost, RCON fechado e Docker acessado por proxy que não deixa criar containers.</p>
+            </article>
+            <article class="feature">
+              <span class="feature-icon"><i data-icon="globe"></i></span>
+              <h3>Roda em qualquer lugar</h3>
+              <p>PC de casa, VPS ou EasyPanel. Port forward, túnel playit.gg para CGNAT ou VPS como ponte.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="comecar">
+        <div class="wrap">
+          <div class="section-head">
+            <span class="eyebrow"><i data-icon="console"></i> Início rápido</span>
+            <h2>No ar em poucos minutos</h2>
+            <p>Precisa só de Docker com Compose v2, <code>make</code> e <code>openssl</code>. Reserve pelo menos 6 GB de RAM.</p>
+          </div>
+          <div class="steps">
+            <div class="step">
+              <span class="step-num">1</span>
+              <h3>Baixe o projeto</h3>
+              <pre class="terminal"><span class="p">$ </span>git clone https://github.com/JuniorCarlini/minetune.git
+<span class="p">$ </span>cd minetune</pre>
+            </div>
+            <div class="step">
+              <span class="step-num">2</span>
+              <h3>Gere os segredos e suba</h3>
+              <pre class="terminal"><span class="p">$ </span>make init  <span class="c"># senhas aleatórias no .env</span>
+<span class="p">$ </span>make up    <span class="c"># ~1–3 min no primeiro boot</span></pre>
+            </div>
+            <div class="step">
+              <span class="step-num">3</span>
+              <h3>Abra o painel e jogue</h3>
+              <p>Painel em <code>http://localhost:8080</code> com a senha <code>PANEL_PASSWORD</code> do <code>.env</code>. No jogo, conecte em <code>localhost:25565</code>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <div class="section-head">
+            <span class="eyebrow"><i data-icon="upload"></i> Backups</span>
+            <h2>Seu mundo guardado fora da máquina</h2>
+            <p>Cada snapshot envia só o que mudou e é criptografado antes de sair. O salvamento pausa durante a cópia, então nada fica pela metade.</p>
+          </div>
+          <div class="targets">
+            <span class="target"><i data-icon="save"></i> Disco local</span>
+            <span class="target"><i data-icon="upload"></i> Cloudflare R2</span>
+            <span class="target"><i data-icon="upload"></i> AWS S3</span>
+            <span class="target"><i data-icon="memory"></i> RustFS (S3 próprio)</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt" id="painel">
+        <div class="wrap">
+          <div class="section-head">
+            <span class="eyebrow"><i data-icon="monitor"></i> O painel</span>
+            <h2>Com cara de Minecraft</h2>
+            <p>Cantos retos, botões com bisel, fonte e ícones pixelados. Cada área do servidor tem a sua página.</p>
+          </div>
+          <div class="gallery">
+            <figure class="shot">
+              <img src="assets/screenshots/settings.png" width="1440" height="900" loading="lazy" alt="Página de configurações do servidor" />
+              <figcaption>Configurações validadas antes de salvar</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="assets/screenshots/gamerules.png" width="1440" height="900" loading="lazy" alt="Página de regras do jogo" />
+              <figcaption>Todas as regras do jogo da versão em execução</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="assets/screenshots/plugins.png" width="1440" height="900" loading="lazy" alt="Página de plugins e mods com busca no Modrinth" />
+              <figcaption>Plugins e mods com busca no Modrinth</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="assets/screenshots/backups.png" width="1440" height="900" loading="lazy" alt="Página de backups com snapshots" />
+              <figcaption>Backups na hora e restore seguro</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="assets/screenshots/players.png" width="1440" height="900" loading="lazy" alt="Página de jogadores" />
+              <figcaption>Whitelist, operadores e banimentos</figcaption>
+            </figure>
+            <figure class="shot">
+              <img src="assets/screenshots/console.png" width="1440" height="900" loading="lazy" alt="Console com logs ao vivo" />
+              <figcaption>Console ao vivo com comandos RCON</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section cta">
+        <div class="wrap">
+          <img src="assets/logo.svg" alt="" />
+          <h2>Pronto para subir o seu servidor?</h2>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> Ver no GitHub</a>
+            <a class="btn" href="changelog.html"><i data-icon="refresh"></i> O que há de novo</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <div>
+          <span class="footer-credit">Feito com <span class="heart"><i data-icon="heart"></i></span> por <a href="https://github.com/JuniorCarlini">JuniorCarlini</a></span>
+          <small>Minecraft é marca da Mojang Studios e da Microsoft. O Minetune não é oficial nem afiliado a elas.</small>
+        </div>
+        <nav class="nav" aria-label="Rodapé">
+          <a href="changelog.html">Changelog</a>
+          <a href="https://github.com/JuniorCarlini/minetune#-documentação">Documentação</a>
+          <a href="https://github.com/JuniorCarlini/minetune">GitHub</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

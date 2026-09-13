@@ -11,3 +11,6 @@ panel/dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Site do GitHub Pages (gerado por scripts/build-site.mjs)
+_site/
