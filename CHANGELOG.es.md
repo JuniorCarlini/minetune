@@ -9,6 +9,20 @@ Tipos de cambio: **Añadido** (novedades), **Cambiado** (cambios en lo que ya
 existía), **Obsoleto** (se quitará en una versión futura), **Eliminado**, **Corregido**
 (errores) y **Seguridad** (vulnerabilidades).
 
+## [0.3.4] - 2026-09-15
+
+### Corregido
+
+- Con el servidor en una versión anterior a la 1.21.6, que no tiene la ventana de
+  contraseña, la puerta rechazaba a todos. En esas versiones ahora solo reenvía las
+  conexiones, y la pantalla Jugadores avisa que ahí no hay contraseña por nick.
+- EasyPanel y Umbrel usan una imagen con Java 25 que no se puede cambiar, y elegir una
+  versión que necesita otro Java dejaba el servidor sin arrancar. El panel ahora lee el
+  Java dentro del contenedor y rechaza esas versiones, explicando el motivo.
+- Con el límite de memoria del contenedor en 4 GB o menos, la memoria por defecto de
+  4 GB no cabía y el servidor no arrancaba la primera vez. La memoria inicial ahora se
+  ajusta al límite, dejando cerca de 1 GB libre.
+
 ## [0.3.3] - 2026-09-15
 
 ### Corregido
@@ -248,6 +262,7 @@ Primera versión: servidor, copias de seguridad, panel web y documentación.
 - Acceso a Docker mediante un proxy con lista de permisos: solo lectura de estado y
   logs y encender, parar o reiniciar contenedores.
 
+[0.3.4]: https://github.com/JuniorCarlini/minetune/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1

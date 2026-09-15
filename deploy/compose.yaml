@@ -32,7 +32,7 @@ x-restic-env: &restic-env
 
 services:
   mc:
-    image: ghcr.io/juniorcarlini/minetune-mc:${MINETUNE_VERSION:-0.3.3}
+    image: ghcr.io/juniorcarlini/minetune-mc:${MINETUNE_VERSION:-0.3.4}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: server
@@ -70,7 +70,7 @@ services:
 
   gate:
     # Portão Minetune: recebe os jogadores e pede a senha do nick antes de ligar cada um ao servidor.
-    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.3}
+    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.4}
     command: ["node", "src/server/gate/index.ts"]
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
@@ -98,7 +98,7 @@ services:
     networks: [game]
 
   backup:
-    image: ghcr.io/juniorcarlini/minetune-backup:${MINETUNE_VERSION:-0.3.3}
+    image: ghcr.io/juniorcarlini/minetune-backup:${MINETUNE_VERSION:-0.3.4}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: backup
@@ -129,7 +129,7 @@ services:
     networks: [game]
 
   panel:
-    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.3}
+    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.4}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: panel

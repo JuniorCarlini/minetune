@@ -9,6 +9,20 @@ Change types: **Added** (new features), **Changed** (changes to existing
 features), **Deprecated** (will be removed in a future version), **Removed**, **Fixed**
 (bugs) and **Security** (vulnerabilities).
 
+## [0.3.4] - 2026-09-15
+
+### Fixed
+
+- With the server on a version older than 1.21.6, which has no password window, the
+  gate refused everyone. On those versions it now just passes connections through, and
+  the Players screen warns that there is no per-name password there.
+- EasyPanel and Umbrel use an image with Java 25 that can't be swapped, and picking a
+  version that needs another Java left the server unable to start. The panel now reads
+  the Java inside the container and refuses those versions, explaining why.
+- With a container memory limit of 4 GB or less, the default 4 GB heap didn't fit and
+  the server failed on its first start. The initial heap now adapts to the limit,
+  leaving about 1 GB free.
+
 ## [0.3.3] - 2026-09-15
 
 ### Fixed
@@ -248,6 +262,7 @@ First version: server, backups, web panel and documentation.
 - Docker access through a proxy with an allowlist: only reading status and
   logs and starting, stopping or restarting containers.
 
+[0.3.4]: https://github.com/JuniorCarlini/minetune/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
