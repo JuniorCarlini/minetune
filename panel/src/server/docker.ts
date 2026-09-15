@@ -8,7 +8,7 @@
 
 import type { ContainerInfo, ContainerState } from '../shared/api.ts';
 
-export type Role = 'server' | 'backup';
+export type Role = 'server' | 'backup' | 'gate';
 
 export class DockerError extends Error {
   readonly status?: number;

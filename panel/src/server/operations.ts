@@ -4,6 +4,7 @@
 
 import { access, mkdir, readdir, rename, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { INTL_LOCALE, PT } from '../shared/i18n/index.ts';
 import type { BaseConfig } from './config.ts';
 import type { DockerClient } from './docker.ts';
 import type { JobContext } from './jobs.ts';
@@ -35,6 +36,7 @@ export class Operations {
    */
   async backup(ctx: JobContext, tag: string): Promise<string> {
     const server = await this.docker.inspect('server').catch(() => null);
+    const t = (ctx.m ?? PT).server.job;
     let autosaveDisabled = false;
 
     try {
@@ -43,22 +45,22 @@ export class Operations {
           await this.rcon.command('save-off');
           autosaveDisabled = true;
           await this.rcon.command('save-all flush');
-          ctx.log('Mundo gravado em disco (save-all flush), autosave pausado.');
+          ctx.log(t.flushed);
         } catch (err) {
-          ctx.log(`AVISO: RCON indisponível (${(err as Error).message}). Backup sem save-all.`);
+          ctx.log(t.rconUnavailable((err as Error).message));
         }
       } else {
-        ctx.log('Servidor parado: copiando arquivos diretamente.');
+        ctx.log(t.serverStopped);
       }
 
-      await this.restic.ensureRepository(ctx.log);
-      ctx.log(`Criando snapshot em ${await this.restic.repositoryLabel()} (tag: ${tag})...`);
+      await this.restic.ensureRepository(ctx.log, t.initRepository);
+      ctx.log(t.creatingSnapshot(await this.restic.repositoryLabel(), tag));
       const { snapshotId, dataAdded } = await this.restic.backup([tag], ctx.log, ctx.progress);
-      ctx.log(`Snapshot ${snapshotId.slice(0, 8)} criado (${formatBytes(dataAdded)} novos após deduplicação).`);
+      ctx.log(t.snapshotCreated(snapshotId.slice(0, 8), formatBytes(dataAdded)));
       return snapshotId;
     } finally {
       if (autosaveDisabled) {
-        await this.rcon.command('save-on').catch((err: Error) => ctx.log(`AVISO: falha ao religar autosave: ${err.message}`));
+        await this.rcon.command('save-on').catch((err: Error) => ctx.log(t.autosaveFailed(err.message)));
       }
     }
   }
@@ -72,16 +74,18 @@ export class Operations {
    *  5. religa o que estava rodando
    */
   async restore(ctx: JobContext, snapshotRef: string, options: { safetyBackup: boolean }): Promise<void> {
+    const m = ctx.m ?? PT;
+    const t = m.server.job;
     const snapshots = await this.restic.snapshots();
     const snapshot =
       snapshotRef === 'latest' ? snapshots[0] : snapshots.find((s) => s.id === snapshotRef || s.shortId === snapshotRef);
-    if (!snapshot) throw new Error(`Snapshot "${snapshotRef}" não encontrado`);
-    ctx.log(`Restaurando snapshot ${snapshot.shortId} de ${new Date(snapshot.time).toLocaleString('pt-BR')}.`);
+    if (!snapshot) throw new Error(t.snapshotNotFound(snapshotRef));
+    ctx.log(t.restoringSnapshot(snapshot.shortId, new Date(snapshot.time).toLocaleString(INTL_LOCALE[ctx.locale ?? 'pt-BR'])));
 
     const dataDir = this.config.DATA_DIR;
     if (options.safetyBackup && (await readdir(dataDir)).some((entry) => entry !== '.minetune')) {
-      ctx.log('Fazendo backup de segurança do estado atual...');
-      await this.backup({ log: ctx.log, progress: (p) => ctx.progress(p * 0.3) }, 'pre-restore');
+      ctx.log(t.safetyBackup);
+      await this.backup({ log: ctx.log, progress: (p) => ctx.progress(p * 0.3), m: ctx.m, locale: ctx.locale }, 'pre-restore');
     }
 
     const server = await this.docker.inspect('server');
@@ -90,11 +94,11 @@ export class Operations {
     const schedulerWasRunning = scheduler?.state === 'running';
 
     if (serverWasRunning) {
-      await this.rcon.command('say Restaurando backup: o servidor vai reiniciar em instantes.').catch(() => undefined);
+      await this.rcon.command(`say ${m.server.say.restoring}`).catch(() => undefined);
     }
     if (schedulerWasRunning) await this.docker.action('backup', 'stop', 30);
     if (serverWasRunning) {
-      ctx.log('Parando o servidor (salvando o mundo)...');
+      ctx.log(t.stoppingForRestore);
       await this.docker.action('server', 'stop', 90);
     }
 
@@ -105,7 +109,7 @@ export class Operations {
 
     try {
       await mkdir(replaced, { recursive: true });
-      ctx.log('Baixando arquivos do snapshot...');
+      ctx.log(t.downloading);
       await this.restic.restore(snapshot.id, staging, (p) => ctx.progress(0.3 + p * 0.6));
 
       const entries = (await readdir(staging)).filter((entry) => entry !== '.minetune');
@@ -118,23 +122,23 @@ export class Operations {
           swapped.push(entry);
         }
       } catch (err) {
-        ctx.log('Falha na troca de arquivos, desfazendo...');
+        ctx.log(t.swapFailed);
         for (const entry of swapped.reverse()) {
           await rm(join(dataDir, entry), { recursive: true, force: true });
           if (await exists(join(replaced, entry))) await rename(join(replaced, entry), join(dataDir, entry));
         }
         throw err;
       }
-      ctx.log(`${entries.length} itens restaurados.`);
+      ctx.log(t.restoredItems(entries.length));
       await rm(replaced, { recursive: true, force: true });
     } finally {
       await rm(staging, { recursive: true, force: true }).catch(() => undefined);
       if (serverWasRunning) {
-        ctx.log('Iniciando o servidor...');
-        await this.docker.action('server', 'start').catch((err: Error) => ctx.log(`ERRO ao iniciar servidor: ${err.message}`));
+        ctx.log(t.startingAfterRestore);
+        await this.docker.action('server', 'start').catch((err: Error) => ctx.log(t.startServerFailed(err.message)));
       }
       if (schedulerWasRunning) {
-        await this.docker.action('backup', 'start').catch((err: Error) => ctx.log(`ERRO ao iniciar agendador: ${err.message}`));
+        await this.docker.action('backup', 'start').catch((err: Error) => ctx.log(t.startSchedulerFailed(err.message)));
       }
     }
   }

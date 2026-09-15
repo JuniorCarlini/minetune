@@ -6,16 +6,13 @@
  * esse formato e o formulário, e a validação usada pela API e pela UI.
  */
 
+import { PT, type Messages } from './i18n/index.ts';
+
 export const BACKUP_PROVIDERS = ['local', 'r2', 's3', 's3-compatible', 'custom'] as const;
 export type BackupProvider = (typeof BACKUP_PROVIDERS)[number];
 
-export const PROVIDER_LABELS: Record<BackupProvider, string> = {
-  local: 'Disco local',
-  r2: 'Cloudflare R2',
-  s3: 'AWS S3',
-  's3-compatible': 'S3 próprio',
-  custom: 'Avançado',
-};
+/** Nome curto do destino, na língua dos textos recebidos (português se nenhum). */
+export const providerLabel = (provider: BackupProvider, m: Messages = PT) => m.backups.providerLabels[provider];
 
 export const LOCAL_REPOSITORY = '/backups/restic';
 
@@ -57,13 +54,10 @@ export interface BackupSettingsInput extends BackupSettings {
   secretAccessKey?: string;
 }
 
-export const INTERVAL_OPTIONS = [
-  { value: '1h', label: 'A cada 1 hora' },
-  { value: '3h', label: 'A cada 3 horas' },
-  { value: '6h', label: 'A cada 6 horas (recomendado)' },
-  { value: '12h', label: 'A cada 12 horas' },
-  { value: '24h', label: 'Uma vez por dia' },
-];
+const INTERVALS = ['1h', '3h', '6h', '12h', '24h'] as const;
+
+/** Frequências oferecidas no formulário, com o rótulo na língua escolhida. */
+export const intervalOptions = (m: Messages = PT) => INTERVALS.map((value) => ({ value, label: m.backups.intervalOptions[value]! }));
 
 export const DEFAULT_SCHEDULE: BackupSchedule = {
   interval: '6h',
@@ -169,27 +163,27 @@ export function scheduleFromEnv(env: {
   };
 }
 
-export function describeInterval(interval: string): string {
-  const option = INTERVAL_OPTIONS.find((o) => o.value === interval);
-  if (option) return option.label.replace(' (recomendado)', '').toLowerCase();
+export function describeInterval(interval: string, m: Messages = PT): string {
+  const known = m.backups.intervalShort[interval];
+  if (known) return known;
   const match = interval.match(/^(\d+)([mhd])$/);
   if (!match) return interval;
-  const unit = { m: ['minuto', 'minutos'], h: ['hora', 'horas'], d: ['dia', 'dias'] }[match[2] as 'm' | 'h' | 'd'];
-  return `a cada ${match[1]} ${match[1] === '1' ? unit[0] : unit[1]}`;
+  return m.backups.everyUnit(Number(match[1]), match[2] as 'm' | 'h' | 'd');
 }
 
-export function describeRetention(s: BackupSchedule): string {
+export function describeRetention(s: BackupSchedule, m: Messages = PT): string {
+  const { retentionParts: part } = m.backups;
   const parts = [
-    [s.keepLast, 'último', 'últimos'],
-    [s.keepDaily, 'diário', 'diários'],
-    [s.keepWeekly, 'semanal', 'semanais'],
-    [s.keepMonthly, 'mensal', 'mensais'],
+    [s.keepLast, part.last],
+    [s.keepDaily, part.daily],
+    [s.keepWeekly, part.weekly],
+    [s.keepMonthly, part.monthly],
   ] as const;
   return (
     parts
       .filter(([n]) => n > 0)
-      .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`)
-      .join(' · ') || 'sem retenção'
+      .map(([n, text]) => text(n))
+      .join(' · ') || m.backups.noRetention
   );
 }
 
@@ -208,42 +202,39 @@ const INTERVAL = /^\d{1,4}[mhd]$/;
  * Erros por campo (chaves: accountId, bucket, secretAccessKey, keepLast...).
  * `hasSecret` indica se já existe um segredo salvo que pode ser mantido.
  */
-export function validateBackupSettings(input: BackupSettingsInput, { hasSecret }: { hasSecret: boolean }): Record<string, string> {
+export function validateBackupSettings(
+  input: BackupSettingsInput,
+  { hasSecret }: { hasSecret: boolean },
+  m: Messages = PT,
+): Record<string, string> {
   const errors: Record<string, string> = {};
+  const v = m.backups.validation;
   const d = input.destination;
   const s = input.schedule;
 
-  if (!BACKUP_PROVIDERS.includes(d.provider)) errors.provider = 'Destino desconhecido';
+  if (!BACKUP_PROVIDERS.includes(d.provider)) errors.provider = v.unknownProvider;
 
-  if (d.provider === 'r2' && !/^[a-f0-9]{32}$/i.test(d.accountId.trim())) {
-    errors.accountId = 'O ID da conta tem 32 caracteres (painel da Cloudflare → R2 → Account ID)';
-  }
-  if (d.provider === 's3' && !REGION.test(d.region.trim())) errors.region = 'Use a região do bucket, ex.: us-east-1 ou sa-east-1';
+  if (d.provider === 'r2' && !/^[a-f0-9]{32}$/i.test(d.accountId.trim())) errors.accountId = v.accountId;
+  if (d.provider === 's3' && !REGION.test(d.region.trim())) errors.region = v.region;
   if (d.provider === 's3-compatible') {
-    if (!ENDPOINT.test(d.endpoint.trim())) errors.endpoint = 'Use o endereço completo, ex.: http://192.168.0.50:9000';
-    if (d.region.trim() && !REGION.test(d.region.trim())) errors.region = 'Região inválida';
+    if (!ENDPOINT.test(d.endpoint.trim())) errors.endpoint = v.endpoint;
+    if (d.region.trim() && !REGION.test(d.region.trim())) errors.region = v.regionInvalid;
   }
   if (usesS3Credentials(d.provider)) {
-    if (!BUCKET.test(d.bucket.trim())) errors.bucket = 'Nome de bucket inválido (minúsculas, números, ponto e hífen)';
-    if (!PREFIX.test(d.prefix.trim())) errors.prefix = 'Use só letras, números, ponto, hífen, sublinhado e /';
-    if (!KEY.test(d.accessKeyId.trim())) errors.accessKeyId = 'Informe a chave de acesso (Access Key ID)';
+    if (!BUCKET.test(d.bucket.trim())) errors.bucket = v.bucket;
+    if (!PREFIX.test(d.prefix.trim())) errors.prefix = v.prefix;
+    if (!KEY.test(d.accessKeyId.trim())) errors.accessKeyId = v.accessKey;
     const secret = input.secretAccessKey?.trim() ?? '';
-    if (secret && !KEY.test(secret)) errors.secretAccessKey = 'Segredo inválido';
-    if (!secret && !hasSecret) errors.secretAccessKey = 'Informe o segredo (Secret Access Key)';
+    if (secret && !KEY.test(secret)) errors.secretAccessKey = v.secretInvalid;
+    if (!secret && !hasSecret) errors.secretAccessKey = v.secretMissing;
   }
-  if (d.provider === 'custom' && !CUSTOM_REPOSITORY.test(d.repository.trim())) {
-    errors.repository = 'Repositório restic inválido, ex.: sftp:usuario@host:/backups ou b2:bucket:pasta';
-  }
+  if (d.provider === 'custom' && !CUSTOM_REPOSITORY.test(d.repository.trim())) errors.repository = v.repository;
 
-  if (!INTERVAL.test(s.interval)) errors.interval = 'Frequência inválida';
+  if (!INTERVAL.test(s.interval)) errors.interval = v.interval;
   for (const key of ['keepLast', 'keepDaily', 'keepWeekly', 'keepMonthly'] as const) {
-    if (!Number.isInteger(s[key]) || s[key] < 0 || s[key] > 1000) errors[key] = 'Use um número de 0 a 1000';
+    if (!Number.isInteger(s[key]) || s[key] < 0 || s[key] > 1000) errors[key] = v.keepRange;
   }
-  if (!errors.keepLast && s.keepLast + s.keepDaily + s.keepWeekly + s.keepMonthly === 0) {
-    errors.keepLast = 'Mantenha pelo menos um backup';
-  }
-  if (!Number.isFinite(s.uploadLimitMb) || s.uploadLimitMb < 0 || s.uploadLimitMb > 10_000) {
-    errors.uploadLimitMb = 'Use 0 (sem limite) ou um valor em MB/s';
-  }
+  if (!errors.keepLast && s.keepLast + s.keepDaily + s.keepWeekly + s.keepMonthly === 0) errors.keepLast = v.keepOne;
+  if (!Number.isFinite(s.uploadLimitMb) || s.uploadLimitMb < 0 || s.uploadLimitMb > 10_000) errors.uploadLimitMb = v.uploadLimit;
   return errors;
 }

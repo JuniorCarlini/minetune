@@ -31,6 +31,14 @@ describe('avisos da tela Início', () => {
     assert.equal(items[0]?.action?.server, 'start');
   });
 
+  it('portão parado avisa e oferece ligar, mesmo com o servidor ligado', () => {
+    const items = attentionItems(status({ gate: { state: 'exited' } }), true);
+    assert.equal(items[0]?.id, 'gate-stopped');
+    assert.equal(items[0]?.action?.gate, 'start');
+    assert.deepEqual(ids(status({ gate: { state: 'running' } })), []);
+    assert.deepEqual(ids(status({ gate: { state: 'missing' } })), []);
+  });
+
   it('avisa memória acima de 90% e jogo travando', () => {
     const s = status({ resources: { memoryUsed: 5.6 * 1024 ** 3, memoryLimit: 6 * 1024 ** 3, cpuPercent: 90, cpuCores: 4 }, tps: [12, 14, 16] });
     assert.deepEqual(ids(s), ['memory', 'performance']);

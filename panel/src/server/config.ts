@@ -16,6 +16,8 @@ const baseSchema = z.object({
   /** Endereço que os amigos usam (domínio ou túnel); vazio = painel deduz pelo navegador. */
   PUBLIC_ADDRESS: z.string().default(''),
   MC_PORT: z.coerce.number().int().default(25565),
+  /** Tamanho máximo de um .zip de mundo enviado pelo painel (padrão 8 GB). */
+  WORLD_UPLOAD_MAX_BYTES: z.coerce.number().int().positive().default(8 * 1024 ** 3),
 
   RESTIC_REPOSITORY: z.string().min(1, 'RESTIC_REPOSITORY é obrigatório'),
   RESTIC_PASSWORD: z.string().min(1, 'RESTIC_PASSWORD é obrigatório'),

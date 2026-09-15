@@ -9,6 +9,7 @@
  * Tem segredos: gravado com permissão 600 e ignorado pelo git.
  */
 
+import { PT, type Messages } from '../shared/i18n/index.ts';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
@@ -135,14 +136,15 @@ export class BackupConfig {
 }
 
 /** Traduz os erros mais comuns do restic/S3 para algo que dá para agir. */
-export function explainBackupError(message: string): string {
+export function explainBackupError(message: string, m: Messages = PT): string {
+  const e = m.backups.errors;
   const rules: [RegExp, string][] = [
-    [/wrong password|no key found|ciphertext verification/i, 'O destino já tem um repositório criado com outra senha (RESTIC_PASSWORD do .env).'],
+    [/wrong password|no key found|ciphertext verification/i, e.wrongPassword],
     // RustFS/MinIO escrevem "Access Denied" com espaço; AWS e R2, "AccessDenied".
-    [/SignatureDoesNotMatch|InvalidAccessKeyId|Access ?Denied|\b403\b|Forbidden|Unauthorized|\b401\b/i, 'O destino recusou as credenciais. Confira a chave de acesso, o segredo e as permissões do token no bucket.'],
-    [/NoSuchBucket|bucket does not exist|The specified bucket does not exist/i, 'Bucket não encontrado. Crie o bucket no provedor ou confira o nome.'],
-    [/no such host|dial tcp|connection refused|i\/o timeout|Tempo esgotado|network is unreachable|TLS handshake/i, 'Não foi possível conectar ao endereço do destino. Confira o endereço, a porta e o firewall.'],
-    [/permission denied/i, 'Sem permissão para gravar no destino.'],
+    [/SignatureDoesNotMatch|InvalidAccessKeyId|Access ?Denied|\b403\b|Forbidden|Unauthorized|\b401\b/i, e.credentials],
+    [/NoSuchBucket|bucket does not exist|The specified bucket does not exist/i, e.noBucket],
+    [/no such host|dial tcp|connection refused|i\/o timeout|Tempo esgotado|network is unreachable|TLS handshake/i, e.connect],
+    [/permission denied/i, e.permission],
   ];
   const match = rules.find(([pattern]) => pattern.test(message));
   return match ? `${match[1]} (${message.slice(0, 180)})` : message;

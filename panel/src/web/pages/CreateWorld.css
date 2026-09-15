@@ -1,0 +1,20 @@
+/* Bloco que ocupa as duas colunas: nome do mundo e mundo base, que abrem cada cartão. */
+.settings-grid-wide {
+  grid-column: 1 / -1;
+  display: grid;
+}
+
+/* Fim da tela: ligar agora à esquerda, cancelar e criar à direita. */
+.create-world-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+}
+.create-world-base {
+  margin: -0.5rem 0 0;
+}

@@ -11,12 +11,16 @@ import { hostname } from 'node:os';
 import { mkdir, open, readFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { JobInfo, JobKind } from '../shared/api.ts';
+import { INTL_LOCALE, PT, messages, type Locale, type Messages } from '../shared/i18n/index.ts';
 
 export class ConflictError extends Error {}
 
 export interface JobContext {
   log(message: string): void;
   progress(fraction: number): void;
+  /** Textos na língua de quem pediu a tarefa (a CLI não passa: fica em português). */
+  m?: Messages;
+  locale?: Locale;
 }
 
 /** Um lock mais velho que isso é considerado abandonado (processo morreu no meio). */
@@ -31,7 +35,7 @@ export class OperationLock {
     this.path = join(dataDir, '.minetune', 'operation.lock');
   }
 
-  async acquire(kind: string): Promise<() => Promise<void>> {
+  async acquire(kind: string, m: Messages = PT): Promise<() => Promise<void>> {
     await mkdir(join(this.path, '..'), { recursive: true });
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
@@ -47,11 +51,11 @@ export class OperationLock {
           continue;
         }
         const holder = await readFile(this.path, 'utf8').catch(() => '{}');
-        const { kind: other = 'desconhecida', since = '?' } = JSON.parse(holder || '{}') as { kind?: string; since?: string };
-        throw new ConflictError(`Já existe uma operação em andamento (${other}, desde ${since})`);
+        const { kind: other = m.server.unknownKind, since = '?' } = JSON.parse(holder || '{}') as { kind?: string; since?: string };
+        throw new ConflictError(m.server.operationRunning(other, since));
       }
     }
-    throw new ConflictError('Não foi possível obter o lock de operação');
+    throw new ConflictError(m.server.lockFailed);
   }
 }
 
@@ -63,20 +67,26 @@ export class JobRunner {
     this.lock = lock;
   }
 
-  /** Inicia em segundo plano. Lança ConflictError se outra operação estiver rodando. */
-  async start(kind: JobKind, work: (ctx: JobContext) => Promise<void>): Promise<JobInfo> {
-    const release = await this.lock.acquire(kind);
+  /**
+   * Inicia em segundo plano. Lança ConflictError se outra operação estiver rodando.
+   * O passo a passo sai na língua de quem pediu (locale), com o horário no formato dela.
+   */
+  async start(kind: JobKind, work: (ctx: JobContext) => Promise<void>, locale: Locale = 'pt-BR'): Promise<JobInfo> {
+    const m = messages(locale);
+    const release = await this.lock.acquire(kind, m);
     const job: JobInfo = { id: randomUUID(), kind, status: 'running', startedAt: new Date().toISOString(), logs: [] };
     this.remember(job);
 
     const ctx: JobContext = {
       log: (message) => {
-        job.logs.push(`${new Date().toLocaleTimeString('pt-BR')}  ${message}`);
+        job.logs.push(`${new Date().toLocaleTimeString(INTL_LOCALE[locale])}  ${message}`);
         if (job.logs.length > MAX_LOG_LINES) job.logs.splice(0, job.logs.length - MAX_LOG_LINES);
       },
       progress: (fraction) => {
         job.progress = Math.max(0, Math.min(1, fraction));
       },
+      m,
+      locale,
     };
 
     void (async () => {
@@ -84,11 +94,11 @@ export class JobRunner {
         await work(ctx);
         job.status = 'succeeded';
         job.progress = 1;
-        ctx.log('Concluído.');
+        ctx.log(m.server.job.done);
       } catch (err) {
         job.status = 'failed';
         job.error = (err as Error).message;
-        ctx.log(`ERRO: ${job.error}`);
+        ctx.log(m.server.job.error(job.error));
       } finally {
         job.finishedAt = new Date().toISOString();
         await release().catch(() => undefined);

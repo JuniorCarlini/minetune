@@ -6,7 +6,7 @@
 
 import { useSyncExternalStore } from 'react';
 
-export type LogoVariant = 'rack' | 'creeper' | 'power';
+export type LogoVariant = 'rack' | 'creeper' | 'power' | 'creeperLever' | 'redstoneRack' | 'lamp' | 'command' | 'redstoneCreeper';
 
 const PALETTE: Record<string, string> = {
   G: '#62c14f', // grama
@@ -22,12 +22,24 @@ const PALETTE: Record<string, string> = {
   C: '#5fd08a', // creeper
   c: '#3f9e63', // creeper sombra
   F: '#10261a', // rosto do creeper
+  R: '#e0382e', // redstone
+  r: '#9e1f18', // redstone sombra
+  E: '#ff9a7a', // brilho da redstone
+  O: '#9a9a9a', // pedra da alavanca
+  o: '#626262', // pedra sombra
+  T: '#a47d4a', // cabo da alavanca
+  t: '#6b4f2c', // cabo sombra
+  Y: '#ffd46b', // lâmpada acesa
+  y: '#e8a33c', // lâmpada meio-tom
+  B: '#6e4221', // moldura da lâmpada
+  M: '#d9823b', // bloco de comando
+  m: '#9a5424', // bloco de comando sombra
+  N: '#f2d7a6', // cantos do bloco de comando
 };
 
-export const LOGOS: Record<LogoVariant, { name: string; note: string; grid: string[] }> = {
+/** Só o desenho: nome e descrição de cada logo ficam em shared/i18n/app.ts (m.app.logos). */
+export const LOGOS: Record<LogoVariant, { grid: string[] }> = {
   rack: {
-    name: 'Rack de grama',
-    note: 'Servidor com gavetas e LEDs, grama por cima',
     grid: [
       '..GGGGGGGGGGGG..',
       '.GGGgGGGGgGGGGG.',
@@ -48,8 +60,6 @@ export const LOGOS: Record<LogoVariant, { name: string; note: string; grid: stri
     ],
   },
   creeper: {
-    name: 'Creeper servidor',
-    note: 'Gabinete com rosto de creeper e baias com LEDs',
     grid: [
       '..KKKKKKKKKKKK..',
       '..KCCcCCCCcCCK..',
@@ -70,8 +80,6 @@ export const LOGOS: Record<LogoVariant, { name: string; note: string; grid: stri
     ],
   },
   power: {
-    name: 'Bloco ligado',
-    note: 'Bloco de grama com o símbolo de power aceso',
     grid: [
       '................',
       '.GGGGGGGGGGGGGG.',
@@ -89,6 +97,111 @@ export const LOGOS: Record<LogoVariant, { name: string; note: string; grid: stri
       '.DDDDDLLLLDDDDD.',
       '.DDdDDDDDDDDdDD.',
       '................',
+    ],
+  },
+  // Creeper servidor com uma alavanca de pedra presa na lateral, ligada (cabo para cima).
+  creeperLever: {
+    grid: [
+      'KKKKKKKKKKKK....',
+      'KCCcCCCCcCCK....',
+      'KCFFCCCCFFCK....',
+      'KcFFCCcCFFCK..tt',
+      'KCCCCFFCCCcK..tT',
+      'KCCcFFFFCCCK..T.',
+      'KCCCFFFFCcCK.T..',
+      'KCCCFCCFCCCKOTOo',
+      'KCcCCCCCCCCKOOOo',
+      'KKKKKKKKKKKKoooo',
+      'KSSSSSSSSLSK....',
+      'KKKKKKKKKKKK....',
+      'KSSSSSSSSASK....',
+      'KKKKKKKKKKKK....',
+      'KsWsWsWsWssK....',
+      'KKKKKKKKKKKK....',
+    ],
+  },
+  // O rack de sempre com um bloco de redstone no lugar da grama e LEDs vermelhos.
+  redstoneRack: {
+    grid: [
+      '..RRrRRERRRrRR..',
+      '.RERRrRRRRERRrR.',
+      '.RrRRRERrRRRRER.',
+      '.rRRERRRRrRERRr.',
+      '.rrrrrrrrrrrrrr.',
+      '.KKKKKKKKKKKKKK.',
+      '.KssssssssssRrK.',
+      '.KsWsWsWsWssssK.',
+      '.KKKKKKKKKKKKKK.',
+      '.KssssssssssRRK.',
+      '.KsWsWsWsWssssK.',
+      '.KKKKKKKKKKKKKK.',
+      '.KssssssssssRsK.',
+      '.KsWsWsWsWssssK.',
+      '.KKKKKKKKKKKKKK.',
+      '..K..........K..',
+    ],
+  },
+  // Lâmpada de redstone acesa com o símbolo de power na moldura.
+  lamp: {
+    grid: [
+      '................',
+      '.BBBBBBBBBBBBBB.',
+      '.ByYYYYyyYYYYyB.',
+      '.BYYyYYYYYYyYYB.',
+      '.BYyYYYYYYYYyYB.',
+      '.BYYYYYBBYYYYYB.',
+      '.ByYYBYBBYBYYyB.',
+      '.BYYBYYBBYYBYYB.',
+      '.BYYBYYBBYYBYYB.',
+      '.BYyBYYYYYYByYB.',
+      '.BYYBYYYYYYBYYB.',
+      '.BYYYBYYYYBYYyB.',
+      '.ByYYYBBBBYYYYB.',
+      '.BYYyYYYYYYyYYB.',
+      '.BBBBBBBBBBBBBB.',
+      '................',
+    ],
+  },
+  // Bloco de comando laranja com a tela do console aberta (>_).
+  command: {
+    grid: [
+      '................',
+      '.MMMMMMMMMMMMMM.',
+      '.MNMmMMMMMMmMNM.',
+      '.MmMMMMMMMMMMmM.',
+      '.MMKKKKKKKKKKMM.',
+      '.MMKWWWWWWWWKMM.',
+      '.MMKWLWWWWWWKMM.',
+      '.MMKWWLWWWWWKMM.',
+      '.MMKWLWWWWWWKMM.',
+      '.MMKWWWWLLLWKMM.',
+      '.MMKWWWWWWWWKMM.',
+      '.MMKKKKKKKKKKMM.',
+      '.MmMMMMMMMMMMmM.',
+      '.MNMmMMMMMMmMNM.',
+      '.mmmmmmmmmmmmmm.',
+      '................',
+    ],
+  },
+  // O creeper servidor em redstone, com brilho nos olhos e LEDs vermelhos.
+  redstoneCreeper: {
+    grid: [
+      '..KKKKKKKKKKKK..',
+      '..KRRrRRRRrRRK..',
+      '..KRWERRRRWERK..',
+      '..KrWWRRrRWWRK..',
+      '..KRRRRWWRRRrK..',
+      '..KRRrWWWWRRRK..',
+      '..KRRRWWWWRrRK..',
+      '..KRRRWRRWRRRK..',
+      '..KRrRRRRRRRRK..',
+      '..KKKKKKKKKKKK..',
+      '..KSSSSSSSSRSK..',
+      '..KKKKKKKKKKKK..',
+      '..KSSSSSSSSESK..',
+      '..KKKKKKKKKKKK..',
+      '..KsWsWsWsWssK..',
+      '..KKKKKKKKKKKK..',
     ],
   },
 };

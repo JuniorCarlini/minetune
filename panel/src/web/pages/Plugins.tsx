@@ -7,10 +7,15 @@ import { Badge, Button, Card, CheckLabel, Input, SearchInput, Spinner, useToast 
 import { api } from '../lib/api.ts';
 import { formatNumber } from '../lib/format.ts';
 import { useApi } from '../lib/hooks.ts';
+import { useMessages } from '../lib/i18n.tsx';
+import { useWorld } from '../lib/world.tsx';
 import './Plugins.css';
 
 export function PluginsPage() {
-  const list = useApi<ModrinthListResponse>('/modrinth');
+  const world = useWorld();
+  const m = useMessages();
+  const t = m.plugins;
+  const list = useApi<ModrinthListResponse>(world.ready ? world.path('/modrinth') : null);
   const [entries, setEntries] = useState<ModrinthEntry[]>();
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<ModrinthSearchHit[]>();
@@ -30,7 +35,7 @@ export function PluginsPage() {
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        const result = await api.get<{ hits: ModrinthSearchHit[] }>(`/modrinth/search?q=${encodeURIComponent(query)}`);
+        const result = await api.get<{ hits: ModrinthSearchHit[] }>(world.path(`/modrinth/search?q=${encodeURIComponent(query)}`));
         setHits(result.hits);
       } catch (err) {
         toast.error(err);
@@ -40,20 +45,21 @@ export function PluginsPage() {
     }, 350);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, list.data?.loader]);
+  }, [query, list.data?.loader, world.selected]);
 
   const loader = list.data?.loader;
-  const kind = loader === 'paper' ? 'plugin' : 'mod';
-  const kindPlural = `${kind}s`;
+  // Paper usa plugins; Fabric e NeoForge, mods. O texto muda de palavra em cada língua.
+  const isPlugin = loader === 'paper';
 
   const save = async () => {
     if (!entries) return;
     setSaving(true);
     try {
-      await api.put('/modrinth', { entries: entries.map(formatModrinthEntry) });
+      await api.put(world.path('/modrinth'), { entries: entries.map(formatModrinthEntry) });
       await list.reload();
-      setSavedPendingRestart(true);
-      toast.success('Lista salva');
+      // Mundo guardado não tem o que reiniciar: a lista vale quando ele for ligado.
+      setSavedPendingRestart(world.isActive);
+      toast.success(world.isActive ? t.savedActive : t.savedStored);
     } catch (err) {
       toast.error(err);
     } finally {
@@ -66,7 +72,7 @@ export function PluginsPage() {
     try {
       await api.post('/server/restart');
       setSavedPendingRestart(false);
-      toast.success('Servidor reiniciando: os downloads acontecem enquanto ele liga');
+      toast.success(t.restarting);
     } catch (err) {
       toast.error(err);
     } finally {
@@ -82,8 +88,8 @@ export function PluginsPage() {
   return (
     <>
       <Page
-        title="Plugins e mods"
-        description="Adicione recursos ao servidor. Tudo é baixado do Modrinth."
+        title={t.title}
+        description={t.description}
         actions={<AdvancedToggle />}
         loading={!ready && !list.error}
         error={!ready ? list.error?.message : undefined}
@@ -92,11 +98,11 @@ export function PluginsPage() {
         {ready && !loader && (
           <EmptyState
             icon="plugins"
-            title="Este tipo de servidor não aceita plugins nem mods"
-            text="O Vanilla é o servidor oficial, sem extensões. Troque para Paper (plugins) ou Fabric (mods)."
+            title={t.noLoaderTitle}
+            text={t.noLoaderText}
             action={
               <a className="tuc-btn is-outline" href="#/settings">
-                <Icon name="settings" /> Trocar tipo de servidor
+                <Icon name="settings" /> {t.changeType}
               </a>
             }
           />
@@ -109,19 +115,19 @@ export function PluginsPage() {
                 tone="warning"
                 action={
                   <Button size="sm" variant="primary" onClick={restart} loading={restarting}>
-                    <Icon name="restart" /> Reiniciar agora
+                    <Icon name="restart" /> {t.restartNow}
                   </Button>
                 }
               >
-                As mudanças valem quando o servidor reiniciar.
+                {t.pendingRestart}
               </Notice>
             )}
 
-            <Card title="Instalados" description={`${entries!.length} ${entries!.length === 1 ? kind : kindPlural}`}>
+            <Card title={t.installed} description={t.count(entries!.length, isPlugin)}>
               {entries!.length === 0 ? (
-                <EmptyState icon="plugins" title={`Nenhum ${kind} instalado`} text="Busque abaixo e adicione." />
+                <EmptyState icon="plugins" title={t.noneInstalled(isPlugin)} text={t.searchBelow} />
               ) : (
-                <ListView label="Instalados">
+                <ListView label={t.installed}>
                   {entries!.map((entry) => (
                     <ListItem
                       key={entry.slug}
@@ -135,10 +141,7 @@ export function PluginsPage() {
                           {entry.slug}
                         </a>
                       }
-                      detail={[
-                        entry.optional ? 'opcional: o servidor sobe mesmo sem versão compatível' : 'obrigatório',
-                        entry.version ? `versão ${entry.version}` : null,
-                      ]
+                      detail={[entry.optional ? t.optionalDetail : t.required, entry.version ? t.versionDetail(entry.version) : null]
                         .filter(Boolean)
                         .join(' · ')}
                       actions={
@@ -146,19 +149,19 @@ export function PluginsPage() {
                           {advanced && (
                             <>
                               <CheckLabel checked={entry.optional} onChange={(optional) => update(entry.slug, { optional })}>
-                                <span className="small muted">opcional</span>
+                                <span className="small muted">{t.optional}</span>
                               </CheckLabel>
                               <Input
                                 className="input-sm plugin-version"
-                                placeholder="versão (última)"
-                                aria-label={`Versão de ${entry.slug}`}
+                                placeholder={t.versionPlaceholder}
+                                aria-label={t.versionAria(entry.slug)}
                                 value={entry.version ?? ''}
                                 onChange={(e) => update(entry.slug, { version: e.target.value.trim() || undefined })}
                               />
                             </>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => setEntries((l) => l?.filter((e) => e.slug !== entry.slug))}>
-                            <Icon name="trash" /> Remover
+                            <Icon name="trash" /> {m.common.remove}
                           </Button>
                         </>
                       }
@@ -168,11 +171,11 @@ export function PluginsPage() {
               )}
             </Card>
 
-            <Card title="Adicionar" description="Só aparecem os compatíveis com a versão do servidor">
-              <SearchInput placeholder="Buscar: mapa, proteção, economia…" value={query} onValueChange={setQuery} />
+            <Card title={t.add} description={t.addDescription}>
+              <SearchInput placeholder={t.searchPlaceholder} value={query} onValueChange={setQuery} />
               {searching && !hits && <Spinner />}
               {hits && hits.length > 0 && (
-                <ListView label="Resultados da busca">
+                <ListView label={t.resultsAria}>
                   {hits.map((hit) => (
                     <ListItem
                       key={hit.slug}
@@ -187,13 +190,13 @@ export function PluginsPage() {
                       }
                       title={hit.title}
                       detail={hit.description}
-                      badges={<Badge>{formatNumber(hit.downloads)} downloads</Badge>}
+                      badges={<Badge>{t.downloads(formatNumber(hit.downloads))}</Badge>}
                       actions={
                         installed.has(hit.slug.toLowerCase()) ? (
-                          <Badge tone="success">na lista</Badge>
+                          <Badge tone="success">{t.inList}</Badge>
                         ) : (
                           <Button size="sm" onClick={() => setEntries((l) => [...(l ?? []), { slug: hit.slug, optional: true }])}>
-                            <Icon name="plus" /> Adicionar
+                            <Icon name="plus" /> {t.addButton}
                           </Button>
                         )
                       }
@@ -201,7 +204,7 @@ export function PluginsPage() {
                   ))}
                 </ListView>
               )}
-              {hits?.length === 0 && <EmptyState icon="search" title="Nada encontrado para esta versão" text="Tente outra palavra ou confira a versão em Configurações." />}
+              {hits?.length === 0 && <EmptyState icon="search" title={t.nothingTitle} text={t.nothingText} />}
             </Card>
           </>
         )}
@@ -209,13 +212,13 @@ export function PluginsPage() {
 
       {changed && (
         <div className="savebar">
-          <span>Lista alterada · vale após reiniciar</span>
+          <span>{t.savebar}</span>
           <div className="row">
             <Button variant="ghost" onClick={() => setEntries(list.data!.entries)} disabled={saving}>
-              <Icon name="undo" /> Descartar
+              <Icon name="undo" /> {t.discard}
             </Button>
             <Button variant="primary" onClick={save} loading={saving}>
-              <Icon name="save" /> Salvar lista
+              <Icon name="save" /> {t.saveList}
             </Button>
           </div>
         </div>

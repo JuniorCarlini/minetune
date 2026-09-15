@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { BackupSettingsResponse, BackupTestResponse, BackupsResponse } from '../../shared/api.ts';
 import {
-  INTERVAL_OPTIONS,
   emptyDestination,
+  intervalOptions,
   repositoryFor,
   usesS3Credentials,
   validateBackupSettings,
@@ -15,14 +15,15 @@ import { Notice, Page } from '../components/page.tsx';
 import { Button, Card, CheckLabel, Input, TucSelect, useToast } from '../components/ui.tsx';
 import { ApiError, api } from '../lib/api.ts';
 import { useApi } from '../lib/hooks.ts';
+import { useMessages } from '../lib/i18n.tsx';
 
-/** Rótulos da planta de telas, em palavras de quem usa (os nomes compartilhados continuam técnicos). */
-const PROVIDERS: { id: BackupProvider; icon: IconName; label: string; note: string }[] = [
-  { id: 'local', icon: 'save', label: 'Este computador', note: 'Não protege de falha no disco' },
-  { id: 'r2', icon: 'upload', label: 'Cloudflare R2', note: 'Nuvem, recomendado' },
-  { id: 's3', icon: 'globe', label: 'Amazon S3', note: 'Nuvem' },
-  { id: 's3-compatible', icon: 'memory', label: 'Meu servidor S3', note: 'RustFS, MinIO' },
-  { id: 'custom', icon: 'settings', label: 'Avançado', note: 'Repositório restic à mão' },
+/** Ícone de cada lugar; nome e nota vêm dos textos da língua escolhida (m.backups.providerChoices). */
+const PROVIDERS: { id: BackupProvider; icon: IconName }[] = [
+  { id: 'local', icon: 'save' },
+  { id: 'r2', icon: 'upload' },
+  { id: 's3', icon: 'globe' },
+  { id: 's3-compatible', icon: 'memory' },
+  { id: 'custom', icon: 'settings' },
 ];
 
 type TestState = { status: 'idle' } | { status: 'testing' } | { status: 'done'; result: BackupTestResponse } | { status: 'error'; message: string };
@@ -33,6 +34,8 @@ type TestState = { status: 'idle' } | { status: 'testing' } | { status: 'done'; 
  * configuração que a pessoa faz com calma, lendo os avisos.
  */
 export function BackupDestinationPage() {
+  const m = useMessages();
+  const b = m.backups;
   const [loaded, setLoaded] = useState<BackupSettingsResponse>();
   const [loadError, setLoadError] = useState<string>();
   const [destination, setDestination] = useState<BackupDestination>(emptyDestination());
@@ -64,9 +67,9 @@ export function BackupDestinationPage() {
   const input = schedule ? { destination, schedule, secretAccessKey: secret } : undefined;
   const keepsSecret = !!loaded?.hasSecret && destination.accessKeyId.trim() === loaded.settings.destination.accessKeyId;
   const errors = useMemo(
-    () => (input ? { ...validateBackupSettings(input, { hasSecret: keepsSecret }), ...serverErrors } : {}),
+    () => (input ? { ...validateBackupSettings(input, { hasSecret: keepsSecret }, m), ...serverErrors } : {}),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [destination, schedule, secret, keepsSecret, serverErrors],
+    [destination, schedule, secret, keepsSecret, serverErrors, m],
   );
   const hasErrors = Object.keys(errors).length > 0;
   const dirty =
@@ -103,9 +106,7 @@ export function BackupDestinationPage() {
     setSaving(true);
     try {
       const res = await api.put<{ restartedScheduler: boolean; initialized: boolean }>('/backups/settings', input);
-      toast.success(
-        `Backups configurados${res.initialized ? ', repositório criado' : ''}${res.restartedScheduler ? ' e agendador reiniciado' : ''}.`,
-      );
+      toast.success(b.saved(res.initialized, res.restartedScheduler));
       window.location.hash = '#/backups';
     } catch (err) {
       if (err instanceof ApiError && err.fields) setServerErrors(err.fields);
@@ -139,17 +140,17 @@ export function BackupDestinationPage() {
   return (
     <>
       <Page
-        crumbs={[{ label: 'Backups', href: '#/backups' }, { label: 'Onde guardar' }]}
-        title="Onde guardar os backups"
-        description="Escolha um lugar fora deste computador para não perder o mundo."
+        crumbs={[{ label: b.title, href: '#/backups' }, { label: b.destCrumb }]}
+        title={b.destTitle}
+        description={b.destDescription}
         loading={!ready && !loadError}
         error={loadError}
         onRetry={load}
       >
         {ready && (
           <div className="destination-page">
-            <Card title="Lugar" description="Dá para trocar depois.">
-              <div className="choice-grid" role="radiogroup" aria-label="Lugar dos backups">
+            <Card title={b.place} description={b.placeDescription}>
+              <div className="choice-grid" role="radiogroup" aria-label={b.placeAria}>
                 {PROVIDERS.map((p) => (
                   <button
                     key={p.id}
@@ -162,54 +163,49 @@ export function BackupDestinationPage() {
                     <span className="choice-icon">
                       <Icon name={p.icon} />
                     </span>
-                    <strong>{p.label}</strong>
-                    <span>{p.note}</span>
+                    <strong>{b.providerChoices[p.id].label}</strong>
+                    <span>{b.providerChoices[p.id].note}</span>
                   </button>
                 ))}
               </div>
               {destination.provider === 'local' && (
-                <Notice tone="warning">
-                  Protege contra erros, grief e mundo corrompido, mas não contra perda do disco ou da máquina. Para dados que importam, use a nuvem.
-                </Notice>
+                <Notice tone="warning">{b.localWarning}</Notice>
               )}
               {changedDestination && snapshotCount > 0 && (
-                <Notice tone="info">
-                  As {snapshotCount} cópias atuais continuam no lugar antigo. A lista passa a mostrar só as do novo lugar; a primeira cópia lá é
-                  completa.
-                </Notice>
+                <Notice tone="info">{b.oldCopies(snapshotCount)}</Notice>
               )}
             </Card>
 
             {destination.provider !== 'local' && (
               <Card
-                title="Conexão"
-                description={credentials ? 'Dados do bucket e da chave de acesso criada no provedor.' : 'Qualquer destino suportado pelo restic.'}
+                title={b.connection}
+                description={credentials ? b.connectionS3 : b.connectionCustom}
                 actions={
                   <Button size="sm" onClick={runTest} loading={test.status === 'testing'} disabled={hasErrors || saving}>
-                    <Icon name="refresh" /> Testar
+                    <Icon name="refresh" /> {b.test}
                   </Button>
                 }
               >
                 <div className="form-grid">
                   {destination.provider === 'r2' &&
-                    field('accountId', 'ID da conta (Account ID)', { placeholder: '32 caracteres', hint: 'Painel da Cloudflare → R2 → Account ID' })}
-                  {destination.provider === 's3' && field('region', 'Região do bucket', { placeholder: 'sa-east-1' })}
+                    field('accountId', b.accountId, { placeholder: b.accountIdPlaceholder, hint: b.accountIdHint })}
+                  {destination.provider === 's3' && field('region', b.bucketRegion, { placeholder: 'sa-east-1' })}
                   {destination.provider === 's3-compatible' &&
-                    field('endpoint', 'Endereço do servidor', { placeholder: 'http://192.168.0.50:9000', hint: 'Com a stack RustFS local: http://rustfs:9000' })}
+                    field('endpoint', b.endpoint, { placeholder: 'http://192.168.0.50:9000', hint: b.endpointHint })}
                   {credentials && (
                     <>
-                      {field('bucket', 'Nome do bucket', { placeholder: 'minetune-backups' })}
-                      {field('prefix', 'Pasta no bucket (opcional)', { placeholder: 'servidor-principal' })}
-                      {destination.provider === 's3-compatible' && field('region', 'Região (opcional)', { placeholder: 'us-east-1' })}
-                      {field('accessKeyId', 'Chave de acesso (Access Key ID)')}
+                      {field('bucket', b.bucket, { placeholder: 'minetune-backups' })}
+                      {field('prefix', b.prefix, { placeholder: b.prefixPlaceholder })}
+                      {destination.provider === 's3-compatible' && field('region', b.regionOptional, { placeholder: 'us-east-1' })}
+                      {field('accessKeyId', b.accessKey)}
                       <label className="field">
-                        <span className="field-label">Segredo (Secret Access Key)</span>
+                        <span className="field-label">{b.secret}</span>
                         <Input
                           type="password"
                           value={secret}
                           invalid={!!errors.secretAccessKey}
                           autoComplete="new-password"
-                          placeholder={keepsSecret ? '•••••••• (mantém o atual)' : ''}
+                          placeholder={keepsSecret ? b.secretKeepPlaceholder : ''}
                           onChange={(e) => {
                             setSecret(e.target.value);
                             setTest({ status: 'idle' });
@@ -219,50 +215,48 @@ export function BackupDestinationPage() {
                           <span className="field-error">{errors.secretAccessKey}</span>
                         ) : (
                           <span className="field-help">
-                            {keepsSecret ? 'Deixe vazio para manter o segredo salvo.' : 'Guardado só neste servidor (config/backup.env, permissão 600).'}
+                            {keepsSecret ? b.secretKeepHint : b.secretStoredHint}
                           </span>
                         )}
                       </label>
                     </>
                   )}
                   {destination.provider === 'custom' &&
-                    field('repository', 'Repositório restic', { placeholder: 'sftp:usuario@host:/srv/backups', hint: 'Ex.: sftp:, rest:, b2:, azure:, gs:' })}
+                    field('repository', b.repository, { placeholder: b.repositoryPlaceholder, hint: b.repositoryHint })}
                 </div>
 
-                {test.status === 'idle' && <p className="muted small">Teste antes de salvar: o painel confere se o lugar responde e se já tem cópias.</p>}
+                {test.status === 'idle' && <p className="muted small">{b.testHint}</p>}
                 {test.status === 'done' && (
                   <Notice tone="success">
-                    {test.result.status === 'ok'
-                      ? 'Conexão ok: este lugar já tem cópias de segurança com a senha atual.'
-                      : 'Conexão ok: lugar vazio. O repositório será criado ao salvar.'}
+                    {test.result.status === 'ok' ? b.testOk : b.testEmpty}
                   </Notice>
                 )}
                 {test.status === 'error' && (
-                  <Notice tone="danger" title="Não deu para usar este lugar">
+                  <Notice tone="danger" title={b.testFailedTitle}>
                     {test.message}
                   </Notice>
                 )}
               </Card>
             )}
 
-            <Card title="Frequência e retenção" description="Quando fazer backup e quantas cópias guardar. O restante é apagado após cada backup automático.">
+            <Card title={b.schedule} description={b.scheduleDescription}>
               <div className="form-grid">
                 {/* div, não label: um <label> repassa o clique ao campo interno e o select do Tucano fecha logo após abrir. */}
                 <div className="field">
-                  <span className="field-label">Fazer backup</span>
+                  <span className="field-label">{b.doBackup}</span>
                   <TucSelect
                     value={schedule!.interval}
                     options={
-                      INTERVAL_OPTIONS.some((o) => o.value === schedule!.interval)
-                        ? INTERVAL_OPTIONS
-                        : [...INTERVAL_OPTIONS, { value: schedule!.interval, label: `A cada ${schedule!.interval}` }]
+                      intervalOptions(m).some((o) => o.value === schedule!.interval)
+                        ? intervalOptions(m)
+                        : [...intervalOptions(m), { value: schedule!.interval, label: b.everyRaw(schedule!.interval) }]
                     }
-                    placeholder="Frequência"
+                    placeholder={b.frequency}
                     onChange={(interval) => interval && updateSchedule({ interval })}
                   />
                 </div>
                 <label className="field">
-                  <span className="field-label">Limite de upload (MB/s)</span>
+                  <span className="field-label">{b.uploadLimit}</span>
                   <Input
                     type="number"
                     min={0}
@@ -274,22 +268,15 @@ export function BackupDestinationPage() {
                   {errors.uploadLimitMb ? (
                     <span className="field-error">{errors.uploadLimitMb}</span>
                   ) : (
-                    <span className="field-help">0 = sem limite. Útil em internet de casa.</span>
+                    <span className="field-help">{b.uploadHint}</span>
                   )}
                 </label>
               </div>
 
               <div className="retention-grid">
-                {(
-                  [
-                    ['keepLast', 'Últimas', 'mais recentes'],
-                    ['keepDaily', 'Diárias', 'uma por dia'],
-                    ['keepWeekly', 'Semanais', 'uma por semana'],
-                    ['keepMonthly', 'Mensais', 'uma por mês'],
-                  ] as const
-                ).map(([key, label, hint]) => (
+                {(['keepLast', 'keepDaily', 'keepWeekly', 'keepMonthly'] as const).map((key) => (
                   <label key={key} className="field">
-                    <span className="field-label">{label}</span>
+                    <span className="field-label">{b.retention[key].label}</span>
                     <Input
                       type="number"
                       min={0}
@@ -298,7 +285,7 @@ export function BackupDestinationPage() {
                       invalid={!!errors[key]}
                       onChange={(e) => updateSchedule({ [key]: Number(e.target.value) })}
                     />
-                    <span className="field-help">{hint}</span>
+                    <span className="field-help">{b.retention[key].hint}</span>
                   </label>
                 ))}
               </div>
@@ -307,7 +294,7 @@ export function BackupDestinationPage() {
               )}
 
               <CheckLabel checked={schedule!.pauseIfNoPlayers} onChange={(pauseIfNoPlayers) => updateSchedule({ pauseIfNoPlayers })}>
-                Pular backups enquanto ninguém joga (o mundo não mudou)
+                {b.pauseIfNoPlayers}
               </CheckLabel>
             </Card>
           </div>
@@ -316,13 +303,13 @@ export function BackupDestinationPage() {
 
       {dirty && (
         <div className="savebar">
-          <span>{hasErrors ? 'Corrija os campos marcados para salvar' : needsTest ? 'Teste a conexão para poder salvar' : 'Alterações não salvas'}</span>
+          <span>{hasErrors ? b.savebarErrors : needsTest ? b.savebarNeedsTest : b.savebarDirty}</span>
           <div className="row">
             <Button variant="ghost" onClick={load} disabled={saving}>
-              <Icon name="undo" /> Descartar
+              <Icon name="undo" /> {b.discard}
             </Button>
             <Button variant="primary" onClick={save} loading={saving} disabled={hasErrors || needsTest || test.status === 'testing'}>
-              <Icon name="save" /> Salvar
+              <Icon name="save" /> {m.common.save}
             </Button>
           </div>
         </div>

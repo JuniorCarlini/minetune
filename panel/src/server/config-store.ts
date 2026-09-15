@@ -8,6 +8,7 @@ import { dirname, join } from 'node:path';
 import { EnvDocument } from './env-file.ts';
 import { formatModrinthEntry, parseModrinthEntry, type ModrinthEntry } from '../shared/modrinth.ts';
 import { RESERVED_KEYS, SETTINGS_BY_KEY, validateSetting, type Loader } from '../shared/settings.ts';
+import { PT, type Messages } from '../shared/i18n/index.ts';
 
 export class ValidationError extends Error {
   readonly fields: Record<string, string>;
@@ -59,16 +60,16 @@ export class ConfigStore {
   }
 
   /** Aplica alterações (string vazia remove a chave). Retorna as chaves que mudaram. */
-  updateSettings(changes: Record<string, string>): Promise<string[]> {
+  updateSettings(changes: Record<string, string>, m: Messages = PT): Promise<string[]> {
     return this.serialize(async () => {
       const errors: Record<string, string> = {};
       for (const [key, value] of Object.entries(changes)) {
         const field = SETTINGS_BY_KEY.get(key);
         if (!field || RESERVED_KEYS.has(key)) {
-          errors[key] = 'Configuração desconhecida ou reservada';
+          errors[key] = m.server.unknownSetting;
           continue;
         }
-        const error = validateSetting(field, value);
+        const error = validateSetting(field, value, m);
         if (error) errors[key] = error;
       }
       if (Object.keys(errors).length > 0) throw new ValidationError(errors);

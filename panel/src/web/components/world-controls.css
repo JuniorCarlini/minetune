@@ -1,0 +1,193 @@
+/* O visual vem de .tuc-menu__section; aqui só aproxima o título do botão. */
+.world-switcher-heading {
+  margin-bottom: -0.35rem;
+}
+
+/* Botão do mundo na barra lateral, logo abaixo da marca: abre o modal para escolher. */
+.world-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  font: inherit;
+  color: var(--tuc-fg);
+  text-align: left;
+  background: var(--tuc-elevated);
+  border: 1px solid var(--tuc-border);
+  box-shadow: var(--mt-bevel);
+  cursor: pointer;
+}
+.world-switcher:hover {
+  background: var(--tuc-hover);
+}
+.world-switcher:active {
+  box-shadow: var(--mt-bevel-pressed);
+  translate: 0 1px;
+}
+.world-switcher:focus-visible {
+  outline: 3px solid var(--tuc-accent-ring);
+  outline-offset: 2px;
+}
+.world-switcher-icon,
+.world-option-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  color: var(--mt-accent-text);
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+}
+.world-switcher-text {
+  display: grid;
+  flex: 1;
+  gap: 0.2rem;
+  min-width: 0;
+  line-height: 1.2;
+}
+.world-switcher-name {
+  overflow: hidden;
+  font-family: var(--mt-pixel);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-switcher-state {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-size: 0.7rem;
+  color: var(--tuc-muted);
+}
+/*
+ * Ponto menor que o do rodapé: aqui ele acompanha uma linha de texto pequena. Seletor mais
+ * específico porque o CSS geral do painel carrega depois deste arquivo.
+ */
+.world-switcher .world-switcher-state .status-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+}
+.world-switcher-state-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.world-switcher-chevron {
+  display: grid;
+  flex: none;
+  color: var(--tuc-muted);
+}
+
+/* Modais de mundos (escolher e ligar) um pouco mais largos que o padrão, na mesma largura. */
+.tuc-modal:has(.world-options) .tuc-modal__panel,
+.tuc-modal:has(.world-upload) .tuc-modal__panel,
+.tuc-modal:has(.world-restore) .tuc-modal__panel,
+.tuc-modal:has(.world-activate) .tuc-modal__panel {
+  width: min(38rem, calc(100vw - 2rem));
+  max-width: none;
+}
+
+/* Enviar mundo: regras curtas, arquivo, nome, progresso e o que está errado. */
+.world-upload {
+  display: grid;
+  gap: 0.9rem;
+}
+.world-upload-rules,
+.world-upload-problems {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.world-upload-rules {
+  font-size: 0.82rem;
+  color: var(--tuc-muted);
+}
+.world-upload-file {
+  padding: 0.45rem;
+}
+.world-upload-progress {
+  width: 100%;
+  height: 10px;
+  accent-color: var(--tuc-accent);
+}
+
+/* Lista de mundos dentro do modal: cartões clicáveis, o escolhido com borda verde e ✓. */
+.world-options {
+  display: grid;
+  gap: 0.5rem;
+}
+.world-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  color: var(--tuc-fg);
+  text-align: left;
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  cursor: pointer;
+}
+.world-option:hover {
+  background: var(--tuc-hover);
+}
+.world-option:focus-visible {
+  outline: 3px solid var(--tuc-accent-ring);
+  outline-offset: 2px;
+}
+.world-option.is-selected {
+  border-color: var(--tuc-accent);
+  box-shadow: inset 0 0 0 1px var(--tuc-accent);
+}
+/* Ícone do tamanho do cartão (nome, detalhe e etiqueta somam ~56px): sem vazio em volta. */
+.world-option .world-option-icon {
+  width: 56px;
+  height: 56px;
+}
+.world-option-text {
+  display: grid;
+  flex: 1;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.world-option-text strong {
+  overflow-wrap: anywhere;
+}
+.world-option-text span {
+  font-size: 0.78rem;
+  color: var(--tuc-muted);
+}
+/* Etiquetas embaixo do nome: ao lado dele, nomes longos quebravam no meio. */
+.world-option-text .world-option-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+.world-option-check {
+  display: grid;
+  flex: none;
+  width: 18px;
+  color: var(--mt-accent-text);
+}
+
+/* Linha da seed: valor, copiar e abrir no mapa de seeds do site. */
+.world-seed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.world-seed code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+

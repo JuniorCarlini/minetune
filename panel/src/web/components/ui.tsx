@@ -8,9 +8,10 @@
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { autoInitModals, Select, toast, Tooltip, type DialogInstance } from 'tucano';
+import { autoInitDrawers, autoInitModals, Select, toast, Tooltip, type DialogInstance } from 'tucano';
 import type { JobInfo } from '../../shared/api.ts';
 import { useJob } from '../lib/hooks.ts';
+import { useMessages } from '../lib/i18n.tsx';
 import { Icon } from './icons.tsx';
 import { GRASS_BLOCK, PixelGrid } from './logos.tsx';
 
@@ -66,7 +67,8 @@ export function Badge({ tone = 'neutral', plain = false, children }: { tone?: To
 }
 
 /** Carregamento no estilo Minecraft: bloco de grama pulando e barra de blocos acendendo. */
-export function Spinner({ label = 'Carregando' }: { label?: string }) {
+export function Spinner({ label }: { label?: string }) {
+  const m = useMessages();
   return (
     <div className="mc-loader" role="status" aria-live="polite">
       <div className="mc-loader-block">
@@ -77,7 +79,7 @@ export function Spinner({ label = 'Carregando' }: { label?: string }) {
           <span key={i} style={{ '--i': i } as React.CSSProperties} />
         ))}
       </div>
-      <span className="mc-loader-label">{label}</span>
+      <span className="mc-loader-label">{label ?? m.app.loading}</span>
     </div>
   );
 }
@@ -134,12 +136,13 @@ export function SearchInput({
   onValueChange,
   ...props
 }: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & { value: string; onValueChange: (value: string) => void }) {
+  const m = useMessages();
   return (
     <label className="tuc-input-group search-input">
       <Icon name="search" size={16} />
       <input type="search" {...props} className="tuc-input" value={value} onChange={(e) => onValueChange(e.target.value)} />
       {value && (
-        <button type="button" className="tuc-btn is-outline is-icon is-sm search-clear" aria-label="Limpar busca" onClick={() => onValueChange('')}>
+        <button type="button" className="tuc-btn is-outline is-icon is-sm search-clear" aria-label={m.app.clearSearch} onClick={() => onValueChange('')}>
           <Icon name="x" size={16} />
         </button>
       )}
@@ -204,12 +207,15 @@ export function TucSelect({
   value,
   options,
   placeholder,
+  clearable = true,
   onChange,
 }: {
   id?: string;
   value: string;
   options: { value: string; label: string }[];
   placeholder: string;
+  /** false quando sempre há uma escolha e o X de limpar não teria o que fazer. */
+  clearable?: boolean;
   onChange: (value: string) => void;
 }) {
   const nativeRef = useRef<HTMLSelectElement>(null);
@@ -221,6 +227,8 @@ export function TucSelect({
     const node = nativeRef.current!;
     instance.current = new Select(node, {
       placeholder,
+      // Dentro de um modal a lista abre no próprio <dialog>: desde a Tucano 0.32 o Select faz isso sozinho.
+      clearable,
       search: options.length > 8,
       onChange: (next) => onChangeRef.current(typeof next === 'string' ? next : ''),
     });
@@ -277,6 +285,22 @@ export function useTip<T extends HTMLElement>(text: string) {
   );
 }
 
+/**
+ * "?" ao lado do nome de uma opção: explicação e, entre parênteses, o nome técnico
+ * (variável ou regra do jogo). Fica fora da tela para não confundir quem não precisa dele.
+ */
+export function HelpTip({ text, technical }: { text?: string; technical?: string }) {
+  const m = useMessages();
+  const full = [text, technical && `(${technical})`].filter(Boolean).join(' ');
+  const tip = useTip<HTMLButtonElement>(full);
+  if (!full) return null;
+  return (
+    <button ref={tip} type="button" className="help-tip" aria-label={m.common.help(full)}>
+      ?
+    </button>
+  );
+}
+
 // --- Modal (dialog.tuc-modal adotado pelo Tucano) ---------------------------------------------
 
 export function Modal({
@@ -298,6 +322,7 @@ export function Modal({
   footer?: ReactNode;
   onClose: () => void;
 }) {
+  const m = useMessages();
   const hostRef = useRef<HTMLDivElement>(null);
   const instance = useRef<DialogInstance | null>(null);
   const onCloseRef = useRef(onClose);
@@ -320,19 +345,83 @@ export function Modal({
 
   return (
     <div ref={hostRef} style={{ display: 'contents' }}>
-      <dialog className={`tuc-modal is-${size} is-${tone} is-sheet`}>
+      {/* Sem is-sheet: no celular o modal fica centralizado, como no computador, e não sobe do rodapé. */}
+      <dialog className={`tuc-modal is-${size} is-${tone}`}>
         <div className="tuc-modal__panel">
           <div className="tuc-modal__top">
             <div className="tuc-modal__header">
               <h2 className="tuc-modal__title">{title}</h2>
               {text && <p className="tuc-modal__text">{text}</p>}
             </div>
-            <button type="button" className="tuc-btn is-outline is-icon is-sm tuc-modal__close" aria-label="Fechar" data-tuc-modal-close>
+            <button type="button" className="tuc-btn is-outline is-icon is-sm tuc-modal__close" aria-label={m.common.close} data-tuc-modal-close>
               <Icon name="x" size={16} />
             </button>
           </div>
           <div className="tuc-modal__body">{open ? children : null}</div>
           {footer && <div className="tuc-modal__footer">{footer}</div>}
+        </div>
+      </dialog>
+    </div>
+  );
+}
+
+// --- Gaveta / off-canvas (dialog.tuc-drawer adotado pelo Tucano) --------------------------------
+
+/**
+ * Painel que entra por uma borda, com o motor do modal do Tucano: animação, foco preso, Esc,
+ * fundo escurecido e a página de trás parada. O conteúdo fica montado mesmo fechada.
+ */
+export function Drawer({
+  open,
+  title,
+  side = 'left',
+  size = 'sm',
+  className = '',
+  children,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  side?: 'left' | 'right' | 'top' | 'bottom';
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  children?: ReactNode;
+  onClose: () => void;
+}) {
+  const m = useMessages();
+  const hostRef = useRef<HTMLDivElement>(null);
+  const instance = useRef<DialogInstance | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    // Mesmo cuidado do Modal: o StrictMode monta duas vezes, a gaveta é adotada uma só.
+    if (!instance.current && hostRef.current) {
+      const [adopted] = autoInitDrawers(hostRef.current);
+      if (adopted) {
+        adopted.opts.onClose = () => onCloseRef.current();
+        instance.current = adopted;
+      }
+    }
+    const drawer = instance.current as (DialogInstance & { isOpen?: boolean }) | null;
+    if (!drawer) return;
+    if (open && !drawer.isOpen) drawer.open();
+    if (!open && drawer.isOpen) drawer.close('api');
+  }, [open]);
+
+  return (
+    <div ref={hostRef} style={{ display: 'contents' }}>
+      <dialog className={`tuc-drawer is-${side} is-${size} is-default ${className}`.trim()}>
+        <div className="tuc-drawer__panel">
+          <div className="tuc-drawer__top">
+            <div className="tuc-drawer__header">
+              <h2 className="tuc-drawer__title">{title}</h2>
+            </div>
+            <button type="button" className="tuc-btn is-outline is-icon is-sm tuc-drawer__close" aria-label={m.common.close} data-tuc-drawer-close>
+              <Icon name="x" size={16} />
+            </button>
+          </div>
+          <div className="tuc-drawer__body">{children}</div>
         </div>
       </dialog>
     </div>
@@ -350,13 +439,8 @@ export function Progress({ value }: { value: number | undefined }) {
 
 // --- Jobs ------------------------------------------------------------------------------------
 
-const JOB_LABEL: Record<JobInfo['kind'], string> = {
-  backup: 'Backup',
-  restore: 'Restauração',
-  'apply-settings': 'Aplicar configurações',
-};
-
 export function JobPanel({ jobId, onFinish }: { jobId: string; onFinish?: (job: JobInfo) => void }) {
+  const m = useMessages();
   const job = useJob(jobId, onFinish);
   const logRef = useRef<HTMLPreElement>(null);
 
@@ -373,10 +457,10 @@ export function JobPanel({ jobId, onFinish }: { jobId: string; onFinish?: (job: 
   }
 
   const tone: Tone = job.status === 'succeeded' ? 'success' : job.status === 'failed' ? 'danger' : 'info';
-  const label = job.status === 'running' ? 'em andamento' : job.status === 'succeeded' ? 'concluído' : 'falhou';
+  const label = job.status === 'running' ? m.app.jobStatus.running : job.status === 'succeeded' ? m.app.jobStatus.succeeded : m.app.jobStatus.failed;
 
   return (
-    <Card title={JOB_LABEL[job.kind]} actions={<Badge tone={tone}>{label}</Badge>}>
+    <Card title={m.app.jobs[job.kind]} actions={<Badge tone={tone}>{label}</Badge>}>
       {job.status === 'running' && <Progress value={job.progress} />}
       {job.error && <Alert tone="danger">{job.error}</Alert>}
       <pre ref={logRef} className="log small">

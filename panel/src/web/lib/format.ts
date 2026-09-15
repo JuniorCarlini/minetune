@@ -1,3 +1,5 @@
+import { intlLocale } from './i18n.tsx';
+
 export function formatBytes(bytes: number | undefined): string {
   if (bytes === undefined || !Number.isFinite(bytes)) return '—';
   if (bytes < 1024) return `${bytes} B`;
@@ -8,13 +10,13 @@ export function formatBytes(bytes: number | undefined): string {
     value /= 1024;
     unit++;
   }
-  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unit]}`;
+  return `${value.toLocaleString(intlLocale(), { maximumFractionDigits: value < 10 ? 1 : 0 })} ${units[unit]}`;
 }
 
-const relative = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
-
+/** "há 5 minutos" / "5 minutes ago" / "hace 5 minutos", na língua escolhida no painel. */
 export function timeAgo(iso: string | undefined): string {
   if (!iso) return '—';
+  const relative = new Intl.RelativeTimeFormat(intlLocale(), { numeric: 'auto' });
   const seconds = (new Date(iso).getTime() - Date.now()) / 1000;
   const steps: [Intl.RelativeTimeFormatUnit, number][] = [
     ['year', 31_536_000],
@@ -26,13 +28,14 @@ export function timeAgo(iso: string | undefined): string {
   for (const [unit, size] of steps) {
     if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
   }
-  return 'agora mesmo';
+  // numeric: 'auto' com 0 segundos vira "agora" / "now" / "ahora".
+  return relative.format(0, 'second');
 }
 
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  return new Date(iso).toLocaleString(intlLocale(), { dateStyle: 'short', timeStyle: 'short' });
 }
 
 export function formatNumber(n: number): string {
-  return new Intl.NumberFormat('pt-BR', { notation: 'compact' }).format(n);
+  return new Intl.NumberFormat(intlLocale(), { notation: 'compact' }).format(n);
 }

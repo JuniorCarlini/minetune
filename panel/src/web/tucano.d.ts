@@ -38,11 +38,16 @@ declare module 'tucano' {
   /** Adota `dialog.tuc-modal` escritos no DOM (o painel usa isso com JSX). */
   export function autoInitModals(scope: ParentNode): DialogInstance[];
 
+  /** Adota `dialog.tuc-drawer` (gaveta/off-canvas) escritos no DOM, com a mesma mecânica do modal. */
+  export function autoInitDrawers(scope: ParentNode): DialogInstance[];
+
   export interface SelectOptions {
     search?: boolean;
     placeholder?: string;
     clearable?: boolean;
     placement?: string;
+    /** Onde pendurar a lista aberta (padrão: body). Dentro de <dialog>, use o próprio dialog. */
+    appendTo?: HTMLElement;
     onChange?: (value: string | string[] | null) => void;
   }
 

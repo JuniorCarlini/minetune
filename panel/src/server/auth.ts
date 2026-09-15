@@ -6,6 +6,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { Context, MiddlewareHandler } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
+import { requestMessages } from './i18n.ts';
 
 const COOKIE = 'minetune_session';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -84,9 +85,9 @@ export class Auth {
   middleware(publicPaths: string[]): MiddlewareHandler {
     return async (c, next) => {
       if (publicPaths.includes(c.req.path)) return next();
-      if (!this.isAuthenticated(c)) return c.json({ error: 'Não autenticado' }, 401);
+      if (!this.isAuthenticated(c)) return c.json({ error: requestMessages(c).server.notAuthenticated }, 401);
       if (c.req.method !== 'GET' && c.req.header('x-minetune') !== '1') {
-        return c.json({ error: 'Cabeçalho X-Minetune ausente' }, 403);
+        return c.json({ error: requestMessages(c).server.missingHeader }, 403);
       }
       return next();
     };

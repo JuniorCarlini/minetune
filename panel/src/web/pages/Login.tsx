@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { BrandMark, Icon } from '../components/icons.tsx';
-import { Button, Input, useToast } from '../components/ui.tsx';import { api } from '../lib/api.ts';
+import { LanguagePicker } from '../components/LanguagePicker.tsx';
+import { Button, Input, useToast } from '../components/ui.tsx';
+import { api } from '../lib/api.ts';
+import { useMessages } from '../lib/i18n.tsx';
 
 export function LoginPage({ onLogin }: { onLogin: () => void }) {
+  const m = useMessages();
   const [password, setPassword] = useState('');
   const [invalid, setInvalid] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,12 +37,12 @@ export function LoginPage({ onLogin }: { onLogin: () => void }) {
             </h1>
           </div>
           <label className="field">
-            <span className="field-label">Senha do painel</span>
+            <span className="field-label">{m.app.login.password}</span>
             <Input
               type="password"
               autoFocus
               autoComplete="current-password"
-              placeholder="Digite a senha"
+              placeholder={m.app.login.placeholder}
               value={password}
               invalid={invalid}
               aria-invalid={invalid || undefined}
@@ -49,16 +53,18 @@ export function LoginPage({ onLogin }: { onLogin: () => void }) {
             />
           </label>
           <Button variant="primary" size="lg" block type="submit" loading={loading} disabled={!password}>
-            <Icon name="login" /> Entrar
+            <Icon name="login" /> {m.app.login.submit}
           </Button>
+          {/* Antes de entrar já dá para trocar a língua: quem não lê português acha a sua pelo nome. */}
+          <LanguagePicker />
         </form>
         <footer className="login-credit">
           <span className="login-credit__made">
-            feito com
+            {m.app.login.madeWith}
             <span className="login-credit__heart">
               <Icon name="heart" size={16} />
             </span>
-            por
+            {m.app.login.by}
           </span>
           <a className="tuc-btn is-outline is-sm" href="https://github.com/JuniorCarlini" target="_blank" rel="noreferrer">
             <Icon name="github" size={16} /> JuniorCarlini
@@ -66,7 +72,6 @@ export function LoginPage({ onLogin }: { onLogin: () => void }) {
         </footer>
       </section>
       <aside className="login-art" aria-hidden />
-
     </div>
   );
 }

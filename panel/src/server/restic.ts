@@ -84,12 +84,12 @@ export class Restic {
   }
 
   /** Inicializa o repositório se ainda não existir (primeiro backup). */
-  async ensureRepository(log: Log): Promise<void> {
+  async ensureRepository(log: Log, initMessage = 'Repositório de backup não existe, inicializando...'): Promise<void> {
     try {
       await this.run(['cat', 'config']);
     } catch (err) {
       if (!MISSING_REPOSITORY.test((err as Error).message)) throw err;
-      log('Repositório de backup não existe, inicializando...');
+      log(initMessage);
       await this.run(['init']);
     }
   }
@@ -163,6 +163,36 @@ export class Restic {
     });
     if (!summary) throw new ResticError('restic não retornou resumo do backup');
     return { snapshotId: summary.snapshot_id, dataAdded: summary.data_added };
+  }
+
+  /**
+   * Mundos de uma cópia: pastas com level.dat na raiz de /data e em `archiveDir`/.
+   * Devolve o caminho relativo a /data ("wordcrias", "mundos-guardados/antigo").
+   */
+  async listWorlds(snapshotId: string, archiveDir: string): Promise<string[]> {
+    const data = this.config.DATA_DIR.replace(/\/+$/, '');
+    const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`^${escape(data)}/((?:${escape(archiveDir)}/)?[^/]+)/level\\.dat$`);
+    const found = new Set<string>();
+    await this.run(['ls', '--json', '--recursive', snapshotId, data], {
+      onLine: (line) => {
+        const node = safeJson(line);
+        const match = typeof node?.path === 'string' ? pattern.exec(node.path) : null;
+        if (match && match[1] !== archiveDir) found.add(match[1]!);
+      },
+    });
+    return [...found].sort();
+  }
+
+  /** Restaura só uma pasta de /data da cópia (`relative`, ex.: "wordcrias") dentro de `target`. */
+  async restorePath(snapshotId: string, relative: string, target: string, progress: Progress): Promise<void> {
+    const data = this.config.DATA_DIR.replace(/\/+$/, '');
+    await this.run(['restore', `${snapshotId}:${data}/${relative}`, '--target', target, '--json'], {
+      onLine: (line) => {
+        const event = safeJson(line);
+        if (event?.message_type === 'status' && typeof event.percent_done === 'number') progress(event.percent_done);
+      },
+    });
   }
 
   /** Restaura o conteúdo de /data do snapshot diretamente em `target`. */

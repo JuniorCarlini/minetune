@@ -44,6 +44,10 @@
   --tuc-accent-hover: #4fd000;
   --tuc-accent-fg: #102100;
   --mt-accent-text: #2f7d00;
+  /* Tucano 0.32+: texto em destaque (links, menu ativo) e bolinha dos interruptores. Sem eles o
+     padrão da biblioteca é neutro (preto no claro) e o verde sumiria desses lugares. */
+  --tuc-accent-text: var(--mt-accent-text);
+  --tuc-thumb: #ffffff;
   --tuc-success: #2f7d00;
   --tuc-warning: #b36b00;
   --tuc-danger: #c62828;
@@ -92,6 +96,8 @@ button {
   --tuc-accent-hover: #7df53c;
   --tuc-accent-fg: #102100;
   --mt-accent-text: #5cec01;
+  --tuc-accent-text: var(--mt-accent-text);
+  --tuc-thumb: #ffffff;
   --tuc-success: #5cec01;
   --tuc-warning: #ffaa00;
   --tuc-danger: #ff5555;
@@ -115,6 +121,8 @@ button {
     --tuc-accent-hover: #7df53c;
     --tuc-accent-fg: #102100;
     --mt-accent-text: #5cec01;
+    --tuc-accent-text: var(--mt-accent-text);
+    --tuc-thumb: #ffffff;
     --tuc-success: #5cec01;
     --tuc-warning: #ffaa00;
     --tuc-danger: #ff5555;
@@ -396,37 +404,74 @@ code {
   justify-content: center;
 }
 
+/*
+ * Celular: a barra lateral sai da tela e vira a gaveta (off-canvas) do Tucano, aberta pelo
+ * botão da barra fina do topo. Dentro dela o menu é o mesmo do computador, com nomes.
+ */
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--tuc-bg);
+  border-bottom: 1px solid var(--tuc-border);
+}
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--tuc-fg);
+  text-decoration: none;
+}
+.mobile-brand:hover {
+  text-decoration: none;
+}
+.mobile-brand strong {
+  font-size: 1rem;
+}
+.mobile-topbar-status {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  padding: 0.5rem;
+}
+.hamburger {
+  display: grid;
+  gap: 3px;
+  width: 16px;
+}
+.hamburger span {
+  display: block;
+  height: 2px;
+  background: currentColor;
+}
 @media (max-width: 860px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
     align-content: start;
   }
-  .sidebar {
-    position: sticky;
-    z-index: 20;
-    height: auto;
-    flex-direction: row;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-right: 0;
-    border-bottom: 1px solid var(--tuc-border);
-    overflow-x: auto;
-  }
-  .brand > div,
-  .brand .tuc-btn,
-  .sidebar-status,
-  .tuc-menu__section,
-  .sidebar .tuc-menu__label {
-    display: none;
-  }
-  .sidebar nav.tuc-menu {
-    flex-direction: row;
-    overflow: visible;
-  }
   .content {
     padding-top: 1.25rem;
   }
+}
+/* A barra lateral dentro da gaveta: sem altura de tela nem borda, rolando junto com a gaveta. */
+.sidebar-drawer .tuc-drawer__body {
+  padding: 0;
+}
+.sidebar.sidebar-in-drawer {
+  position: static;
+  height: auto;
+  min-height: 100%;
+  padding: 0.25rem 0.85rem 0.85rem;
+  border-right: 0;
+}
+.sidebar.sidebar-in-drawer nav.tuc-menu {
+  overflow: visible;
 }
 
 /* --- Status ---------------------------------------------------------------------- */
@@ -662,13 +707,24 @@ button.chip:focus-visible {
 .field-label {
   font-weight: 600;
 }
-.field-key {
-  align-self: flex-start;
+/* "?" ao lado do nome de uma opção: explicação e nome técnico na dica. */
+.help-tip {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
   padding: 0;
-  font-size: 0.7rem;
-  color: var(--tuc-subtle);
-  background: none;
-  border: 0;
+  font: 700 0.68rem/1 var(--mt-pixel);
+  color: var(--tuc-muted);
+  background: var(--tuc-bg);
+  border: 1px solid var(--tuc-border);
+  cursor: help;
+}
+.help-tip:hover,
+.help-tip:focus-visible {
+  color: var(--tuc-fg);
+  border-color: var(--tuc-accent);
 }
 .field-help {
   font-size: 0.85rem;
@@ -903,14 +959,21 @@ input.tuc-input.is-invalid {
   outline: 2px solid var(--tuc-accent);
   outline-offset: 2px;
 }
+/* Janela de Aparência mais larga: com quatro logos por linha, nome e descrição cabem sem quebrar tanto. */
+.tuc-modal:has(.logo-options) .tuc-modal__panel {
+  width: min(56rem, calc(100vw - 2rem));
+  max-width: none;
+}
+
+/* Oito logos: quatro por linha fecham duas linhas cheias; no celular, dois por linha. */
 .logo-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.6rem;
 }
 @media (max-width: 40rem) {
   .logo-options {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 .logo-option {
@@ -1689,15 +1752,6 @@ input.tuc-input.is-invalid {
 .sidebar-logout:hover .tuc-menu__icon {
   color: var(--tuc-danger);
 }
-@media (max-width: 860px) {
-  .sidebar-footer {
-    flex-direction: row;
-    margin-left: auto;
-  }
-  .sidebar-logout {
-    width: auto;
-  }
-}
 
 /* --- Ícones pixelados (RuneIcons) ------------------------------------------------------------ */
 
@@ -1789,6 +1843,12 @@ input.tuc-input.is-invalid {
   --tuc-btn-icon: 16px;
   width: 32px;
   height: 32px;
+  /*
+   * O Tucano puxa o X para fora com margem negativa (feito para o botão menor dele): aqui ele
+   * passava da borda do conteúdo. Sem margem, fica à mesma distância da borda de cima e da
+   * direita do modal, com o topo alinhado ao título; subir para centralizar colava na borda.
+   */
+  margin: 0;
 }
 .search-input .search-clear {
   --tuc-btn-icon: 16px;

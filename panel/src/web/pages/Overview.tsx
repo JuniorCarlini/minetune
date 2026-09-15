@@ -1,91 +1,72 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AttentionItem, ContainerInfo, StatusResponse } from '../../shared/api.ts';
+import type { AttentionItem, ContainerInfo, StatusResponse, WorldOverviewResponse } from '../../shared/api.ts';
+import { PT, type Messages } from '../../shared/i18n/index.ts';
 import { joinAddress } from '../../shared/join-address.ts';
-import { SETTINGS_BY_KEY } from '../../shared/settings.ts';
 import { Icon } from '../components/icons.tsx';
-import { EmptyState, Notice, StatTile } from '../components/page.tsx';
-import { Button, Card, Modal, Spinner, useToast, type Tone } from '../components/ui.tsx';
+import { Notice, Page, StatTile } from '../components/page.tsx';
+import { ServerCard, serverTypeLabel } from '../components/ServerCard.tsx';
+import { Button, Card, useToast, type Tone } from '../components/ui.tsx';
+import { levelTypes, SeedLine } from '../components/WorldControls.tsx';
 import { api } from '../lib/api.ts';
 import { formatBytes, formatDateTime, timeAgo } from '../lib/format.ts';
 import { useApi } from '../lib/hooks.ts';
+import { intlLocale, useMessages } from '../lib/i18n.tsx';
+import { useWorld } from '../lib/world.tsx';
 import './Overview.css';
 
-export function serverStateBadge(info: ContainerInfo): { tone: Tone; label: string } {
+export function serverStateBadge(info: ContainerInfo, m: Messages = PT): { tone: Tone; label: string } {
   if (info.state === 'running') {
-    if (info.health === 'starting') return { tone: 'warning', label: 'Iniciando' };
-    if (info.health === 'unhealthy') return { tone: 'danger', label: 'Com problemas' };
-    return { tone: 'success', label: 'Online' };
+    if (info.health === 'starting') return { tone: 'warning', label: m.home.badgeStarting };
+    if (info.health === 'unhealthy') return { tone: 'danger', label: m.home.badgeUnhealthy };
+    return { tone: 'success', label: m.home.badgeOnline };
   }
-  if (info.state === 'restarting') return { tone: 'warning', label: 'Reiniciando' };
-  if (info.state === 'missing') return { tone: 'danger', label: 'Container não encontrado' };
-  return { tone: 'neutral', label: 'Parado' };
+  if (info.state === 'restarting') return { tone: 'warning', label: m.home.badgeRestarting };
+  if (info.state === 'missing') return { tone: 'danger', label: m.home.badgeMissing };
+  return { tone: 'neutral', label: m.home.badgeStopped };
 }
 
-/** Frase grande do topo: o estado dito como a pessoa falaria. */
-function stateSentence(info: ContainerInfo): string {
-  if (info.state === 'running') {
-    if (info.health === 'starting') return 'Servidor iniciando';
-    if (info.health === 'unhealthy') return 'Servidor com problemas';
-    return 'Servidor ligado';
-  }
-  if (info.state === 'restarting') return 'Servidor reiniciando';
-  if (info.state === 'missing') return 'Servidor não encontrado';
-  return 'Servidor desligado';
-}
-
+/**
+ * Início do mundo escolhido no seletor. O estado do servidor (ligado, desligar, reiniciar)
+ * fica no card do topo; aqui só aparece o que é do mundo.
+ */
 export function OverviewPage() {
-  const { data, error, reload } = useApi<StatusResponse>('/status', 5000);
-  const [busy, setBusy] = useState<string>();
-  const [confirmStop, setConfirmStop] = useState(false);
-  const toast = useToast();
+  const world = useWorld();
+  const m = useMessages();
+  if (!world.ready) return <Page title={m.home.title} loading />;
+  return world.isActive ? <RunningWorldHome /> : <StoredWorldHome />;
+}
 
-  const act = async (action: 'start' | 'stop' | 'restart') => {
-    setBusy(action);
+/** Mundo que está rodando: quem joga, como entrar, desempenho e avisos. */
+function RunningWorldHome() {
+  const world = useWorld();
+  const m = useMessages();
+  const { data, error, reload } = useApi<StatusResponse>('/status', 5000);
+  const [starting, setStarting] = useState(false);
+  const toast = useToast();
+  const name = world.selectedWorld?.name ?? world.active;
+
+  const start = async (target: 'server' | 'gate' = 'server') => {
+    setStarting(true);
     try {
-      await api.post(`/server/${action}`);
-      toast.success(action === 'start' ? 'Servidor ligando' : action === 'stop' ? 'Servidor desligado' : 'Servidor reiniciando');
-      setConfirmStop(false);
+      await api.post(target === 'gate' ? '/gate/start' : '/server/start');
+      // O portão sobe em um segundo: o aviso some na recarga, sem precisar de mensagem.
+      if (target === 'server') toast.success(m.home.toastStarting);
       await reload();
     } catch (err) {
       toast.error(err);
     } finally {
-      setBusy(undefined);
+      setStarting(false);
     }
   };
 
   if (!data) {
-    // O topo é o próprio bloco de estado; sem dados, o lugar dele mostra o carregamento ou o erro.
-    return error ? (
-      <EmptyState
-        icon="refresh"
-        title="Não deu para carregar o estado do servidor"
-        text={error.message}
-        action={
-          <Button onClick={reload}>
-            <Icon name="refresh" /> Tentar de novo
-          </Button>
-        }
-      />
-    ) : (
-      <Spinner />
-    );
+    return <Page title={name} loading={!error} error={error?.message} onRetry={reload} />;
   }
 
-  const state = serverStateBadge(data.server);
   const running = data.server.state === 'running';
-  const typeLabel = SETTINGS_BY_KEY.get('TYPE')?.options?.find((o) => o.value === data.game.type)?.label.split(' —')[0] ?? data.game.type;
   const online = data.players?.online ?? 0;
-  const line = [
-    running && data.players ? (online === 1 ? '1 pessoa jogando' : `${online} pessoas jogando`) : null,
-    running && data.server.startedAt ? `ligado ${timeAgo(data.server.startedAt)}` : null,
-    `${typeLabel} ${data.game.version}`,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
   const memPct = data.resources?.memoryLimit ? data.resources.memoryUsed / data.resources.memoryLimit : undefined;
   const join = joinAddress(data.join, window.location.hostname);
-
   // O Docker mede CPU em "núcleos" (100% = um núcleo, 350% = três e meio). Dividido pelos
   // núcleos disponíveis vira 0–100% da máquina, que é o que uma pessoa entende.
   const cpuShare =
@@ -96,62 +77,64 @@ export function OverviewPage() {
 
   return (
     <>
-      <section className={`hero hero-${state.tone}`}>
-        <div className="hero-main">
-          <div className="hero-status">
-            <span className={`status-dot status-${state.tone}`} />
-            <span className="home-hero-line">{line}</span>
-          </div>
-          <h1 className="hero-title">{stateSentence(data.server)}</h1>
-        </div>
-
-        <div className="hero-actions">
-          {running ? (
-            <>
-              <Button variant="danger" onClick={() => setConfirmStop(true)} disabled={!!busy}>
-                <Icon name="stop" /> Desligar
-              </Button>
-              <Button variant="primary" onClick={() => act('restart')} loading={busy === 'restart'} disabled={!!busy}>
-                <Icon name="restart" /> Reiniciar
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => act('start')}
-              loading={busy === 'start'}
-              disabled={!!busy || data.server.state === 'missing' || data.server.state === 'restarting'}
-            >
-              <Icon name="play" /> Ligar servidor
-            </Button>
-          )}
-        </div>
-      </section>
+      <ServerCard variant="hero" />
+      {/* Números primeiro: o estado do servidor em um olhar, antes de como entrar e dos avisos. */}
+      <div className="home-stats">
+        <StatTile
+          icon="players"
+          label={m.home.players}
+          value={running && data.players ? m.home.ofMax(online, data.players.max) : '—'}
+          detail={!running ? m.home.serverOff : data.players?.names.length ? data.players.names.join(', ') : m.home.nobodyPlaying}
+        />
+        <StatTile
+          icon="memory"
+          label={m.home.memory}
+          value={memPct !== undefined ? m.home.memoryUsed(Math.round(memPct * 100)) : '—'}
+          bar={memPct}
+          tone={memPct === undefined ? undefined : memPct > 0.9 ? 'danger' : memPct > 0.75 ? 'warning' : undefined}
+          detail={data.resources ? m.home.memoryDetail(formatBytes(data.resources.memoryUsed), formatBytes(data.resources.memoryLimit)) : m.home.serverOff}
+        />
+        <StatTile
+          icon="cpu"
+          label={m.home.cpu}
+          // Abaixo de 10% mostra uma casa: servidor ocioso em máquina com muitos núcleos daria "0%", que parece medição quebrada.
+          value={cpuShare !== undefined ? m.home.cpuUsed((cpuShare * 100).toLocaleString(intlLocale(), { maximumFractionDigits: cpuShare < 0.1 ? 1 : 0 })) : '—'}
+          bar={cpuShare}
+          tone={cpuShare === undefined ? undefined : cpuShare > 0.9 ? 'danger' : cpuShare > 0.7 ? 'warning' : undefined}
+          detail={!running ? m.home.serverOff : cpuShare === undefined ? m.home.measuring : m.home.cpuDetail(data.resources!.cpuCores)}
+        />
+        <StatTile
+          icon="gauge"
+          label={m.home.performance}
+          value={!running || tps === undefined ? '—' : tps >= 19 ? m.home.perfGreat : tps >= 15 ? m.home.perfSlow : m.home.perfLagging}
+          tone={!running || tps === undefined ? undefined : tps >= 19 ? 'success' : tps >= 15 ? 'warning' : 'danger'}
+          detail={!running ? m.home.serverOff : tps === undefined ? m.home.perfPaperOnly : tps >= 19 ? m.home.perfNoLag : m.home.perfStruggling}
+        />
+      </div>
 
       <div className="grid two">
-        <Card title="Como entrar no servidor" description={join.scope === 'public' ? 'Mande isto para seus amigos' : undefined}>
+        <Card title={m.home.joinTitle} description={join.scope === 'public' ? m.home.joinShare : undefined}>
           <CopyAddress address={join.address} />
           {join.scope !== 'public' && (
-            <Notice tone="warning" title={join.scope === 'lan' ? 'Só funciona na mesma rede (Wi-Fi)' : 'Só funciona neste computador'}>
-              Para amigos de outras casas entrarem, crie um túnel (playit.gg) ou use um domínio e coloque o endereço em PUBLIC_ADDRESS no arquivo .env.
+            <Notice tone="warning" title={join.scope === 'lan' ? m.home.joinLan : m.home.joinLocal}>
+              {m.home.joinHint}
             </Notice>
           )}
           <ol className="home-steps">
-            <li>Abra o Minecraft Java → Multijogador</li>
-            <li>Adicionar servidor e colar o endereço</li>
+            <li>{m.home.joinStep1}</li>
+            <li>{m.home.joinStep2}</li>
           </ol>
         </Card>
 
-        <Card title="Precisa de atenção" description={data.attention.length === 0 ? undefined : `${data.attention.length} ${data.attention.length === 1 ? 'item' : 'itens'}`}>
+        <Card title={m.home.attention} description={data.attention.length === 0 ? undefined : m.home.attentionCount(data.attention.length)}>
           <div className="home-attention">
             {data.attention.length === 0 ? (
-              <Notice tone="success" title="Tudo certo por aqui">
-                Servidor e backups sem nenhum problema agora.
+              <Notice tone="success" title={m.home.allGoodTitle}>
+                {m.home.allGoodText}
               </Notice>
             ) : (
               data.attention.map((item) => (
-                <Notice key={item.id} tone={item.tone} title={item.title} action={<AttentionAction item={item} busy={busy} onStart={() => act('start')} />}>
+                <Notice key={item.id} tone={item.tone} title={item.title} action={<AttentionAction item={item} busy={starting} onStart={(target) => void start(target)} />}>
                   {item.text}
                 </Notice>
               ))
@@ -160,82 +143,106 @@ export function OverviewPage() {
         </Card>
       </div>
 
-      <div className="home-stats">
-        <StatTile
-          icon="players"
-          label="Jogadores"
-          value={running && data.players ? `${online} de ${data.players.max}` : '—'}
-          detail={!running ? 'servidor desligado' : data.players?.names.length ? data.players.names.join(', ') : 'ninguém jogando'}
-        />
-        <StatTile
-          icon="memory"
-          label="Memória"
-          value={memPct !== undefined ? `${Math.round(memPct * 100)}% usada` : '—'}
-          bar={memPct}
-          tone={memPct === undefined ? undefined : memPct > 0.9 ? 'danger' : memPct > 0.75 ? 'warning' : undefined}
-          detail={data.resources ? `${formatBytes(data.resources.memoryUsed)} de ${formatBytes(data.resources.memoryLimit)}` : 'servidor desligado'}
-        />
-        <StatTile
-          icon="cpu"
-          label="Processador"
-          // Abaixo de 10% mostra uma casa: servidor ocioso em máquina com muitos núcleos daria "0%", que parece medição quebrada.
-          value={cpuShare !== undefined ? `${(cpuShare * 100).toLocaleString('pt-BR', { maximumFractionDigits: cpuShare < 0.1 ? 1 : 0 })}% em uso` : '—'}
-          bar={cpuShare}
-          tone={cpuShare === undefined ? undefined : cpuShare > 0.9 ? 'danger' : cpuShare > 0.7 ? 'warning' : undefined}
-          detail={
-            !running
-              ? 'servidor desligado'
-              : cpuShare === undefined
-                ? 'medindo…'
-                : `da capacidade total · ${data.resources!.cpuCores} ${data.resources!.cpuCores === 1 ? 'núcleo' : 'núcleos'}`
-          }
-        />
-        <StatTile
-          icon="gauge"
-          label="Desempenho"
-          value={!running || tps === undefined ? '—' : tps >= 19 ? 'Ótimo' : tps >= 15 ? 'Com lentidão' : 'Travando'}
-          tone={!running || tps === undefined ? undefined : tps >= 19 ? 'success' : tps >= 15 ? 'warning' : 'danger'}
-          detail={!running ? 'servidor desligado' : tps === undefined ? 'disponível só no Paper' : tps >= 19 ? 'sem travamentos agora' : 'o servidor não está dando conta'}
-        />
-      </div>
-
-      <Card
-        title="Último backup"
-        description={data.lastBackup ? `${timeAgo(data.lastBackup.time)} · ${formatDateTime(data.lastBackup.time)}` : 'Nenhum backup ainda'}
-        actions={
-          <a className="tuc-btn is-outline is-sm" href="#/backups">
-            <Icon name="backups" /> Ver backups
-          </a>
-        }
-      />
-
-      <Modal
-        open={confirmStop}
-        title="Desligar o servidor?"
-        text="Quem estiver jogando será desconectado. O mundo é salvo antes de desligar."
-        tone="danger"
-        size="sm"
-        onClose={() => setConfirmStop(false)}
-        footer={
-          <>
-            <Button onClick={() => setConfirmStop(false)}>
-              <Icon name="x" /> Cancelar
-            </Button>
-            <Button variant="danger" onClick={() => act('stop')} loading={busy === 'stop'}>
-              <Icon name="stop" /> Desligar
-            </Button>
-          </>
-        }
-      />
+      <LastBackupCard lastBackup={data.lastBackup} />
     </>
   );
 }
 
-function AttentionAction({ item, busy, onStart }: { item: AttentionItem; busy?: string; onStart: () => void }) {
+/** Mundo guardado: só os dados dele. Nada do servidor que está rodando outro mundo. */
+function StoredWorldHome() {
+  const world = useWorld();
+  const m = useMessages();
+  const overview = useApi<WorldOverviewResponse>(world.path('/world-overview'));
+  const status = useApi<StatusResponse>('/status', 30_000);
+  const name = world.selectedWorld?.name ?? world.selected;
+  const data = overview.data;
+
+  if (!data) {
+    return <Page title={name} loading={!overview.error} error={overview.error?.message} onRetry={overview.reload} />;
+  }
+
+  const { world: info, counts } = data;
+  const levelType = levelTypes(m).find((o) => o.value === info.levelType)?.label ?? m.home.levelTypeNormal;
+
+  return (
+    <>
+      <ServerCard variant="hero" />
+      {data.blockReason && (
+        <Notice
+          tone="danger"
+          title={m.home.blockedTitle}
+          action={
+            <a className="tuc-btn is-outline is-sm" href="#/settings">
+              <Icon name="settings" /> {m.home.openSettings}
+            </a>
+          }
+        >
+          {data.blockReason}
+        </Notice>
+      )}
+      {!info.hasProfile && (
+        <Notice tone="info" title={m.home.inheritedTitle}>
+          {m.home.inheritedText}
+        </Notice>
+      )}
+      {!info.generated && (
+        <Notice tone="info" title={m.home.notGeneratedTitle}>
+          {m.home.notGeneratedText}
+        </Notice>
+      )}
+
+      <div className="home-stats">
+        <StatTile
+          icon="cube"
+          label={m.home.version}
+          value={info.serverVersion ? `${serverTypeLabel(info.serverType, m)} ${info.serverVersion}` : '—'}
+          detail={info.version ? m.home.mapSavedIn(info.version) : m.home.mapNotGenerated}
+        />
+        <StatTile icon="globe" label={m.home.map} value={info.generated ? formatBytes(info.sizeBytes) : '—'} detail={m.home.levelType(levelType)} />
+        <StatTile
+          icon="play"
+          label={m.home.lastPlayed}
+          value={info.lastPlayed ? timeAgo(info.lastPlayed) : m.home.never}
+          detail={info.lastPlayed ? formatDateTime(info.lastPlayed) : m.home.neverStarted}
+        />
+        <StatTile
+          icon="players"
+          label={m.home.access}
+          value={m.home.invitedCount(counts.whitelist)}
+          detail={m.home.accessDetail(counts.ops, counts.banned, data.whitelistEnabled)}
+        />
+      </div>
+
+      <Card title={m.home.seed} description={info.seed ? undefined : m.home.seedPending}>
+        {info.seed && <SeedLine seed={info.seed} version={info.version} />}
+      </Card>
+
+      <LastBackupCard lastBackup={status.data?.lastBackup} />
+    </>
+  );
+}
+
+function LastBackupCard({ lastBackup }: { lastBackup?: StatusResponse['lastBackup'] }) {
+  const m = useMessages();
+  return (
+    <Card
+      title={m.home.lastBackup}
+      description={lastBackup ? m.home.lastBackupDetail(timeAgo(lastBackup.time), formatDateTime(lastBackup.time)) : m.home.noBackup}
+      actions={
+        <a className="tuc-btn is-outline is-sm" href="#/backups">
+          <Icon name="backups" /> {m.home.viewBackups}
+        </a>
+      }
+    />
+  );
+}
+
+function AttentionAction({ item, busy, onStart }: { item: AttentionItem; busy: boolean; onStart: (target: 'server' | 'gate') => void }) {
   if (!item.action) return null;
-  if (item.action.server === 'start') {
+  if (item.action.server === 'start' || item.action.gate === 'start') {
+    const target = item.action.gate === 'start' ? 'gate' : 'server';
     return (
-      <Button size="sm" variant="primary" onClick={onStart} loading={busy === 'start'} disabled={!!busy}>
+      <Button size="sm" variant="primary" onClick={() => onStart(target)} loading={busy} disabled={busy}>
         <Icon name="play" /> {item.action.label}
       </Button>
     );
@@ -249,6 +256,7 @@ function AttentionAction({ item, busy, onStart }: { item: AttentionItem; busy?: 
 }
 
 function CopyAddress({ address }: { address: string }) {
+  const m = useMessages();
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -267,8 +275,8 @@ function CopyAddress({ address }: { address: string }) {
   return (
     <div className="home-address">
       <code>{address}</code>
-      <Button onClick={copy} aria-label="Copiar endereço">
-        <Icon name={copied ? 'check' : 'copy'} /> {copied ? 'Copiado' : 'Copiar'}
+      <Button onClick={copy} aria-label={m.home.copyAddress}>
+        <Icon name={copied ? 'check' : 'copy'} /> {copied ? m.common.copied : m.common.copy}
       </Button>
     </div>
   );

@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useMessages } from '../lib/i18n.tsx';
 import { Icon, type IconName } from './icons.tsx';
 import { Button, Spinner, Toggle } from './ui.tsx';
 
@@ -40,10 +41,11 @@ export function Page({
   onRetry?: () => void;
   children?: ReactNode;
 }) {
+  const m = useMessages();
   return (
     <>
       {crumbs && crumbs.length > 0 && (
-        <nav className="crumbs" aria-label="Caminho">
+        <nav className="crumbs" aria-label={m.app.page.crumbs}>
           {crumbs.map((crumb, i) => (
             <span key={crumb.label} className="crumbs-item">
               {i > 0 && <span aria-hidden>/</span>}
@@ -62,12 +64,12 @@ export function Page({
       {error ? (
         <EmptyState
           icon="refresh"
-          title="Não deu para carregar esta tela"
+          title={m.app.page.loadError}
           text={error}
           action={
             onRetry && (
               <Button onClick={onRetry}>
-                <Icon name="refresh" /> Tentar de novo
+                <Icon name="refresh" /> {m.common.retry}
               </Button>
             )
           }
@@ -167,49 +169,6 @@ export function Avatar({ name }: { name: string }) {
 
 // --- Linha de opção ---------------------------------------------------------------------------
 
-/**
- * Nome comum, uma frase do efeito e o controle à direita. Usada em Configurações e
- * Regras do jogo. O nome técnico (variável, comando) só aparece no modo avançado.
- */
-export function OptionRow({
-  htmlFor,
-  title,
-  description,
-  badges,
-  technical,
-  control,
-  error,
-  highlight,
-  children,
-}: {
-  htmlFor?: string;
-  title: ReactNode;
-  description?: ReactNode;
-  badges?: ReactNode;
-  technical?: string;
-  control: ReactNode;
-  error?: string;
-  /** Destaque de "mudado/não salvo". */
-  highlight?: boolean;
-  children?: ReactNode;
-}) {
-  const advanced = useAdvancedMode()[0];
-  return (
-    <div className={`option-row ${highlight ? 'is-highlight' : ''} ${error ? 'is-invalid' : ''}`}>
-      <div className="option-row-info">
-        <div className="option-row-title">
-          {htmlFor ? <label htmlFor={htmlFor}>{title}</label> : <span>{title}</span>}
-          {badges}
-        </div>
-        {error ? <span className="field-error">{error}</span> : description && <span className="field-help">{description}</span>}
-        {advanced && technical && <code className="field-key">{technical}</code>}
-        {children}
-      </div>
-      <div className="option-row-control">{control}</div>
-    </div>
-  );
-}
-
 // --- Modo avançado -------------------------------------------------------------------------------
 
 const ADVANCED_KEY = 'minetune.advanced';
@@ -251,11 +210,12 @@ export function useAdvancedMode(): [boolean, (value: boolean) => void] {
 }
 
 export function AdvancedToggle() {
+  const m = useMessages();
   const [advanced, setAdvanced] = useAdvancedMode();
   return (
     <label className="advanced-toggle">
-      <Toggle checked={advanced} onChange={setAdvanced} label="Mostrar opções avançadas" />
-      <span className="small muted">Opções avançadas</span>
+      <Toggle checked={advanced} onChange={setAdvanced} label={m.app.page.advancedShow} />
+      <span className="small muted">{m.app.page.advanced}</span>
     </label>
   );
 }
@@ -274,7 +234,8 @@ export interface MenuAction {
  * Ações de um item quando passam de duas, ou quando são de risco (expulsar, banir).
  * Fecha com Esc, clique fora ou ao escolher; o foco volta para o botão.
  */
-export function ActionMenu({ label = 'Mais', items, busy = false }: { label?: string; items: MenuAction[]; busy?: boolean }) {
+export function ActionMenu({ label, items, busy = false }: { label?: string; items: MenuAction[]; busy?: boolean }) {
+  const m = useMessages();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLSpanElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -303,7 +264,7 @@ export function ActionMenu({ label = 'Mais', items, busy = false }: { label?: st
   return (
     <span className="action-menu" ref={root}>
       <Button ref={trigger} size="sm" loading={busy} aria-haspopup="menu" aria-expanded={open} aria-controls={menuId} onClick={() => setOpen((o) => !o)}>
-        {label} <Icon name="chevron" size={16} />
+        {label ?? m.app.page.more} <Icon name="chevron" size={16} />
       </Button>
       {open && (
         <span className="action-menu-list" role="menu" id={menuId}>

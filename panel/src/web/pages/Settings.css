@@ -1,14 +1,34 @@
-/* Grupos de configuração como fileira de botões (antes era um menu lateral). */
-.settings-groups {
+/* Busca e grupos acima dos cartões, no mesmo formato de Regras do jogo. */
+.settings-filter {
+  display: grid;
+  gap: 0.6rem;
+}
+.settings-filter-top {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
 }
-.settings-groups .chip.is-active {
+.settings-filter-top .search-input {
+  flex: 1 1 18rem;
+  max-width: 28rem;
+}
+.settings-filter .chip.is-active {
   color: var(--tuc-accent-fg);
   background: var(--tuc-accent);
   border-color: var(--tuc-accent);
 }
-.settings-groups .chip.is-active .chip-count {
+.settings-filter .chip.is-active .chip-count {
   color: var(--tuc-accent-fg);
+}
+/* Confirmação de mudanças com risco: larga o bastante para os três botões ficarem numa linha. */
+.tuc-modal:has(.risk-list) .tuc-modal__panel {
+  width: min(42rem, calc(100vw - 2rem));
+  max-width: none;
+}
+
+/* Grupo com mudança não salva: borda de destaque, igual ao bloco alterado. */
+.settings-filter .chip.has-changes:not(.is-active) {
+  border-color: var(--tuc-accent);
 }

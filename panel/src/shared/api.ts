@@ -1,6 +1,16 @@
 /** Contratos das respostas da API, compartilhados entre backend e frontend. */
 
 import type { JoinInfo } from './join-address.ts';
+import type { WorldInfo } from './worlds.ts';
+
+/** Início de um mundo guardado: só os dados dele, nada do servidor que está rodando. */
+export interface WorldOverviewResponse {
+  world: WorldInfo;
+  counts: { whitelist: number; ops: number; banned: number };
+  whitelistEnabled: boolean;
+  /** Por que ele não pode ser ligado com a configuração atual, ou null. */
+  blockReason: string | null;
+}
 import type { ModrinthEntry } from './modrinth.ts';
 import type { Loader } from './settings.ts';
 
@@ -18,6 +28,8 @@ import type { BackupProvider, BackupSchedule, BackupSettings } from './backup-de
 export interface StatusResponse {
   server: ContainerInfo;
   backup: ContainerInfo;
+  /** Portão Minetune (senha por nick); state "missing" em instalações sem ele. */
+  gate?: ContainerInfo;
   /** cpuPercent: 100 = um núcleo inteiro (padrão do Docker); cpuCores: núcleos disponíveis. */
   resources?: { memoryUsed: number; memoryLimit: number; cpuPercent: number | null; cpuCores: number };
   players?: { online: number; max: number; names: string[] };
@@ -28,20 +40,24 @@ export interface StatusResponse {
   /** "Precisa de atenção" da tela Início: cada item com a frase e o que resolve. */
   attention: AttentionItem[];
   join: JoinInfo;
+  /** Pasta do mundo ligado (LEVEL). */
+  world?: string;
 }
 
 export interface AttentionItem {
-  id: 'server-stopped' | 'server-unhealthy' | 'backup-local' | 'backup-old' | 'memory' | 'performance';
+  id: 'server-stopped' | 'server-crashing' | 'server-unhealthy' | 'gate-stopped' | 'backup-local' | 'backup-old' | 'memory' | 'performance';
   tone: 'warning' | 'danger';
   title: string;
   text: string;
-  action?: { label: string; href?: string; server?: 'start' };
+  action?: { label: string; href?: string; server?: 'start'; gate?: 'start' };
 }
 
 export interface SettingsResponse {
   values: Record<string, string>;
   /** Chaves presentes no server.env que o painel não conhece (preservadas ao salvar). */
   unmanaged: string[];
+  /** De qual mundo é esta configuração; inherited = guardado que ainda usa a do mundo ligado. */
+  world?: { folder: string; active: boolean; inherited: boolean };
   memoryLimitBytes?: number;
 }
 
@@ -60,6 +76,8 @@ export interface GameRuleValue {
 export interface GameRulesResponse {
   naming: 'modern' | 'legacy';
   rules: GameRuleValue[];
+  /** Regras lidas do arquivo de um mundo guardado: só para ver, mudar exige ligar o mundo. */
+  readOnly?: boolean;
 }
 
 export interface PlayerRef {
@@ -77,6 +95,8 @@ export interface PlayersResponse {
   ops: (PlayerRef & { level?: number })[];
   banned: (PlayerRef & { reason?: string; expires?: string })[];
   join: JoinInfo;
+  /** false: é um mundo guardado, e as listas são as guardadas com ele (só leitura). */
+  worldActive: boolean;
 }
 
 export type PlayerAction = 'whitelist-add' | 'whitelist-remove' | 'op' | 'deop' | 'kick' | 'ban' | 'pardon';
@@ -124,7 +144,7 @@ export interface BackupTestResponse {
   status: 'ok' | 'empty';
 }
 
-export type JobKind = 'backup' | 'restore' | 'apply-settings';
+export type JobKind = 'backup' | 'restore' | 'apply-settings' | 'world-create' | 'world-switch' | 'world-delete' | 'world-upload' | 'world-restore';
 
 export interface JobInfo {
   id: string;
