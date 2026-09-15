@@ -9,6 +9,15 @@ Change types: **Added** (new features), **Changed** (changes to existing
 features), **Deprecated** (will be removed in a future version), **Removed**, **Fixed**
 (bugs) and **Security** (vulnerabilities).
 
+## [0.3.1] - 2026-09-15
+
+### Fixed
+
+- On a fresh install the server starts in online mode (official accounts) and the gate
+  refused everyone with "Something went wrong". In online mode the gate now just passes
+  connections through, since Minecraft itself already guarantees each player's name; the
+  per-name password applies in offline mode. The Players screen says which mode is on.
+
 ## [0.3.0] - 2026-09-15
 
 In-game password per player name, multiple worlds with upload and download, panel and
@@ -222,6 +231,7 @@ First version: server, backups, web panel and documentation.
 - Docker access through a proxy with an allowlist: only reading status and
   logs and starting, stopping or restarting containers.
 
+[0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JuniorCarlini/minetune/releases/tag/v0.1.0

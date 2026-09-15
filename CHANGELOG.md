@@ -9,6 +9,15 @@ Tipos de mudança: **Adicionado** (novidades), **Alterado** (mudanças no que j�
 existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido**
 (bugs) e **Segurança** (vulnerabilidades).
 
+## [0.3.1] - 2026-09-15
+
+### Corrigido
+
+- Numa instalação nova o servidor liga no modo online (contas originais) e o portão
+  recusava todo mundo com "Algo deu errado". No modo online o portão agora só repassa
+  as conexões, porque o próprio Minecraft já garante o nick de cada um; a senha por
+  nick vale no modo offline. A tela Jogadores explica em qual dos dois o servidor está.
+
 ## [0.3.0] - 2026-09-15
 
 Senha por nick dentro do jogo, vários mundos com envio e download, painel e site em
@@ -221,6 +230,7 @@ Primeira versão: servidor, backups, painel web e documentação.
 - Acesso ao Docker por proxy com lista de permissões: só leitura de status e
   logs e ligar, parar ou reiniciar containers.
 
+[0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JuniorCarlini/minetune/releases/tag/v0.1.0
