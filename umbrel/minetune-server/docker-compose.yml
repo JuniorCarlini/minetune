@@ -145,7 +145,7 @@ services:
   # Acesso mínimo ao Docker só para o painel: ler estado e logs, ligar/desligar/reiniciar.
   # É o motivo de este app ficar na loja da comunidade: a loja oficial não aceita docker.sock.
   docker-proxy:
-    image: wollomatic/socket-proxy:1
+    image: wollomatic/socket-proxy:1.13.1@sha256:3935b709275e4ec35d6ed5a5c4a1f0d01ed31eec5e7234efc3357ecd47689002
     command:
       - -loglevel=WARN
       - -listenip=0.0.0.0

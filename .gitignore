@@ -23,3 +23,5 @@ config/backup.env
 
 # Liga/desliga da senha do Portão Minetune (estado local, gravado pelo painel)
 config/gate.json
+# Pastas vazias que o app do Umbrel precisa ter no pacote
+!umbrel/minetune-server/data/
