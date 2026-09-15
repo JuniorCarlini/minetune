@@ -102,8 +102,9 @@ Pronto:
 | **Backups** | restic incremental, deduplicado e criptografado. Agendado, manual e automático antes de restore e updates. Retenção configurável. |
 | **Crossplay** | Geyser + Floodgate com um toggle: jogadores Bedrock entram sem conta Java. Desligado por padrão. |
 | **Otimização** | Distâncias de visão e simulação ajustadas, patches do Paper (explosões, redstone Alternate Current, limites de entidades) e Chunky para pré-gerar o mundo. |
+| **Senha por nick** | Portão Minetune na frente do servidor: cada jogador cria uma senha numa janela do próprio jogo e ninguém entra com o nick de outra pessoa. Paper, Vanilla, Fabric e NeoForge (1.21.6+), sem plugin nem mod, ~30 MB de RAM. |
 | **Segurança** | Painel preso ao localhost por padrão, sessão HMAC com limite de tentativas, RCON nunca exposto e Docker acessado por um proxy que **não permite criar containers**. |
-| **Exposição** | Port forward, túnel playit.gg (resolve CGNAT), VPS como ponte ou EasyPanel. |
+| **Exposição** | Port forward, túnel playit.gg (resolve CGNAT, com IP real dos jogadores), VPS direta ou como ponte (frp). Guia com firewall da Oracle, Hetzner, Hostinger e Magalu Cloud. |
 
 ## 🖥️ O painel
 
@@ -138,7 +139,7 @@ seguindo o sistema, e três versões de logo para escolher (clique no logo do me
 | **Início** | Ver se o servidor está ligado, ligar, desligar e reiniciar; copiar o endereço para os amigos; jogadores, memória, processador e desempenho em frases simples; "Precisa de atenção" com o botão que resolve cada aviso; último backup. |
 | **Jogadores** | Quem está jogando; tornar administrador, expulsar e banir pelo menu "Mais"; lista de convidados com a chave "Só convidados podem entrar"; desbanir. |
 | **Regras do jogo** | Todas as regras que a versão em execução oferece, com busca e categorias, aplicadas na hora em todas as dimensões. |
-| **Configurações** | Tipo e versão do servidor (lista oficial de cada software), memória, mensagem na lista de servidores, mundo, dificuldade, distâncias, acesso e Bedrock. Tudo validado antes de salvar; opções técnicas só com "Opções avançadas". |
+| **Configurações** | Tipo e versão do servidor (lista oficial de cada software), memória, mensagem na lista de servidores, mundo, dificuldade, distâncias, acesso e Bedrock, com busca e um cartão por grupo. Tudo validado antes de salvar; o nome técnico de cada opção fica no "?". |
 | **Plugins e mods** | Buscar no Modrinth só o que é compatível e adicionar ou remover; a lista é separada por loader (Paper, Fabric, NeoForge). |
 | **Backups** | Saber no topo se o mundo está protegido; backup na hora; lista de cópias e restauração segura (faz um backup antes e desfaz se algo falhar). |
 | **Onde guardar** | Destino dos backups (este computador, Cloudflare R2, Amazon S3 ou S3 próprio) com teste de conexão, frequência e retenção. |
@@ -211,14 +212,16 @@ Destinos, regra 3-2-1, restore de um arquivo só e recuperação numa máquina n
 |---|---|
 | **PC ou servidor de casa** | `make init && make up`. |
 | **VPS** (Hetzner, Oracle, Contabo, AWS…) | Mesmo fluxo; painel atrás de um proxy reverso com HTTPS. |
-| **EasyPanel** | Importar o compose e publicar o painel pelo domínio do EasyPanel. |
+| **EasyPanel** | Compose pelo Git, ou colar o `deploy/compose.yaml` (imagens publicadas), e publicar o painel pelo domínio do EasyPanel. |
+| **Umbrel** | Community App Store pronta em `umbrel/`: painel pelo Umbrel, jogo na porta 25565. |
+| **EasyPanel** | Template em `easypanel/minetune/` (gerado por `scripts/build-easypanel.mjs`), com as senhas criadas na instalação. |
 
 Como os jogadores chegam até o servidor:
 
 | Opção | Quando usar |
 |---|---|
 | **Port forward** | Você tem IP público em casa. |
-| **Túnel playit.gg** | Sem IP público ou atrás de CGNAT; não precisa abrir portas. Ative `compose.tunnel.yaml`. |
+| **Túnel playit.gg** | Sem IP público ou atrás de CGNAT; não precisa abrir portas. Ative `compose.tunnel.yaml` (Linux) ou `compose.tunnel-bridge.yaml` (Docker Desktop no Mac/Windows). |
 | **VPS como ponte** | Quer IP fixo e boa latência, mas com o servidor rodando em casa. |
 | **Hospedar na VPS** | Tudo na nuvem. |
 
@@ -267,16 +270,19 @@ spark): [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ```mermaid
 flowchart LR
-  player([Jogadores Java/Bedrock]) -->|25565 TCP / 19132 UDP| mc
+  player([Jogadores Java]) -->|25565 TCP| gate
+  bedrock([Jogadores Bedrock]) -->|19132 UDP| mc
   admin([Admin]) -->|HTTPS| panel
 
   subgraph stack[docker compose]
+    gate[gate<br/>Portão Minetune<br/>senha por nick]
     mc[mc<br/>itzg/minecraft-server<br/>Paper · Fabric · NeoForge]
     backup[backup<br/>itzg/mc-backup + restic]
     panel[panel<br/>Hono + React]
     proxy[docker-proxy<br/>allowlist]
   end
 
+  gate -->|depois da senha| mc
   panel -->|RCON| mc
   backup -->|RCON save-off/save-all| mc
   panel -->|status, logs, start/stop| proxy --> sock[(docker.sock)]
@@ -287,6 +293,7 @@ flowchart LR
 | Serviço | Imagem | Papel |
 |---|---|---|
 | `mc` | `itzg/minecraft-server` | O servidor. Lê `config/server.env` a cada start. |
+| `gate` | a mesma do painel | Portão Minetune: dono da porta do jogo, pede a senha do nick e repassa o IP real ao Paper. |
 | `backup` | `itzg/mc-backup` | Backups agendados com restic, coordenados via RCON. |
 | `panel` | construída de `panel/` | API (Hono) e interface (React). |
 | `docker-proxy` | `wollomatic/socket-proxy` | Único acesso ao Docker, com lista de permissões. |
@@ -297,9 +304,12 @@ Por que cada decisão foi tomada: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```
 .
-├── compose.yaml              # stack: mc, backup, panel, docker-proxy
+├── compose.yaml              # stack: mc, gate, backup, panel, docker-proxy
 ├── compose.s3-local.yaml     # overlay: RustFS como destino S3 dos backups
-├── compose.tunnel.yaml       # overlay: túnel playit.gg
+├── compose.tunnel.yaml       # overlay: túnel playit.gg (rede do host, Linux)
+├── compose.tunnel-bridge.yaml # overlay: túnel playit.gg sem rede do host (Mac/Windows)
+├── easypanel/minetune/       # template do EasyPanel (gerado)
+├── umbrel/                   # Community App Store do Umbrel
 ├── .env.example              # infraestrutura: portas, recursos, segredos, backup
 ├── Makefile                  # operação do dia a dia (make help)
 ├── config/                   # configuração do JOGO (versionável, editada pelo painel)
@@ -350,7 +360,7 @@ node scripts/generate-rune-icons.mjs [commit]
 |---|---|
 | [Arquitetura e decisões](docs/ARCHITECTURE.md) | Por que cada peça foi escolhida e o que ficou de fora. |
 | [Backups e recuperação](docs/BACKUP.md) | Destinos, retenção, restore e recuperação numa máquina nova. |
-| [Deploy e acesso pela internet](docs/DEPLOY.md) | Local, VPS, EasyPanel, túnel e domínio próprio. |
+| [Deploy e acesso pela internet](docs/DEPLOY.md) | Local, VPS, EasyPanel, Umbrel, túnel e domínio próprio. |
 | [Desempenho](docs/PERFORMANCE.md) | Pré-geração do mundo, memória, distâncias e diagnóstico de lag. |
 | [Changelog](CHANGELOG.md) | O que mudou em cada versão. |
 

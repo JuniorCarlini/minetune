@@ -9,10 +9,31 @@ Tipos de mudança: **Adicionado** (novidades), **Alterado** (mudanças no que j�
 existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido**
 (bugs) e **Segurança** (vulnerabilidades).
 
-## [Não lançado]
+## [0.3.0] - 2026-09-15
+
+Senha por nick dentro do jogo, vários mundos com envio e download, painel e site em
+três línguas e tudo pronto para instalar pelo EasyPanel e pelo Umbrel.
 
 ### Adicionado
 
+- **IP real dos jogadores atrás de túnel**: com "Proxy Protocol" ligado no playit.gg
+  (ou no frp), o portão lê o IP de cada jogador, e bans e limites passam a valer por
+  pessoa. Só aceita esse cabeçalho vindo da própria máquina ou da rede local.
+- **playit.gg sem rede do host** (`compose.tunnel-bridge.yaml`), para Docker Desktop no
+  Mac e no Windows, e guia de como abrir o servidor: port forward, túneis que funcionam
+  para Minecraft Java e firewall de VPS na Oracle, Hetzner, Hostinger e Magalu Cloud.
+- **Template do EasyPanel** gerado a partir do `deploy/compose.yaml`, com as senhas
+  criadas na instalação, e app do Umbrel pronto para a loja da comunidade: uma senha
+  derivada para cada uso, dados dentro da pasta do app e versão fixa das imagens.
+- **Portão Minetune: senha por nick dentro do jogo**. Na primeira vez que alguém
+  entra, uma janela do próprio Minecraft pede para criar uma senha, e depois ela é
+  pedida a cada entrada. Ninguém entra com o nick de outra pessoa, derruba quem já
+  está jogando ou mexe no mundo antes da senha. Funciona com Paper, Vanilla, Fabric
+  e NeoForge a partir do Minecraft 1.21.6, sem plugin nem mod, e usa cerca de 30 MB
+  de RAM. Em Jogadores dá para desligar a senha e resetar a de alguém. No Paper, o
+  servidor passa a aceitar só quem chega pelo portão e continua vendo o IP real de
+  cada jogador. A tela Início avisa se o portão parar, e ligar a senha com gente
+  jogando desconecta só quem entrou sem senha.
 - **Mapa de seeds no site**: digite uma seed e veja os biomas, as estruturas
   (vilas, fortalezas, mansões, cidades ancestrais, câmaras do desafio e mais) e o
   spawn, do Minecraft Java 1.18 ao 26.2, no mundo normal, no Nether e no End.
@@ -25,16 +46,46 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
   endereço mostrado só funciona no próprio computador ou na mesma rede.
 - **Convidar pelo menu de quem está jogando**: "Adicionar aos convidados" (ou
   "Tirar dos convidados") junto de administrador, expulsar e banir.
+- **Vários mundos**: crie, renomeie, apague e troque o mundo ligado pela tela
+  Mundos. Cada mundo guarda a própria configuração, plugins e listas de
+  convidados, administradores e banidos; um mundo novo começa sem pessoas.
+- **Travas de compatibilidade**: o painel não deixa trocar um mundo salvo pelo
+  Paper para Vanilla, Fabric ou NeoForge (o servidor caía ao ligar) nem voltar um
+  mapa para uma versão mais antiga, e explica o motivo no campo.
+- **Painel e site em inglês e espanhol**, além do português. A língua segue o
+  navegador e pode ser trocada no login e em Aparência; o site ganhou `/en/` e `/es/`.
+- **Cinco logos novos**: creeper com alavanca, rack de redstone, lâmpada de
+  redstone, bloco de comando e creeper de redstone.
+- **Imagens publicadas e deploy sem o código-fonte**: `minetune-panel`,
+  `minetune-mc` e `minetune-backup` no GitHub Container Registry (amd64 e arm64),
+  o `deploy/compose.yaml` para colar no EasyPanel e uma Community App Store para o Umbrel.
+- **Explicação no "?" de todas as opções**: as 59 regras do jogo e todas as
+  configurações dizem em uma frase o que mudam no jogo, nas três línguas.
+- **Enviar, baixar e recuperar mundos**: suba um mundo em .zip pela tela Mundos, baixe
+  qualquer mundo (o ligado sem desconectar ninguém) e recupere só um mundo de uma cópia
+  de segurança. O envio confere o arquivo antes de extrair e explica o que está errado:
+  programas e scripts, caminhos que saem da pasta, "zip bomb", mundos do Bedrock e
+  arquivos que não são de mundo são recusados; da configuração do arquivo só entram as
+  opções conhecidas do painel.
 
 ### Alterado
 
+- No celular, o menu lateral abre como gaveta e os modais aparecem centralizados.
 - Agente do playit.gg na versão 1.0.
+- Memória do servidor em GB, só com números; o painel mostra o máximo que cabe na máquina.
+- Mapa de seeds: bússola marcando o spawn, cursor de mira, destaque ao passar o
+  mouse numa estrutura e marca no ponto clicado.
+- Componentes Tucano na versão 0.33.
+- Site com os prints do painel em inglês e espanhol e rodapé só com Início,
+  Mapa de seeds, Changelog e GitHub.
 
 ### Corrigido
 
 - Jogadores entrando pelo túnel (playit) ou por proxy eram recusados quando
   alguém tinha acabado de entrar: todos chegam com o mesmo IP e o Paper limitava
   uma conexão a cada 4 segundos por IP. O limite fica desligado.
+- Um texto colado por engano no nome do mundo virava uma pasta com a frase inteira;
+  agora nomes com cara de frase são recusados ao criar ou renomear.
 
 ## [0.2.0] - 2026-09-13
 
@@ -170,6 +221,6 @@ Primeira versão: servidor, backups, painel web e documentação.
 - Acesso ao Docker por proxy com lista de permissões: só leitura de status e
   logs e ligar, parar ou reiniciar containers.
 
-[Não lançado]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...HEAD
+[0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/JuniorCarlini/minetune/releases/tag/v0.1.0
