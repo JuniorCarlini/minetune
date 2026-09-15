@@ -9,7 +9,7 @@
  *   node scripts/build-easypanel.mjs
  */
 
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
 const root = new URL('..', import.meta.url);
 const out = new URL('easypanel/minetune/', root);
@@ -56,11 +56,10 @@ export function generate(input: Input): Output {
 }
 `;
 
+// Mesmo formato dos templates aceitos no repositório oficial: logo.png e um screenshot.png.
+await rm(new URL('assets/', out), { recursive: true, force: true });
 await mkdir(new URL('assets/', out), { recursive: true });
 await writeFile(new URL('index.ts', out), index);
 await copyFile(new URL('docs/assets/logo/rack-512.png', root), new URL('assets/logo.png', out));
-const shots = ['overview', 'players', 'settings'];
-await Promise.all(
-  shots.map((name, i) => copyFile(new URL(`docs/assets/screenshots/en/${name}.png`, root), new URL(`assets/screenshot${i + 1}.png`, out))),
-);
+await copyFile(new URL('docs/assets/screenshots/en/overview.png', root), new URL('assets/screenshot.png', out));
 console.log(`template do EasyPanel gerado em easypanel/minetune/ (Minetune ${version})`);
