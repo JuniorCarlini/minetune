@@ -14,7 +14,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   mc:
-    image: ghcr.io/juniorcarlini/minetune-mc:0.3.0
+    image: ghcr.io/juniorcarlini/minetune-mc:0.3.0@sha256:699155075f02973894346e96743dcb490e6c72b04631763a741d8c65fa90e10d
     labels:
       minetune.instance: minetune
       minetune.role: server
@@ -49,7 +49,7 @@ services:
 
   # Portão Minetune: pede a senha do nick antes de ligar o jogador ao servidor (~30 MB de RAM).
   gate:
-    image: ghcr.io/juniorcarlini/minetune-panel:0.3.0
+    image: ghcr.io/juniorcarlini/minetune-panel:0.3.0@sha256:da00b7f62d072135f24451f4c03f56ac57b870a67250401511bc3ae8a6065ee5
     command: ["node", "src/server/gate/index.ts"]
     labels:
       minetune.instance: minetune
@@ -74,7 +74,7 @@ services:
     restart: on-failure
 
   backup:
-    image: ghcr.io/juniorcarlini/minetune-backup:0.3.0
+    image: ghcr.io/juniorcarlini/minetune-backup:0.3.0@sha256:572a9e4841e8f6d76e318a2875b610a6db5f80121de2ab71a5ccb64b9ff20d11
     labels:
       minetune.instance: minetune
       minetune.role: backup
@@ -104,7 +104,7 @@ services:
     restart: on-failure
 
   panel:
-    image: ghcr.io/juniorcarlini/minetune-panel:0.3.0
+    image: ghcr.io/juniorcarlini/minetune-panel:0.3.0@sha256:da00b7f62d072135f24451f4c03f56ac57b870a67250401511bc3ae8a6065ee5
     labels:
       minetune.instance: minetune
       minetune.role: panel
