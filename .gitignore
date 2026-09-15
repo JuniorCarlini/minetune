@@ -25,3 +25,4 @@ config/backup.env
 config/gate.json
 # Pastas vazias que o app do Umbrel precisa ter no pacote
 !umbrel/minetune-server/data/
+!umbrel/minetune-server/data/backups/
