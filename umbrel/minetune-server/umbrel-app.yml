@@ -1,0 +1,43 @@
+manifestVersion: 1
+id: minetune-server
+category: media
+name: Minetune
+version: "0.3.0"
+tagline: Minecraft server with a friendly web panel, in-game passwords and encrypted backups
+icon: https://raw.githubusercontent.com/JuniorCarlini/minetune/main/docs/assets/logo/rack-512.png
+description: >-
+  Minetune runs a Minecraft Java (and optional Bedrock) server with its own web panel in English,
+  Portuguese and Spanish: server type and version, plugins and mods from Modrinth, game rules,
+  players, multiple worlds with upload and download, and incremental, encrypted backups with restic.
+
+
+  Every player creates a password for their name in a window inside the game, with no plugin or
+  mod, so nobody can join with someone else's name. You can turn it off and reset passwords in the panel.
+
+
+  Players join on port 25565 of your Umbrel. To play from outside your home network, forward that
+  port on your router or use a tunnel such as playit.gg pointing to your Umbrel's IP, port 25565.
+releaseNotes: >-
+  In-game password per player name (Minetune Gate), multiple worlds with upload, download and
+  single-world restore, panel and website in English and Spanish, and a separate secret for each
+  internal password.
+developer: Junior Carlini
+website: https://juniorcarlini.github.io/minetune/
+dependencies: []
+repo: https://github.com/JuniorCarlini/minetune
+support: https://github.com/JuniorCarlini/minetune/issues
+port: 8488
+gallery:
+  - https://raw.githubusercontent.com/JuniorCarlini/minetune/main/docs/assets/screenshots/en/overview.png
+  - https://raw.githubusercontent.com/JuniorCarlini/minetune/main/docs/assets/screenshots/en/players.png
+  - https://raw.githubusercontent.com/JuniorCarlini/minetune/main/docs/assets/screenshots/en/settings.png
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+# O painel usa a senha gerada pelo Umbrel (mostrada na tela do app) como senha de login.
+deterministicPassword: true
+# Cache do restic é refeito sozinho; não precisa entrar nos backups do Umbrel.
+backupIgnore:
+  - data/restic-cache/*
+submitter: Junior Carlini
+submission: https://github.com/JuniorCarlini/minetune

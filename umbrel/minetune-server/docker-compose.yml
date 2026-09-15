@@ -1,0 +1,168 @@
+# Minetune no Umbrel. Mesma stack do deploy/compose.yaml, no formato de app do Umbrel:
+#   - app_proxy do Umbrel na frente do painel (porta do manifesto → panel:8080)
+#   - dados em ${APP_DATA_DIR}/data, que o Umbrel inclui nos backups dele
+#   - senha de login do painel = ${APP_PASSWORD} (mostrada na tela do app); as demais senhas
+#     são derivadas uma a uma em exports.sh
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: minetune-server_panel_1
+      APP_PORT: 8080
+      # O painel tem login próprio com a senha do Umbrel; sem segunda tela de login na frente.
+      PROXY_AUTH_ADD: "false"
+
+  mc:
+    image: ghcr.io/juniorcarlini/minetune-mc:0.3.0
+    labels:
+      minetune.instance: minetune
+      minetune.role: server
+    environment:
+      EULA: "TRUE"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: ${APP_MINETUNE_RCON_PASSWORD}
+      CREATE_CONSOLE_IN_PIPE: "true"
+      ENABLE_ROLLING_LOGS: "true"
+      STOP_SERVER_ANNOUNCE_DELAY: "5"
+      STOP_DURATION: "60"
+      # Umbrel costuma ter 8 GB e o próprio sistema usa ~1,5 GB: heap de 3G dentro de um limite de 4 GB.
+      # Vale só na primeira subida; depois a memória se ajusta em Configurações → Desempenho.
+      MINETUNE_INITIAL_MEMORY: 3G
+      # Atrás do Portão Minetune: o Paper aceita só quem chega por ele.
+      MINETUNE_GATE: "true"
+    ports:
+      # A porta do jogo (TCP) é do portão; aqui só o Bedrock, usado quando o crossplay está ligado.
+      - "19132:19132/udp"
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data
+      - ${APP_DATA_DIR}/data/config:/minetune/config
+    mem_limit: 4g
+    stop_grace_period: 90s
+    healthcheck:
+      test: ["CMD-SHELL", "mc-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5m
+    restart: on-failure
+
+  # Portão Minetune: pede a senha do nick antes de ligar o jogador ao servidor (~30 MB de RAM).
+  gate:
+    image: ghcr.io/juniorcarlini/minetune-panel:0.3.0
+    command: ["node", "src/server/gate/index.ts"]
+    labels:
+      minetune.instance: minetune
+      minetune.role: gate
+    environment:
+      GATE_BACKEND: mc:25565
+      RCON_HOST: mc
+      RCON_PASSWORD: ${APP_MINETUNE_RCON_PASSWORD}
+    ports:
+      - "25565:25565/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data
+      - ${APP_DATA_DIR}/data/config:/minetune/config:ro
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    # Grava as senhas em data/server/minetune-gate, pasta criada pelo servidor.
+    cap_add: [DAC_OVERRIDE]
+    mem_limit: 128m
+    healthcheck:
+      disable: true
+    restart: on-failure
+
+  backup:
+    image: ghcr.io/juniorcarlini/minetune-backup:0.3.0
+    labels:
+      minetune.instance: minetune
+      minetune.role: backup
+    depends_on:
+      mc:
+        condition: service_healthy
+    environment:
+      RESTIC_REPOSITORY: /backups/restic
+      RESTIC_PASSWORD: ${APP_MINETUNE_RESTIC_PASSWORD}
+      RESTIC_HOST: minetune
+      AWS_DEFAULT_REGION: auto
+      BACKUP_METHOD: restic
+      BACKUP_NAME: world
+      RCON_HOST: mc
+      RCON_PASSWORD: ${APP_MINETUNE_RCON_PASSWORD}
+      INITIAL_DELAY: 5m
+      BACKUP_INTERVAL: 6h
+      PAUSE_IF_NO_PLAYERS: "true"
+      PRUNE_RESTIC_RETENTION: --keep-last 4 --keep-daily 7 --keep-weekly 4 --keep-monthly 6
+      EXCLUDES: /data/*.jar,/data/libraries,/data/versions,/data/cache,/data/logs,/data/.minetune,*.tmp
+      RESTIC_CACHE_DIR: /cache
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data:ro
+      - ${APP_DATA_DIR}/data/backups:/backups
+      - ${APP_DATA_DIR}/data/restic-cache:/cache
+      - ${APP_DATA_DIR}/data/config:/minetune/config:ro
+    restart: on-failure
+
+  panel:
+    image: ghcr.io/juniorcarlini/minetune-panel:0.3.0
+    labels:
+      minetune.instance: minetune
+      minetune.role: panel
+    depends_on:
+      - docker-proxy
+    environment:
+      INSTANCE_NAME: minetune
+      PANEL_PASSWORD: ${APP_PASSWORD}
+      PANEL_SESSION_SECRET: ${APP_MINETUNE_SESSION_SECRET}
+      MC_PORT: "25565"
+      RCON_HOST: mc
+      RCON_PASSWORD: ${APP_MINETUNE_RCON_PASSWORD}
+      DOCKER_API: http://docker-proxy:2375
+      RESTIC_REPOSITORY: /backups/restic
+      RESTIC_PASSWORD: ${APP_MINETUNE_RESTIC_PASSWORD}
+      RESTIC_HOST: minetune
+      AWS_DEFAULT_REGION: auto
+      BACKUP_NAME: world
+      BACKUP_EXCLUDES: /data/*.jar,/data/libraries,/data/versions,/data/cache,/data/logs,/data/.minetune,*.tmp
+      BACKUP_RETENTION: --keep-last 4 --keep-daily 7 --keep-weekly 4 --keep-monthly 6
+      BACKUP_INTERVAL: 6h
+      BACKUP_PAUSE_IF_NO_PLAYERS: "true"
+      RESTIC_CACHE_DIR: /cache
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/backups:/backups
+      - ${APP_DATA_DIR}/data/restic-cache:/cache
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    # Restore precisa preservar dono e permissões dos arquivos do mundo.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    restart: on-failure
+    networks: [default, docker-api]
+
+  # Acesso mínimo ao Docker só para o painel: ler estado e logs, ligar/desligar/reiniciar.
+  # É o motivo de este app ficar na loja da comunidade: a loja oficial não aceita docker.sock.
+  docker-proxy:
+    image: wollomatic/socket-proxy:1
+    command:
+      - -loglevel=WARN
+      - -listenip=0.0.0.0
+      - -allowfrom=panel
+      - -allowGET=^(/v[0-9.]+)?/(_ping|version|containers/json|containers/[a-zA-Z0-9_.-]+/(json|logs|stats))$$
+      - -allowPOST=^(/v[0-9.]+)?/containers/[a-zA-Z0-9_.-]+/(start|stop|restart)$$
+      - -shutdowngracetime=5
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    user: "0:0"
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    mem_limit: 64m
+    restart: on-failure
+    networks: [docker-api]
+
+networks:
+  docker-api:
+    internal: true

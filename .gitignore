@@ -20,3 +20,6 @@ build/
 
 # Destino dos backups salvo pelo painel (tem segredos)
 config/backup.env
+
+# Liga/desliga da senha do Portão Minetune (estado local, gravado pelo painel)
+config/gate.json

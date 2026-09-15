@@ -1,0 +1,33 @@
+# =============================================================================
+# Overlay: túnel playit.gg sem rede do host — para Docker Desktop (Mac/Windows) e OrbStack
+# sem "host networking", ou para quem prefere não dar a rede da máquina ao agente.
+#
+# Use NO LUGAR do compose.tunnel.yaml (não os dois juntos):
+#   COMPOSE_FILE=compose.yaml:compose.tunnel-bridge.yaml
+#   PLAYIT_SECRET_KEY=<chave gerada em playit.gg>
+#
+# No dashboard do playit, o túnel "Minecraft Java" aponta para 172.31.250.10:25565 — o portão
+# numa rede só dele e do agente. O agente do playit não resolve nomes (só IP), por isso o IP fixo.
+# Para o IP real dos jogadores, ligue "Proxy Protocol v2" no túnel: o portão entende sozinho.
+# =============================================================================
+services:
+  gate:
+    networks:
+      game: {}
+      tunnel:
+        ipv4_address: 172.31.250.10
+
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:${PLAYIT_IMAGE_TAG:-1.0}
+    environment:
+      SECRET_KEY: ${PLAYIT_SECRET_KEY:?defina PLAYIT_SECRET_KEY no .env}
+    depends_on:
+      - gate
+    restart: unless-stopped
+    networks: [tunnel]
+
+networks:
+  tunnel:
+    ipam:
+      config:
+        - subnet: 172.31.250.0/24

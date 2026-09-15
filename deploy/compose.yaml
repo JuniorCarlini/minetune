@@ -1,15 +1,19 @@
 # =============================================================================
-# minetune — stack principal
+# minetune — stack com imagens publicadas, para plataformas sem o código-fonte
 #
-#   mc            Servidor Minecraft (itzg/minecraft-server). Config do jogo em config/server.env
-#   gate          Portão Minetune: dono da porta do jogo, pede a senha de cada nick (código em ./panel)
-#   backup        Backups agendados com restic -> disco local, S3, R2, RustFS/MinIO...
-#   panel         Painel web de configuração/operação (código em ./panel)
-#   docker-proxy  Acesso MÍNIMO ao Docker para o painel (ler status/logs, start/stop/restart)
+# Use quando não dá para clonar o repositório: colar no EasyPanel (serviço Compose),
+# Portainer, Coolify ou qualquer host com Docker. Em casa ou numa VPS com o repositório,
+# continue com o compose.yaml da raiz e o `make up`.
 #
-# Overlays opcionais: compose.s3-local.yaml, compose.tunnel.yaml (ver COMPOSE_FILE no .env)
+# Diferenças para o compose.yaml da raiz:
+#   - imagens ghcr.io/juniorcarlini/minetune-* (entrypoints e configuração inicial dentro)
+#   - nada montado a partir de arquivos do repositório
+#   - a pasta de config é gravável no servidor: na primeira subida ele copia os padrões
+#
+# Variáveis obrigatórias (gere cada uma com `openssl rand -base64 32`):
+#   RCON_PASSWORD, PANEL_PASSWORD, PANEL_SESSION_SECRET, RESTIC_PASSWORD
+# As demais têm padrão; veja .env.example no repositório.
 # =============================================================================
-name: ${COMPOSE_PROJECT_NAME:-minetune}
 
 x-logging: &logging
   driver: json-file
@@ -17,10 +21,9 @@ x-logging: &logging
     max-size: "10m"
     max-file: "3"
 
-# Mesmas credenciais para o agendador (backup) e para o painel (backup manual/restore).
 x-restic-env: &restic-env
   RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-/backups/restic}
-  RESTIC_PASSWORD: ${RESTIC_PASSWORD:?defina RESTIC_PASSWORD no .env (rode make init)}
+  RESTIC_PASSWORD: ${RESTIC_PASSWORD:?defina RESTIC_PASSWORD (openssl rand -base64 32) e guarde fora do servidor}
   RESTIC_HOST: ${INSTANCE_NAME:-minetune}
   AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
   AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -28,10 +31,7 @@ x-restic-env: &restic-env
 
 services:
   mc:
-    image: itzg/minecraft-server:${MC_IMAGE_TAG:-java25}
-    # Wrapper: carrega config/server.env a cada start. Assim o painel só precisa
-    # REINICIAR o container para aplicar mudanças (sem recriar via compose).
-    entrypoint: ["bash", "/minetune/bin/entrypoint.sh"]
+    image: ghcr.io/juniorcarlini/minetune-mc:${MINETUNE_VERSION:-0.3.0}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: server
@@ -39,21 +39,22 @@ services:
       EULA: "TRUE"
       TZ: ${TZ:-America/Sao_Paulo}
       ENABLE_RCON: "true"
-      RCON_PASSWORD: ${RCON_PASSWORD:?defina RCON_PASSWORD no .env (rode make init)}
+      RCON_PASSWORD: ${RCON_PASSWORD:?defina RCON_PASSWORD (openssl rand -base64 32)}
       CREATE_CONSOLE_IN_PIPE: "true"
       ENABLE_ROLLING_LOGS: "true"
       STOP_SERVER_ANNOUNCE_DELAY: "5"
       STOP_DURATION: "60"
-      # Atrás do Portão Minetune: o Paper aceita só quem chega por ele (ver entrypoint.sh).
+      # Heap inicial do Minecraft (ex.: 3G) quando a máquina tem pouca RAM. Vazio = padrão 4G.
+      # Vale só na primeira subida; mantenha ~1 GB abaixo de MC_MEMORY_LIMIT.
+      MINETUNE_INITIAL_MEMORY: ${MINETUNE_INITIAL_MEMORY:-}
+      # Atrás do Portão Minetune: o Paper aceita só quem chega por ele.
       MINETUNE_GATE: "true"
     ports:
       # A porta do jogo (TCP) é do portão; aqui só o Bedrock, usado quando o crossplay está ligado.
       - "${BEDROCK_PORT:-19132}:19132/udp"
     volumes:
       - ${DATA_DIR:-./data}:/data
-      # Montado fora de /config de propósito: a imagem sincroniza /config para /data/config.
-      - ${CONFIG_DIR:-./config}:/minetune/config:ro
-      - ./docker/minecraft:/minetune/bin:ro
+      - ${CONFIG_DIR:-./config}:/minetune/config
     mem_limit: ${MC_MEMORY_LIMIT:-6g}
     stop_grace_period: 90s
     healthcheck:
@@ -61,18 +62,42 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      # Primeiro boot baixa servidor, plugins e gera o mundo.
       start_period: 5m
     restart: unless-stopped
     logging: *logging
     networks: [game]
 
+  gate:
+    # Portão Minetune: recebe os jogadores e pede a senha do nick antes de ligar cada um ao servidor.
+    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.0}
+    command: ["node", "src/server/gate/index.ts"]
+    labels:
+      minetune.instance: ${INSTANCE_NAME:-minetune}
+      minetune.role: gate
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      GATE_BACKEND: mc:25565
+      RCON_HOST: mc
+      RCON_PASSWORD: ${RCON_PASSWORD}
+    ports:
+      # O jogo não é HTTP: a porta sai direto no host (domínios HTTPS da plataforma não servem aqui).
+      - "${MC_PORT:-25565}:25565/tcp"
+    volumes:
+      - ${DATA_DIR:-./data}:/data
+      - ${CONFIG_DIR:-./config}:/minetune/config:ro
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    mem_limit: 128m
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+    logging: *logging
+    networks: [game]
+
   backup:
-    image: itzg/mc-backup:${MC_BACKUP_IMAGE_TAG:-latest}
-    # Wrapper: carrega config/backup.env (destino, agenda e retenção salvos pelo
-    # painel) a cada start. Assim o painel aplica mudanças só reiniciando o agendador.
-    entrypoint: ["bash", "/minetune/bin/entrypoint.sh"]
-    command: ["loop"]
+    image: ghcr.io/juniorcarlini/minetune-backup:${MINETUNE_VERSION:-0.3.0}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: backup
@@ -91,7 +116,6 @@ services:
       PAUSE_IF_NO_PLAYERS: ${BACKUP_PAUSE_IF_NO_PLAYERS:-true}
       PRUNE_RESTIC_RETENTION: ${BACKUP_RETENTION:---keep-last 4 --keep-daily 7 --keep-weekly 4 --keep-monthly 6}
       EXCLUDES: ${BACKUP_EXCLUDES:-/data/*.jar,/data/libraries,/data/versions,/data/cache,/data/logs,/data/.minetune,*.tmp}
-      # KiB/s. 0 = sem limite. Útil quando o upload compete com o jogo na banda de casa.
       RESTIC_LIMIT_UPLOAD: ${RESTIC_LIMIT_UPLOAD:-0}
       RESTIC_CACHE_DIR: /cache
     volumes:
@@ -99,47 +123,12 @@ services:
       - ${BACKUP_LOCAL_DIR:-./backups}:/backups
       - restic-cache:/cache
       - ${CONFIG_DIR:-./config}:/minetune/config:ro
-      - ./docker/backup:/minetune/bin:ro
-    restart: unless-stopped
-    logging: *logging
-    networks: [game]
-
-  gate:
-    # Portão Minetune: recebe os jogadores, pede a senha do nick e só então liga cada um ao
-    # servidor, que fica sem porta no host. Mesma imagem do painel, outro processo (~30 MB).
-    build: ./panel
-    image: minetune-panel:local
-    command: ["node", "src/server/gate/index.ts"]
-    labels:
-      minetune.instance: ${INSTANCE_NAME:-minetune}
-      minetune.role: gate
-    environment:
-      TZ: ${TZ:-America/Sao_Paulo}
-      GATE_BACKEND: mc:25565
-      # Só para desfazer um /ban-ip que acerte o próprio portão (Vanilla, Fabric, NeoForge).
-      RCON_HOST: mc
-      RCON_PASSWORD: ${RCON_PASSWORD}
-    ports:
-      - "${MC_PORT:-25565}:25565/tcp"
-    volumes:
-      # Senhas em data/minetune-gate (entram nos backups); liga/desliga em config/gate.json.
-      - ${DATA_DIR:-./data}:/data
-      - ${CONFIG_DIR:-./config}:/minetune/config:ro
-    read_only: true
-    security_opt: ["no-new-privileges:true"]
-    cap_drop: [ALL]
-    cap_add: [DAC_OVERRIDE]
-    mem_limit: 128m
-    # A verificação de saúde da imagem olha a porta 8080 do painel, que o portão não abre.
-    healthcheck:
-      disable: true
     restart: unless-stopped
     logging: *logging
     networks: [game]
 
   panel:
-    build: ./panel
-    image: minetune-panel:local
+    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.0}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: panel
@@ -149,8 +138,8 @@ services:
       <<: *restic-env
       TZ: ${TZ:-America/Sao_Paulo}
       INSTANCE_NAME: ${INSTANCE_NAME:-minetune}
-      PANEL_PASSWORD: ${PANEL_PASSWORD:?defina PANEL_PASSWORD no .env (rode make init)}
-      PANEL_SESSION_SECRET: ${PANEL_SESSION_SECRET:?defina PANEL_SESSION_SECRET no .env (rode make init)}
+      PANEL_PASSWORD: ${PANEL_PASSWORD:?defina PANEL_PASSWORD (mínimo 8 caracteres)}
+      PANEL_SESSION_SECRET: ${PANEL_SESSION_SECRET:?defina PANEL_SESSION_SECRET (openssl rand -base64 32)}
       PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:-}
       MC_PORT: ${MC_PORT:-25565}
       RCON_HOST: mc
@@ -163,8 +152,12 @@ services:
       BACKUP_PAUSE_IF_NO_PLAYERS: ${BACKUP_PAUSE_IF_NO_PLAYERS:-true}
       RESTIC_LIMIT_UPLOAD: ${RESTIC_LIMIT_UPLOAD:-0}
       RESTIC_CACHE_DIR: /cache
-    ports:
-      - "${PANEL_BIND:-127.0.0.1}:${PANEL_PORT:-8080}:8080"
+    # Sem porta no host: a plataforma (EasyPanel, proxy reverso) aponta o domínio HTTPS para panel:8080.
+    # Num host sem proxy, descomente para abrir só nesta máquina.
+    # ports:
+    #   - "127.0.0.1:8080:8080"
+    expose:
+      - "8080"
     volumes:
       - ${DATA_DIR:-./data}:/data
       - ${CONFIG_DIR:-./config}:/config
@@ -174,7 +167,6 @@ services:
     tmpfs: [/tmp]
     security_opt: ["no-new-privileges:true"]
     cap_drop: [ALL]
-    # Restore precisa preservar dono/permissões dos arquivos do mundo.
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
     restart: unless-stopped
     logging: *logging
@@ -182,8 +174,6 @@ services:
 
   docker-proxy:
     image: wollomatic/socket-proxy:1
-    # Allowlist por método+caminho. Nada de exec, create, images ou volumes:
-    # mesmo com o painel comprometido, não dá para criar containers no host.
     command:
       - -loglevel=WARN
       - -listenip=0.0.0.0
@@ -193,8 +183,6 @@ services:
       - -shutdowngracetime=5
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    # O socket pertence a root:<grupo docker>, e o GID muda entre hosts. Padrão root
-    # (sem capabilities, FS read-only). Para rodar sem root: DOCKER_PROXY_USER=65534:<gid do socket>.
     user: ${DOCKER_PROXY_USER:-0:0}
     read_only: true
     security_opt: ["no-new-privileges:true"]
@@ -206,7 +194,6 @@ services:
 
 networks:
   game: {}
-  # Rede interna: só o painel alcança o proxy do Docker, e o proxy não sai para a internet.
   docker-api:
     internal: true
 

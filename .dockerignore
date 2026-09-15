@@ -1,0 +1,15 @@
+# Imagens construídas a partir da raiz (docker/minecraft, docker/backup): só entra o que elas copiam.
+# Segredos e estado local nunca podem ir parar numa imagem publicada.
+.env
+.env.*
+!.env.example
+data/
+backups/
+config/backup.env
+.git/
+_site/
+build/
+.cache/
+panel/node_modules/
+panel/dist/
+**/.DS_Store

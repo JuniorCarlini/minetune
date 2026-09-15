@@ -1,0 +1,6 @@
+# Community App Store do Minetune para o Umbrel.
+# O Umbrel lê a loja pela raiz de um repositório: copie o conteúdo desta pasta para um
+# repositório próprio (ex.: JuniorCarlini/minetune-umbrel) e adicione a URL dele no Umbrel
+# em App Store → Community App Stores.
+id: minetune
+name: Minetune

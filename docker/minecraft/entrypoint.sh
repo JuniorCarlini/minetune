@@ -18,8 +18,35 @@ SERVER_ENV="$CONFIG_DIR/server.env"
 
 log() { echo "[minetune] $*"; }
 
+# Primeira subida numa plataforma sem o repositório (imagem minetune-mc, pasta de config vazia):
+# copia a configuração inicial sem sobrescrever nada. No compose.yaml local a pasta é só leitura
+# e não há padrões na imagem da itzg, então isto não faz nada.
+DEFAULTS_DIR=/minetune/defaults
+if [[ -d "$DEFAULTS_DIR" && -w "$CONFIG_DIR" ]]; then
+  first_boot=false
+  [[ -f "$SERVER_ENV" ]] || first_boot=true
+  # Arquivo a arquivo em vez de `cp -n`: nas coreutils novas o -n sai com erro quando o
+  # arquivo já existe, e com `set -e` isso impediria o servidor de ligar.
+  while IFS= read -r -d '' file; do
+    target="$CONFIG_DIR/${file#"$DEFAULTS_DIR"/}"
+    if [[ ! -e "$target" ]]; then
+      mkdir -p "$(dirname "$target")"
+      cp "$file" "$target"
+    fi
+  done < <(find "$DEFAULTS_DIR" -type f -print0)
+  if [[ "$first_boot" == true ]]; then
+    log "Configuração inicial copiada para $CONFIG_DIR"
+    # Máquinas com pouca RAM (Umbrel de 8 GB): a heap padrão de 4G não cabe no limite do container.
+    # Só na primeira cópia; depois vale o que for salvo pelo painel.
+    if [[ -n "${MINETUNE_INITIAL_MEMORY:-}" ]]; then
+      sed -i -E "s/^MEMORY=.*/MEMORY=\"${MINETUNE_INITIAL_MEMORY}\"/" "$SERVER_ENV"
+      log "Memória inicial do servidor: $MINETUNE_INITIAL_MEMORY"
+    fi
+  fi
+fi
+
 # Chaves de infraestrutura: vêm do compose e não podem ser sobrescritas pelo server.env.
-PROTECTED_KEYS=(EULA ENABLE_RCON RCON_PASSWORD RCON_PORT SERVER_PORT TZ)
+PROTECTED_KEYS=(EULA ENABLE_RCON RCON_PASSWORD RCON_PORT SERVER_PORT TZ MINETUNE_GATE)
 declare -A protected
 for key in "${PROTECTED_KEYS[@]}"; do
   protected[$key]="${!key-}"
@@ -102,6 +129,31 @@ fi
 # jogadores chegam com o mesmo IP, e quem entrasse logo depois de outro era recusado.
 if [[ "$loader" == "paper" ]]; then
   add_patches bukkit
+fi
+
+# Portão Minetune na frente: o Paper passa a aceitar só quem chega por ele e recebe o IP real
+# de cada jogador (encaminhamento do Velocity, assinado com um segredo dividido com o portão).
+# Assim /ban-ip e os logs usam o IP de verdade, e ninguém entra direto na porta do servidor.
+# Vanilla, Fabric e NeoForge não têm isso: o portão cuida dos bans por IP sozinho.
+if [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" ]]; then
+  gate_secret_file=/data/minetune-gate/forwarding.secret
+  mkdir -p "$(dirname "$gate_secret_file")"
+  if [[ ! -s "$gate_secret_file" ]]; then
+    (umask 077 && head -c 32 /dev/urandom | base64 | tr -d '\n/+=' >"$gate_secret_file")
+  fi
+  gate_secret="$(tr -d '\n' <"$gate_secret_file")"
+  # O paper-global.yml só existe depois do primeiro boot; até lá o portão funciona sem o IP real.
+  cat >"$patches_dir/minetune-gate.json" <<EOF
+{
+  "file": "/data/config/paper-global.yml",
+  "ops": [
+    { "\$set": { "path": "\$['proxies']['velocity']['enabled']", "value": true } },
+    { "\$set": { "path": "\$['proxies']['velocity']['online-mode']", "value": false } },
+    { "\$set": { "path": "\$['proxies']['velocity']['secret']", "value": "$gate_secret" } }
+  ]
+}
+EOF
+  log "Portão Minetune: servidor aceita só conexões vindas do portão"
 fi
 
 if [[ "${BEDROCK_CROSSPLAY:-false}" == "true" ]]; then
