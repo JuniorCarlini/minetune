@@ -9,6 +9,15 @@ Change types: **Added** (new features), **Changed** (changes to existing
 features), **Deprecated** (will be removed in a future version), **Removed**, **Fixed**
 (bugs) and **Security** (vulnerabilities).
 
+## [0.3.3] - 2026-09-15
+
+### Fixed
+
+- On EasyPanel, saving the compose file deleted the world: it removes and recreates the
+  service folder every time the compose is saved, and `deploy/compose.yaml` kept the world,
+  config and backups in `./data`, `./config` and `./backups`, inside that folder. They now
+  live in named Docker volumes, which survive saving and redeploying.
+
 ## [0.3.2] - 2026-09-15
 
 ### Fixed
@@ -239,6 +248,7 @@ First version: server, backups, web panel and documentation.
 - Docker access through a proxy with an allowlist: only reading status and
   logs and starting, stopping or restarting containers.
 
+[0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0

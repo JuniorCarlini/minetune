@@ -9,6 +9,15 @@ Tipos de cambio: **Añadido** (novedades), **Cambiado** (cambios en lo que ya
 existía), **Obsoleto** (se quitará en una versión futura), **Eliminado**, **Corregido**
 (errores) y **Seguridad** (vulnerabilidades).
 
+## [0.3.3] - 2026-09-15
+
+### Corregido
+
+- En EasyPanel, guardar el compose borraba el mundo: borra y vuelve a crear la carpeta del
+  servicio cada vez que se guarda el compose, y `deploy/compose.yaml` guardaba el mundo, la
+  configuración y las copias en `./data`, `./config` y `./backups`, dentro de esa carpeta.
+  Ahora están en volúmenes con nombre de Docker, que sobreviven a guardar y volver a desplegar.
+
 ## [0.3.2] - 2026-09-15
 
 ### Corregido
@@ -239,6 +248,7 @@ Primera versión: servidor, copias de seguridad, panel web y documentación.
 - Acceso a Docker mediante un proxy con lista de permisos: solo lectura de estado y
   logs y encender, parar o reiniciar contenedores.
 
+[0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0

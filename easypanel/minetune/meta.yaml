@@ -14,7 +14,7 @@ instructions: >-
   outside the server: backups can't be restored without it.
 changeLog:
   - date: 2026-09-15
-    description: First release (Minetune 0.3.2)
+    description: First release (Minetune 0.3.3)
 links:
   - label: Website
     url: https://juniorcarlini.github.io/minetune/
@@ -39,7 +39,7 @@ schema:
     version:
       type: string
       title: Minetune Version
-      default: "0.3.2"
+      default: "0.3.3"
     memoryLimit:
       type: string
       title: Minecraft Server Memory Limit
