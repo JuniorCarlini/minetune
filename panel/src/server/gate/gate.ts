@@ -14,7 +14,7 @@
  * Fabric e NeoForge, sem plugin nem mod. Conexões de status (lista de servidores) vão direto.
  */
 
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { connect, createServer, isIP, type Server, type Socket } from 'node:net';
 import { networkInterfaces } from 'node:os';
@@ -103,6 +103,8 @@ export class MinetuneGate {
   private readonly playing = new Set<PlayingSession>();
   private lastRequirePassword: boolean | undefined;
   private lastRejectionLog = 0;
+  /** Como o servidor faz: um UUID sorteado ao ligar, mandado no fim do login a partir do 26.2. */
+  readonly sessionId = randomUUID();
   private readonly failures = new FailureLimiter(10, 10 * 60_000);
   /** Nicks entrando ou jogando pelo portão: o mesmo nick não entra duas vezes nem derruba quem está dentro. */
   private readonly names = new Set<string>();
@@ -500,7 +502,7 @@ class Session {
         this.sendRaw(frame(packet(ID.login.compression, varInt(this.threshold)), -1));
         this.incoming.threshold = this.threshold;
       }
-      this.send(packet(ID.login.success, uuidBytes(this.uuid), mcString(this.name), varInt(0)));
+      this.send(loginFinishedPacket(this.protocol, this.uuid, this.name, this.gate.sessionId));
       return;
     }
     if (id === ID.loginIn.acknowledged) {
@@ -795,6 +797,20 @@ class Session {
     if (this.lockedName) this.gate.unlockName(this.name);
     this.releaseSlot();
   }
+}
+
+/** Minecraft 26.2 (protocolo 776): o fim do login passou a levar o UUID da sessão do servidor. */
+const SESSION_ID_PROTOCOL = 776;
+
+/**
+ * Fim do login (login_finished) no formato da versão do jogo: perfil (UUID, nick, nenhuma
+ * propriedade) e, a partir do 26.2, o sessionId. Mandar o formato errado faz o jogo recusar
+ * a conexão com "Failed to decode packet login_finished".
+ */
+export function loginFinishedPacket(protocol: number, uuid: string, name: string, sessionId: string): Buffer {
+  const fields = [uuidBytes(uuid), mcString(name), varInt(0)];
+  if (protocol >= SESSION_ID_PROTOCOL) fields.push(uuidBytes(sessionId));
+  return packet(ID.login.success, ...fields);
 }
 
 /**

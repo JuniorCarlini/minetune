@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { AccountStore, FailureLimiter } from './accounts.ts';
 import { authDialog, gateTexts } from './dialogs.ts';
-import { isSharedAddress, MinetuneGate, textFromJson } from './gate.ts';
+import { isSharedAddress, loginFinishedPacket, MinetuneGate, textFromJson } from './gate.ts';
 import { frame, int64, mcString, networkNbt, offlineUuid, packet, PacketStream, parseProxyHeader, readNetworkNbt, Reader, uuidBytes, varInt, type IncomingPacket } from './protocol.ts';
 
 test('VarInt e enquadramento com compressão vão e voltam', () => {
@@ -32,6 +32,24 @@ test('pacote gigante antes do login é recusado', () => {
   const stream = new PacketStream(1024);
   stream.push(varInt(10_000));
   assert.throws(() => stream.next());
+});
+
+test('fim do login no formato de cada versão (26.2 leva o UUID da sessão)', () => {
+  const uuid = offlineUuid('Junin');
+  const old = new Reader(loginFinishedPacket(775, uuid, 'Junin', '11111111-2222-3333-4444-555555555555'));
+  assert.equal(old.varInt(), 0x02);
+  assert.equal(old.uuid(), uuid);
+  assert.equal(old.string(16), 'Junin');
+  assert.equal(old.varInt(), 0, 'sem propriedades');
+  assert.equal(old.remaining, 0, '26.1.2 termina no perfil');
+
+  const current = new Reader(loginFinishedPacket(776, uuid, 'Junin', '11111111-2222-3333-4444-555555555555'));
+  current.varInt();
+  current.uuid();
+  current.string(16);
+  current.varInt();
+  assert.equal(current.uuid(), '11111111-2222-3333-4444-555555555555', '26.2 manda o sessionId depois do perfil');
+  assert.equal(current.remaining, 0);
 });
 
 test('UUID offline igual ao do servidor', () => {
