@@ -56,8 +56,10 @@ Minecraft não é HTTP, então a exposição tem duas partes:
    Como o proxy do EasyPanel acessa o container pela rede interna, deixe `PANEL_BIND=127.0.0.1`.
 4. **Jogo:** a porta `25565` precisa ser **publicada diretamente no host**, como já está no
    `compose.yaml` (`MC_PORT`, no serviço `gate`). Libere-a no firewall do servidor. Domínios HTTP do EasyPanel não servem para o jogo.
-5. **Volumes:** confirme onde os bind mounts relativos (`./data`, `./config`, `./backups`) ficam
-   no host do EasyPanel. Se preferir caminhos absolutos, use `DATA_DIR`, `CONFIG_DIR` e `BACKUP_LOCAL_DIR`.
+5. **Volumes:** mundo, configuração e backups ficam em volumes nomeados do Docker (`minetune-data`,
+   `minetune-config`, `minetune-backups`). **Não troque por pastas relativas** como `./data`: o EasyPanel apaga
+   e recria a pasta do serviço sempre que o compose é salvo, e o mundo iria junto. Para uma pasta do host, use
+   `DATA_DIR`, `CONFIG_DIR` e `BACKUP_LOCAL_DIR` com caminhos absolutos fora de `/etc/easypanel/projects`.
 
 Checklist pós-deploy: `docker ps` mostra os 5 containers `healthy`/`running`; o painel abre pelo
 domínio; `nc -vz <ip> 25565` conecta de fora.

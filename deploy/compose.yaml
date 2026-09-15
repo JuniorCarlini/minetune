@@ -9,6 +9,7 @@
 #   - imagens ghcr.io/juniorcarlini/minetune-* (entrypoints e configuração inicial dentro)
 #   - nada montado a partir de arquivos do repositório
 #   - a pasta de config é gravável no servidor: na primeira subida ele copia os padrões
+#   - mundo, config e backups em volumes nomeados, que sobrevivem a salvar e reimplantar
 #
 # Variáveis obrigatórias (gere cada uma com `openssl rand -base64 32`):
 #   RCON_PASSWORD, PANEL_PASSWORD, PANEL_SESSION_SECRET, RESTIC_PASSWORD
@@ -31,7 +32,7 @@ x-restic-env: &restic-env
 
 services:
   mc:
-    image: ghcr.io/juniorcarlini/minetune-mc:${MINETUNE_VERSION:-0.3.2}
+    image: ghcr.io/juniorcarlini/minetune-mc:${MINETUNE_VERSION:-0.3.3}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: server
@@ -53,8 +54,8 @@ services:
       # A porta do jogo (TCP) é do portão; aqui só o Bedrock, usado quando o crossplay está ligado.
       - "${BEDROCK_PORT:-19132}:19132/udp"
     volumes:
-      - ${DATA_DIR:-./data}:/data
-      - ${CONFIG_DIR:-./config}:/minetune/config
+      - ${DATA_DIR:-minetune-data}:/data
+      - ${CONFIG_DIR:-minetune-config}:/minetune/config
     mem_limit: ${MC_MEMORY_LIMIT:-6g}
     stop_grace_period: 90s
     healthcheck:
@@ -69,7 +70,7 @@ services:
 
   gate:
     # Portão Minetune: recebe os jogadores e pede a senha do nick antes de ligar cada um ao servidor.
-    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.2}
+    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.3}
     command: ["node", "src/server/gate/index.ts"]
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
@@ -83,8 +84,8 @@ services:
       # O jogo não é HTTP: a porta sai direto no host (domínios HTTPS da plataforma não servem aqui).
       - "${MC_PORT:-25565}:25565/tcp"
     volumes:
-      - ${DATA_DIR:-./data}:/data
-      - ${CONFIG_DIR:-./config}:/minetune/config:ro
+      - ${DATA_DIR:-minetune-data}:/data
+      - ${CONFIG_DIR:-minetune-config}:/minetune/config:ro
     read_only: true
     security_opt: ["no-new-privileges:true"]
     cap_drop: [ALL]
@@ -97,7 +98,7 @@ services:
     networks: [game]
 
   backup:
-    image: ghcr.io/juniorcarlini/minetune-backup:${MINETUNE_VERSION:-0.3.2}
+    image: ghcr.io/juniorcarlini/minetune-backup:${MINETUNE_VERSION:-0.3.3}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: backup
@@ -119,16 +120,16 @@ services:
       RESTIC_LIMIT_UPLOAD: ${RESTIC_LIMIT_UPLOAD:-0}
       RESTIC_CACHE_DIR: /cache
     volumes:
-      - ${DATA_DIR:-./data}:/data:ro
-      - ${BACKUP_LOCAL_DIR:-./backups}:/backups
+      - ${DATA_DIR:-minetune-data}:/data:ro
+      - ${BACKUP_LOCAL_DIR:-minetune-backups}:/backups
       - restic-cache:/cache
-      - ${CONFIG_DIR:-./config}:/minetune/config:ro
+      - ${CONFIG_DIR:-minetune-config}:/minetune/config:ro
     restart: unless-stopped
     logging: *logging
     networks: [game]
 
   panel:
-    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.2}
+    image: ghcr.io/juniorcarlini/minetune-panel:${MINETUNE_VERSION:-0.3.3}
     labels:
       minetune.instance: ${INSTANCE_NAME:-minetune}
       minetune.role: panel
@@ -159,9 +160,9 @@ services:
     expose:
       - "8080"
     volumes:
-      - ${DATA_DIR:-./data}:/data
-      - ${CONFIG_DIR:-./config}:/config
-      - ${BACKUP_LOCAL_DIR:-./backups}:/backups
+      - ${DATA_DIR:-minetune-data}:/data
+      - ${CONFIG_DIR:-minetune-config}:/config
+      - ${BACKUP_LOCAL_DIR:-minetune-backups}:/backups
       - restic-cache:/cache
     read_only: true
     tmpfs: [/tmp]
@@ -197,5 +198,11 @@ networks:
   docker-api:
     internal: true
 
+# Volumes nomeados, e não pastas relativas: o EasyPanel apaga e recria a pasta do serviço a cada
+# vez que o compose é salvo, e o mundo guardado em ./data ia junto. Para usar uma pasta do host,
+# defina DATA_DIR, CONFIG_DIR e BACKUP_LOCAL_DIR com caminhos absolutos.
 volumes:
+  minetune-data: {}
+  minetune-config: {}
+  minetune-backups: {}
   restic-cache: {}
