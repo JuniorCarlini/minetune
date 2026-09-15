@@ -221,6 +221,8 @@ export const settings = defineMessages(
       latestOption: (today: string | null) => `Sempre a mais recente${today ? ` (hoje ${today})` : ''}`,
       tagLatest: 'mais recente',
       tagTest: 'teste',
+      javaFixed: (id: string, java: number, imageJava: number | null) =>
+        `${id} precisa de Java ${java}, e esta instalação usa Java ${imageJava} sem como trocar a imagem. Escolha uma versão que rode no Java ${imageJava}.`,
       requires: (tag: string) => `requer ${tag}`,
       custom: 'personalizada',
       placeholder: 'Padrão do servidor (mais recente)',
@@ -444,6 +446,8 @@ export const settings = defineMessages(
         latestOption: (today: string | null) => `Always the latest${today ? ` (currently ${today})` : ''}`,
         tagLatest: 'latest',
         tagTest: 'test',
+        javaFixed: (id: string, java: number, imageJava: number | null) =>
+          `${id} needs Java ${java}, and this install runs Java ${imageJava} with no way to swap the image. Pick a version that runs on Java ${imageJava}.`,
         requires: (tag: string) => `requires ${tag}`,
         custom: 'custom',
         placeholder: 'Server default (latest)',
@@ -672,6 +676,8 @@ export const settings = defineMessages(
         latestOption: (today: string | null) => `Siempre la más reciente${today ? ` (hoy ${today})` : ''}`,
         tagLatest: 'más reciente',
         tagTest: 'prueba',
+        javaFixed: (id: string, java: number, imageJava: number | null) =>
+          `${id} necesita Java ${java}, y esta instalación usa Java ${imageJava} sin forma de cambiar la imagen. Elige una versión que funcione con Java ${imageJava}.`,
         requires: (tag: string) => `requiere ${tag}`,
         custom: 'personalizada',
         placeholder: 'Predeterminado del servidor (más reciente)',

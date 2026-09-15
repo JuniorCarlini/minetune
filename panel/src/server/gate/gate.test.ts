@@ -134,7 +134,7 @@ interface FakeLogin {
 }
 
 /** Servidor falso; com `secret`, pede o IP real como o Paper com o encaminhamento do Velocity ligado. */
-async function fakeBackend(onLogin: (login: FakeLogin) => void, secret?: () => Promise<string>) {
+async function fakeBackend(onLogin: (login: FakeLogin) => void, secret?: () => Promise<string>, protocol = PROTOCOL) {
   const server = createServer((socket) => {
     const stream = new PacketStream(1024 * 1024);
     const reader = packets(socket, stream);
@@ -145,7 +145,7 @@ async function fakeBackend(onLogin: (login: FakeLogin) => void, secret?: () => P
       handshake.data.uint16();
       if (handshake.data.varInt() === 1) {
         await reader.next();
-        socket.end(frame(packet(0x00, mcString(JSON.stringify({ version: { name: '26.1.2', protocol: PROTOCOL } }))), -1));
+        socket.end(frame(packet(0x00, mcString(JSON.stringify({ version: { name: '26.1.2', protocol } }))), -1));
         return;
       }
       const start = await reader.next();
@@ -183,13 +183,13 @@ async function fakeBackend(onLogin: (login: FakeLogin) => void, secret?: () => P
   return { server, port: typeof address === 'object' && address ? address.port : 0 };
 }
 
-async function joinGate(gatePort: number, name: string, proxyHeader?: Buffer) {
+async function joinGate(gatePort: number, name: string, proxyHeader?: Buffer, protocol = PROTOCOL) {
   const socket = connect({ host: '127.0.0.1', port: gatePort });
   await new Promise((resolve) => socket.once('connect', resolve));
   if (proxyHeader) socket.write(proxyHeader);
   const stream = new PacketStream(1024 * 1024);
   const reader = packets(socket, stream);
-  socket.write(frame(packet(0x00, varInt(PROTOCOL), mcString('localhost'), Buffer.from([0x64, 0x82]), varInt(2)), -1));
+  socket.write(frame(packet(0x00, varInt(protocol), mcString('localhost'), Buffer.from([0x64, 0x82]), varInt(2)), -1));
   socket.write(frame(packet(0x00, mcString(name), uuidBytes(offlineUuid(name))), -1));
   const compression = await reader.next();
   assert.equal(compression.id, 0x03);
@@ -385,6 +385,28 @@ test('servidor em modo online: o portão só repassa, sem janela de senha', asyn
     assert.equal((await player.reader.next()).id, 0x0e, 'direto do servidor, sem janela do portão');
     await waitFor(() => logins.length === 1);
     assert.equal(logins[0]!.name, 'Original');
+    assert.deepEqual(await gate.accountStore.list(), [], 'nenhuma senha criada');
+    player.socket.destroy();
+  } finally {
+    await gate.close();
+    backend.server.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
+
+test('servidor antes da 1.21.6: o portão só repassa, em vez de recusar todo mundo', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gate-old-'));
+  await writeFile(join(dataDir, 'server.properties'), `online-mode=false\nnetwork-compression-threshold=${THRESHOLD}\n`);
+  const logins: FakeLogin[] = [];
+  // 770 = Minecraft 1.21.5, a última versão sem as janelas (dialogs).
+  const backend = await fakeBackend((login) => logins.push(login), undefined, 770);
+  const gate = new MinetuneGate({ listenPort: 0, backendHost: '127.0.0.1', backendPort: backend.port, dataDir, accountsDir: dataDir, configDir: dataDir, log: () => {} });
+  const gatePort = await gate.listen();
+  try {
+    const player = await joinGate(gatePort, 'Antigo', undefined, 770);
+    assert.equal((await player.reader.next()).id, 0x0e, 'direto do servidor, sem janela do portão');
+    await waitFor(() => logins.length === 1);
+    assert.equal(logins[0]!.name, 'Antigo');
     assert.deepEqual(await gate.accountStore.list(), [], 'nenhuma senha criada');
     player.socket.destroy();
   } finally {

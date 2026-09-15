@@ -24,7 +24,7 @@ import { parseModrinthEntry, type ModrinthEntry } from '../shared/modrinth.ts';
 import { LOCALES, PT, messages, type Messages } from '../shared/i18n/index.ts';
 import { SETTINGS_BY_KEY, WORLD_BASE_KEYS, fieldText, loaderForType, parseMemory, validateSetting } from '../shared/settings.ts';
 import { parseSeed, worldBlockReason, worldNameError, worldSettingsErrors, type WorldsResponse } from '../shared/worlds.ts';
-import { isServerType, javaFromImage, requiredJava, type ServerType, type VersionsResponse } from '../shared/versions.ts';
+import { compatibility, imageAllowsJavaChange, isServerType, javaFromImage, requiredJava, type ServerType, type VersionsResponse } from '../shared/versions.ts';
 import { BACKUP_PROVIDERS, validateBackupSettings } from '../shared/backup-destination.ts';
 import { explainBackupError } from './backup-config.ts';
 import { requestLocale, requestMessages } from './i18n.ts';
@@ -79,6 +79,19 @@ export function apiRoutes(services: Services): Hono {
   };
 
   /** Onde gravar para o mundo da tela; um guardado sem perfil ganha um (cópia do em uso) antes. */
+  /**
+   * Recusa a versão que não roda no Java do servidor quando a imagem não pode ser trocada. No compose
+   * do repositório (imagem da itzg) o seletor só avisa, porque dá para trocar MC_IMAGE_TAG.
+   */
+  const assertVersionRunsOnImage = async (version: string, m: Messages) => {
+    const server = await docker.inspect('server').catch(() => null);
+    const needed = requiredJava(version);
+    if (!server?.java || !needed || imageAllowsJavaChange(server.image)) return;
+    if (compatibility(needed, server.java) !== 'ok') {
+      throw new ValidationError({ VERSION: m.server.versionNeedsJava(version, needed, server.java) });
+    }
+  };
+
   const writableStore = async (target: Awaited<ReturnType<typeof scope>>) => {
     if (target.active) return store;
     await profiles.ensure(target.folder);
@@ -177,6 +190,9 @@ export function apiRoutes(services: Services): Hono {
       }
     }
 
+    // Imagem publicada (EasyPanel, Umbrel) vem com um Java só: versão que precisa de outro não liga.
+    if (body.values.VERSION) await assertVersionRunsOnImage(body.values.VERSION, m);
+
     const target = await scope(c);
     // Mundo já gerado: recusa tipo ou versão que não abrem o mapa dele. A tela avisa antes;
     // isto garante que nenhum caminho (API, outra aba) deixe o servidor caindo ao ligar.
@@ -221,8 +237,15 @@ export function apiRoutes(services: Services): Hono {
     let list = versionLists.get(type);
     if (!list) versionLists.set(type, (list = cache(60 * 60_000, () => fetchVersions(type))));
 
-    const server = await docker.info('server').catch(() => null);
-    const body: VersionsResponse = { type, imageJava: javaFromImage(server?.image), latest: null, versions: [] };
+    const server = await docker.inspect('server').catch(() => null);
+    const body: VersionsResponse = {
+      type,
+      // Java de dentro do container; o nome da imagem só diz o Java nas tags javaNN da itzg.
+      imageJava: server?.java ?? javaFromImage(server?.image),
+      imageFixed: !imageAllowsJavaChange(server?.image),
+      latest: null,
+      versions: [],
+    };
     try {
       const raw = await list.get();
       body.versions = raw.map((v) => ({ ...v, java: requiredJava(v.id) }));
@@ -633,6 +656,7 @@ export function apiRoutes(services: Services): Hono {
       else baseSettings[key] = value;
     }
     if (Object.keys(settingErrors).length > 0) throw new ValidationError(settingErrors);
+    if (baseSettings.VERSION) await assertVersionRunsOnImage(baseSettings.VERSION, m);
 
     const levelType = levelTypes.has(body.levelType) ? body.levelType : 'minecraft:normal';
     // Sem seed digitada, sorteia uma: sem isso o mundo novo herdaria a SEED do outro e sairia igual a ele.

@@ -7,7 +7,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Hono } from 'hono';
 import { z } from 'zod';
-import { GATE_ACCOUNTS_DIR, GATE_CONFIG_FILE, parseGateConfig, type GateResponse } from '../shared/gate.ts';
+import { GATE_ACCOUNTS_DIR, GATE_CONFIG_FILE, gateHasPasswordWindow, parseGateConfig, type GateResponse } from '../shared/gate.ts';
 import type { Services } from './context.ts';
 import { AccountStore } from './gate/accounts.ts';
 import { PLAYER_NAME } from './gate/protocol.ts';
@@ -31,6 +31,7 @@ export function registerGate(api: Hono, { config, docker, store }: Services): vo
       requirePassword: settings.requirePassword,
       // Sem ONLINE_MODE no server.env vale o padrão do Minecraft, que é ligado.
       onlineMode: (server.values.ONLINE_MODE ?? 'TRUE').toLowerCase() !== 'false',
+      passwordWindow: gateHasPasswordWindow(server.values.VERSION),
       accounts: list.sort((a, b) => a.name.localeCompare(b.name)),
     };
     return c.json(body);

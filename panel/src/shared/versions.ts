@@ -20,8 +20,10 @@ export interface VersionInfo {
 
 export interface VersionsResponse {
   type: ServerType;
-  /** Java da imagem do servidor (tag javaNN de itzg/minecraft-server). */
+  /** Java da imagem do servidor (JAVA_VERSION do container, ou a tag javaNN de itzg/minecraft-server). */
   imageJava: number | null;
+  /** A instalação não troca de imagem (EasyPanel, Umbrel): versão que pede outro Java fica bloqueada. */
+  imageFixed: boolean;
   /** Versão estável mais recente disponível para o software. */
   latest: string | null;
   versions: VersionInfo[];
@@ -71,6 +73,24 @@ export function requiredJava(id: string): number | null {
 export function javaFromImage(image: string | undefined): number | null {
   const match = image?.match(/:java(\d+)/);
   return match ? Number(match[1]) : null;
+}
+
+/**
+ * Java da JVM dentro do container, pela variável JAVA_VERSION das imagens Temurin
+ * ("jdk-25.0.4+7" -> 25, "jdk8u402-b06" -> 8). Vale para a itzg e para as imagens do Minetune.
+ */
+export function javaFromEnv(env: string[] | undefined): number | null {
+  const value = env?.find((entry) => entry.startsWith('JAVA_VERSION='))?.slice('JAVA_VERSION='.length);
+  const match = value?.match(/^jdk-?(\d+)/);
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * Só a imagem itzg/minecraft-server troca de Java (tag javaNN via MC_IMAGE_TAG). As imagens
+ * publicadas do Minetune, usadas no EasyPanel e no Umbrel, vêm com um Java só.
+ */
+export function imageAllowsJavaChange(image: string | undefined): boolean {
+  return !!image && /(^|\/)itzg\/minecraft-server(:|$)/.test(image);
 }
 
 /**

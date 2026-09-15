@@ -38,9 +38,25 @@ if [[ -d "$DEFAULTS_DIR" && -w "$CONFIG_DIR" ]]; then
     log "Configuração inicial copiada para $CONFIG_DIR"
     # Máquinas com pouca RAM (Umbrel de 8 GB): a heap padrão de 4G não cabe no limite do container.
     # Só na primeira cópia; depois vale o que for salvo pelo painel.
-    if [[ -n "${MINETUNE_INITIAL_MEMORY:-}" ]]; then
-      sed -i -E "s/^MEMORY=.*/MEMORY=\"${MINETUNE_INITIAL_MEMORY}\"/" "$SERVER_ENV"
-      log "Memória inicial do servidor: $MINETUNE_INITIAL_MEMORY"
+    initial_memory="${MINETUNE_INITIAL_MEMORY:-}"
+    # Sem valor definido, a heap cabe no limite do container: com 4 GB ou menos, a padrão de 4G
+    # não deixa espaço para a JVM e o servidor não liga. Deixa ~1 GB livre, mínimo de 1G.
+    if [[ -z "$initial_memory" ]]; then
+      limit_bytes=""
+      if [[ -r /sys/fs/cgroup/memory.max ]]; then
+        limit_bytes="$(cat /sys/fs/cgroup/memory.max)"
+      elif [[ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
+        limit_bytes="$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)"
+      fi
+      if [[ "$limit_bytes" =~ ^[0-9]+$ ]] && (( limit_bytes < 5 * 1024 * 1024 * 1024 )); then
+        heap_gb=$(( (limit_bytes / 1024 / 1024 - 1024) / 1024 ))
+        if (( heap_gb < 1 )); then heap_gb=1; fi
+        initial_memory="${heap_gb}G"
+      fi
+    fi
+    if [[ -n "$initial_memory" ]]; then
+      sed -i -E "s/^MEMORY=.*/MEMORY=\"${initial_memory}\"/" "$SERVER_ENV"
+      log "Memória inicial do servidor: $initial_memory"
     fi
   fi
 fi
@@ -138,7 +154,14 @@ fi
 # Em modo online (contas originais) o portão só repassa e o Paper autentica normalmente,
 # então o encaminhamento fica desligado: com ele ligado o Paper deixaria de conferir as contas.
 online_mode="${ONLINE_MODE:-TRUE}"
-if [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" && "${online_mode,,}" != "false" ]]; then
+# A janela de senha existe a partir da 1.21.6 (26.x incluso). Antes disso o portão também só repassa.
+gate_dialogs=true
+if [[ "${VERSION:-LATEST}" =~ ^1\.([0-9]+)(\.([0-9]+))? ]]; then
+  gate_minor=${BASH_REMATCH[1]}
+  gate_patch=${BASH_REMATCH[3]:-0}
+  if (( gate_minor < 21 || (gate_minor == 21 && gate_patch < 6) )); then gate_dialogs=false; fi
+fi
+if [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" && ( "${online_mode,,}" != "false" || "$gate_dialogs" == "false" ) ]]; then
   cat >"$patches_dir/minetune-gate.json" <<'EOF'
 {
   "file": "/data/config/paper-global.yml",
@@ -147,7 +170,11 @@ if [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" && "${online_m
   ]
 }
 EOF
-  log "Portão Minetune: modo online, o portão só repassa as conexões"
+  if [[ "$gate_dialogs" == "false" ]]; then
+    log "Portão Minetune: a versão ${VERSION} não tem janela de senha, o portão só repassa as conexões"
+  else
+    log "Portão Minetune: modo online, o portão só repassa as conexões"
+  fi
 elif [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" ]]; then
   gate_secret_file=/data/minetune-gate/forwarding.secret
   mkdir -p "$(dirname "$gate_secret_file")"

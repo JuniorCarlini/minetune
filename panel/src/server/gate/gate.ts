@@ -481,6 +481,13 @@ class Session {
       this.passThrough(Buffer.concat([raw, this.incoming.drain()]));
       return;
     }
+    // Servidor antes da 1.21.6: o jogo ainda não tem as janelas (dialogs) onde a senha é pedida.
+    // O portão só repassa, como se não estivesse ali, em vez de deixar todo mundo de fora.
+    const backend = await this.gate.backendInfo();
+    if (backend && backend.protocol < FIRST_DIALOG_PROTOCOL) {
+      this.passThrough(Buffer.concat([raw, this.incoming.drain()]));
+      return;
+    }
     this.phase = 'login';
   }
 

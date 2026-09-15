@@ -19,6 +19,15 @@ export function parseGateConfig(text: string): GateConfig {
   }
 }
 
+/** A janela de senha existe a partir do Minecraft 1.21.6; "LATEST" e as versões 26.x são sempre novas. */
+export function gateHasPasswordWindow(version: string | undefined): boolean {
+  const match = /^1\.(\d+)(?:\.(\d+))?/.exec(version ?? '');
+  if (!match) return true;
+  const minor = Number(match[1]);
+  const patch = Number(match[2] ?? 0);
+  return minor > 21 || (minor === 21 && patch >= 6);
+}
+
 export interface GateAccount {
   name: string;
   createdAt: string;
@@ -32,5 +41,7 @@ export interface GateResponse {
   requirePassword: boolean;
   /** Servidor em modo online (contas originais): o portão só repassa, sem pedir senha. */
   onlineMode: boolean;
+  /** A versão do servidor tem a janela de senha (1.21.6+); antes disso o portão só repassa. */
+  passwordWindow: boolean;
   accounts: GateAccount[];
 }

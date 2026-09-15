@@ -93,7 +93,12 @@ export function VersionPicker({
         </label>
       )}
 
-      {compat !== 'ok' && selected?.java && (
+      {compat !== 'ok' && selected?.java && data.imageFixed && (
+        // EasyPanel e Umbrel usam a imagem publicada, com um Java só: não há troca a sugerir.
+        <span className="version-note is-danger">{t.javaFixed(selected.id, selected.java, data.imageJava)}</span>
+      )}
+
+      {compat !== 'ok' && selected?.java && !data.imageFixed && (
         <span className="version-note is-warning">
           {withCode(t.javaNote(selected.id, selected.java, data.imageJava), {
             env: '.env',

@@ -7,6 +7,7 @@
  */
 
 import type { ContainerInfo, ContainerState } from '../shared/api.ts';
+import { javaFromEnv } from '../shared/versions.ts';
 
 export type Role = 'server' | 'backup' | 'gate';
 
@@ -28,7 +29,7 @@ interface ContainerSummary {
 interface ContainerInspect {
   Id: string;
   State: { Status: ContainerState; StartedAt: string; Health?: { Status: ContainerInfo['health'] } };
-  Config: { Image: string };
+  Config: { Image: string; Env?: string[] };
   HostConfig: { Memory: number };
 }
 
@@ -73,7 +74,7 @@ export class DockerClient {
     return found?.Id ?? null;
   }
 
-  async inspect(role: Role): Promise<(ContainerInfo & { id: string; memoryLimit: number }) | null> {
+  async inspect(role: Role): Promise<(ContainerInfo & { id: string; memoryLimit: number; java: number | null }) | null> {
     const id = await this.findId(role);
     if (!id) return null;
     const res = await this.request(`/containers/${id}/json`);
@@ -85,13 +86,14 @@ export class DockerClient {
       startedAt: data.State.StartedAt,
       image: data.Config.Image,
       memoryLimit: data.HostConfig.Memory,
+      java: javaFromEnv(data.Config.Env),
     };
   }
 
   async info(role: Role): Promise<ContainerInfo> {
     const found = await this.inspect(role);
     if (!found) return { state: 'missing' };
-    const { id: _id, memoryLimit: _limit, ...info } = found;
+    const { id: _id, memoryLimit: _limit, java: _java, ...info } = found;
     return info;
   }
 

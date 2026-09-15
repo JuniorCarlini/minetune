@@ -62,6 +62,8 @@ export const players = defineMessages(
     gateStopped: 'O portão de entrada está desligado: ninguém consegue entrar no servidor até ele voltar.',
     gateOnlineMode:
       'O servidor está no modo online: só entra quem tem conta original, e o Minecraft já garante o nick de cada um. O portão só repassa as conexões, sem pedir senha.',
+    gateOldVersion:
+      'Esta versão do Minecraft é anterior à 1.21.6 e não tem a janela onde a senha é pedida. O portão só repassa as conexões: use a lista de convidados para escolher quem entra.',
     gateNoAccounts: 'Ninguém criou senha ainda',
     gateNoAccountsText: 'Cada jogador cria a própria senha na primeira vez que entra pelo jogo.',
     gateLastLogin: (when: string) => `último acesso ${when}`,
@@ -132,6 +134,8 @@ export const players = defineMessages(
       gateStopped: 'The join gate is stopped: nobody can join the server until it’s back.',
       gateOnlineMode:
         'The server is in online mode: only players with an official account can join, and Minecraft already guarantees each name. The gate just passes connections through, with no password.',
+      gateOldVersion:
+        'This Minecraft version is older than 1.21.6 and has no window to ask for the password. The gate just passes connections through: use the whitelist to choose who can join.',
       gateNoAccounts: 'Nobody has created a password yet',
       gateNoAccountsText: 'Each player creates their own password the first time they join from the game.',
       gateLastLogin: (when: string) => `last joined ${when}`,
@@ -201,6 +205,8 @@ export const players = defineMessages(
       gateStopped: 'La puerta de entrada está apagada: nadie puede entrar al servidor hasta que vuelva.',
       gateOnlineMode:
         'El servidor está en modo online: solo entra quien tiene cuenta original, y Minecraft ya garantiza el nick de cada uno. La puerta solo reenvía las conexiones, sin pedir contraseña.',
+      gateOldVersion:
+        'Esta versión de Minecraft es anterior a la 1.21.6 y no tiene la ventana donde se pide la contraseña. La puerta solo reenvía las conexiones: usa la lista blanca para elegir quién entra.',
       gateNoAccounts: 'Nadie ha creado contraseña todavía',
       gateNoAccountsText: 'Cada jugador crea su propia contraseña la primera vez que entra desde el juego.',
       gateLastLogin: (when: string) => `último acceso ${when}`,

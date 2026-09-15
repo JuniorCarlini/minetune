@@ -148,6 +148,7 @@ export function PlayersPage() {
             <Card title={t.gateTitle} description={t.gateDescription}>
               {!gate.data.running && <Notice tone="danger">{t.gateStopped}</Notice>}
               {gate.data.onlineMode && <Notice tone="info">{t.gateOnlineMode}</Notice>}
+              {!gate.data.onlineMode && !gate.data.passwordWindow && <Notice tone="warning">{t.gateOldVersion}</Notice>}
               <label className="invite-switch">
                 <span className="invite-switch-text">
                   {t.gateRequire}

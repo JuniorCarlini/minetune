@@ -18,6 +18,8 @@ export const server = defineMessages(
     frontendMissing: 'Frontend não compilado. Rode `npm run build` ou use `npm run dev`.',
     unknownSetting: 'Configuração desconhecida ou reservada',
     memoryOverLimit: (limitGb: string) => `Heap + ~768 MB de overhead ultrapassa o limite do container (${limitGb} GB, MC_MEMORY_LIMIT no .env)`,
+    versionNeedsJava: (id: string, java: number, imageJava: number) =>
+      `${id} precisa de Java ${java}, e esta instalação usa a imagem do Minetune com Java ${imageJava}, que não dá para trocar por aqui. Escolha uma versão que rode no Java ${imageJava}.`,
     invalidServerType: 'Software de servidor inválido',
     rulesAfterFirstStart: 'As regras deste mundo aparecem depois que ele for ligado pela primeira vez.',
     turnOnForRules: 'Ligue este mundo para mudar as regras dele.',
@@ -131,6 +133,8 @@ export const server = defineMessages(
       frontendMissing: 'Frontend not built. Run `npm run build` or use `npm run dev`.',
       unknownSetting: 'Unknown or reserved setting',
       memoryOverLimit: (limitGb: string) => `Heap + ~768 MB overhead exceeds the container limit (${limitGb} GB, MC_MEMORY_LIMIT in .env)`,
+      versionNeedsJava: (id: string, java: number, imageJava: number) =>
+        `${id} needs Java ${java}, and this install uses the Minetune image with Java ${imageJava}, which can't be changed here. Pick a version that runs on Java ${imageJava}.`,
       invalidServerType: 'Invalid server software',
       rulesAfterFirstStart: "This world's rules show up after it is started for the first time.",
       turnOnForRules: 'Start this world to change its rules.',
@@ -240,6 +244,8 @@ export const server = defineMessages(
       frontendMissing: 'Frontend sin compilar. Ejecuta `npm run build` o usa `npm run dev`.',
       unknownSetting: 'Configuración desconocida o reservada',
       memoryOverLimit: (limitGb: string) => `Heap + ~768 MB de sobrecarga supera el límite del contenedor (${limitGb} GB, MC_MEMORY_LIMIT en .env)`,
+      versionNeedsJava: (id: string, java: number, imageJava: number) =>
+        `${id} necesita Java ${java}, y esta instalación usa la imagen de Minetune con Java ${imageJava}, que no se puede cambiar aquí. Elige una versión que funcione con Java ${imageJava}.`,
       invalidServerType: 'Software de servidor no válido',
       rulesAfterFirstStart: 'Las reglas de este mundo aparecen después de encenderlo por primera vez.',
       turnOnForRules: 'Enciende este mundo para cambiar sus reglas.',
