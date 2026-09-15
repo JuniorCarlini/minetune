@@ -210,6 +210,13 @@ export class MinetuneGate {
     this.options.log(`[portão] ${line}`);
   }
 
+  /** online-mode do server.properties (padrão do Minecraft: ligado). */
+  async onlineMode(): Promise<boolean> {
+    const properties = await readFile(join(this.options.dataDir, 'server.properties'), 'utf8').catch(() => '');
+    const match = /^online-mode=(\w+)\s*$/m.exec(properties);
+    return match ? match[1] !== 'false' : !properties.includes('online-mode=');
+  }
+
   /** Limite de compressão do servidor: o portão precisa usar o mesmo para repassar bytes sem mexer. */
   async compressionThreshold(): Promise<number> {
     const properties = await readFile(join(this.options.dataDir, 'server.properties'), 'utf8').catch(() => '');
@@ -454,7 +461,7 @@ class Session {
     }
   }
 
-  private onHandshake({ id, data, raw }: IncomingPacket): void {
+  private async onHandshake({ id, data, raw }: IncomingPacket): Promise<void> {
     if (id !== ID.handshake) throw new ProtocolError('esperava handshake');
     this.protocol = data.varInt();
     this.address = data.string(255);
@@ -466,6 +473,12 @@ class Session {
       return;
     }
     if (intent !== 2 && intent !== 3) throw new ProtocolError('intenção desconhecida');
+    // Modo online: o Minecraft confere a conta original de cada um, então ninguém usa o nick de
+    // outra pessoa. O portão só repassa; a senha por nick é para servidores em modo offline.
+    if (await this.gate.onlineMode()) {
+      this.passThrough(Buffer.concat([raw, this.incoming.drain()]));
+      return;
+    }
     this.phase = 'login';
   }
 

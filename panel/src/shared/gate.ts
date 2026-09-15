@@ -30,5 +30,7 @@ export interface GateResponse {
   installed: boolean;
   running: boolean;
   requirePassword: boolean;
+  /** Servidor em modo online (contas originais): o portão só repassa, sem pedir senha. */
+  onlineMode: boolean;
   accounts: GateAccount[];
 }

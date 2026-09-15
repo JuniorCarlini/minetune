@@ -135,7 +135,20 @@ fi
 # de cada jogador (encaminhamento do Velocity, assinado com um segredo dividido com o portão).
 # Assim /ban-ip e os logs usam o IP de verdade, e ninguém entra direto na porta do servidor.
 # Vanilla, Fabric e NeoForge não têm isso: o portão cuida dos bans por IP sozinho.
-if [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" ]]; then
+# Em modo online (contas originais) o portão só repassa e o Paper autentica normalmente,
+# então o encaminhamento fica desligado: com ele ligado o Paper deixaria de conferir as contas.
+online_mode="${ONLINE_MODE:-TRUE}"
+if [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" && "${online_mode,,}" != "false" ]]; then
+  cat >"$patches_dir/minetune-gate.json" <<'EOF'
+{
+  "file": "/data/config/paper-global.yml",
+  "ops": [
+    { "$set": { "path": "$['proxies']['velocity']['enabled']", "value": false } }
+  ]
+}
+EOF
+  log "Portão Minetune: modo online, o portão só repassa as conexões"
+elif [[ "${MINETUNE_GATE:-false}" == "true" && "$loader" == "paper" ]]; then
   gate_secret_file=/data/minetune-gate/forwarding.secret
   mkdir -p "$(dirname "$gate_secret_file")"
   if [[ ! -s "$gate_secret_file" ]]; then

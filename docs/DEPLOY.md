@@ -84,6 +84,10 @@ Os jogadores não conectam direto no servidor: a porta do jogo é do serviço `g
 numa janela do próprio Minecraft (1.21.6 ou mais novo) e só então liga o jogador ao `mc`, que fica sem porta no host.
 Funciona com Paper, Vanilla, Fabric e NeoForge, sem plugin nem mod, e usa ~30 MB de RAM.
 
+- **Modo online e offline:** a senha por nick é para servidores em **modo offline** (`ONLINE_MODE=FALSE`), onde o
+  Minecraft não confere a conta de ninguém. Em **modo online**, que é o padrão do Minecraft, só entra quem tem conta
+  original e o próprio jogo garante cada nick. Nesse caso o portão só repassa as conexões, sem janela de senha, e o
+  Paper autentica normalmente.
 - **Senhas:** hash scrypt em `data/minetune-gate/accounts.json`, dentro dos backups. Em **Jogadores** dá para
   desligar a senha (`config/gate.json`) e resetar a senha de alguém.
 - **Paper:** com `MINETUNE_GATE=true` o servidor liga o encaminhamento do Velocity com um segredo em

@@ -60,6 +60,8 @@ export const players = defineMessages(
     gateRequireOffHelp: 'Desligado: qualquer pessoa entra com qualquer nick, sem senha.',
     gateToggled: (on: boolean): string => (on ? 'Agora é preciso senha para entrar.' : 'Senha desligada: qualquer pessoa entra com qualquer nick.'),
     gateStopped: 'O portão de entrada está desligado: ninguém consegue entrar no servidor até ele voltar.',
+    gateOnlineMode:
+      'O servidor está no modo online: só entra quem tem conta original, e o Minecraft já garante o nick de cada um. O portão só repassa as conexões, sem pedir senha.',
     gateNoAccounts: 'Ninguém criou senha ainda',
     gateNoAccountsText: 'Cada jogador cria a própria senha na primeira vez que entra pelo jogo.',
     gateLastLogin: (when: string) => `último acesso ${when}`,
@@ -128,6 +130,8 @@ export const players = defineMessages(
       gateRequireOffHelp: 'Off: anyone can join with any name, no password.',
       gateToggled: (on: boolean): string => (on ? 'A password is now required to join.' : 'Password off: anyone can join with any name.'),
       gateStopped: 'The join gate is stopped: nobody can join the server until it’s back.',
+      gateOnlineMode:
+        'The server is in online mode: only players with an official account can join, and Minecraft already guarantees each name. The gate just passes connections through, with no password.',
       gateNoAccounts: 'Nobody has created a password yet',
       gateNoAccountsText: 'Each player creates their own password the first time they join from the game.',
       gateLastLogin: (when: string) => `last joined ${when}`,
@@ -195,6 +199,8 @@ export const players = defineMessages(
       gateRequireOffHelp: 'Desactivado: cualquiera entra con cualquier nick, sin contraseña.',
       gateToggled: (on: boolean): string => (on ? 'Ahora hace falta contraseña para entrar.' : 'Contraseña desactivada: cualquiera entra con cualquier nick.'),
       gateStopped: 'La puerta de entrada está apagada: nadie puede entrar al servidor hasta que vuelva.',
+      gateOnlineMode:
+        'El servidor está en modo online: solo entra quien tiene cuenta original, y Minecraft ya garantiza el nick de cada uno. La puerta solo reenvía las conexiones, sin pedir contraseña.',
       gateNoAccounts: 'Nadie ha creado contraseña todavía',
       gateNoAccountsText: 'Cada jugador crea su propia contraseña la primera vez que entra desde el juego.',
       gateLastLogin: (when: string) => `último acceso ${when}`,

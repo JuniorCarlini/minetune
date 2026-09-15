@@ -190,7 +190,7 @@ const click = (id: string, fields: Record<string, string>) =>
 
 test('portão: cadastra, recusa senha errada e emenda no servidor com o mesmo nick', async () => {
   const dataDir = await mkdtemp(join(tmpdir(), 'gate-data-'));
-  await writeFile(join(dataDir, 'server.properties'), `network-compression-threshold=${THRESHOLD}\n`);
+  await writeFile(join(dataDir, 'server.properties'), `online-mode=false\nnetwork-compression-threshold=${THRESHOLD}\n`);
   const logins: FakeLogin[] = [];
   const backend = await fakeBackend((login) => logins.push(login), () => readFile(join(dataDir, 'forwarding.secret'), 'utf8'));
   const gate = new MinetuneGate({ listenPort: 0, backendHost: '127.0.0.1', backendPort: backend.port, dataDir, accountsDir: dataDir, configDir: dataDir, log: () => {} });
@@ -239,7 +239,7 @@ test('portão: cadastra, recusa senha errada e emenda no servidor com o mesmo ni
 
 test('portão com a senha desligada no painel: entra direto, sem janela', async () => {
   const dataDir = await mkdtemp(join(tmpdir(), 'gate-open-'));
-  await writeFile(join(dataDir, 'server.properties'), `network-compression-threshold=${THRESHOLD}\n`);
+  await writeFile(join(dataDir, 'server.properties'), `online-mode=false\nnetwork-compression-threshold=${THRESHOLD}\n`);
   await writeFile(join(dataDir, 'gate.json'), JSON.stringify({ requirePassword: false }));
   const logins: FakeLogin[] = [];
   const backend = await fakeBackend((login) => logins.push(login));
@@ -299,7 +299,7 @@ test('cabeçalho PROXY: v1, v2, pedaços e conexão normal do jogo', () => {
 
 test('portão atrás do playit: usa o IP real do cabeçalho PROXY', async () => {
   const dataDir = await mkdtemp(join(tmpdir(), 'gate-proxy-'));
-  await writeFile(join(dataDir, 'server.properties'), `network-compression-threshold=${THRESHOLD}\n`);
+  await writeFile(join(dataDir, 'server.properties'), `online-mode=false\nnetwork-compression-threshold=${THRESHOLD}\n`);
   await writeFile(join(dataDir, 'gate.json'), JSON.stringify({ requirePassword: false }));
   const logins: FakeLogin[] = [];
   const backend = await fakeBackend((login) => logins.push(login), () => readFile(join(dataDir, 'forwarding.secret'), 'utf8'));
@@ -351,6 +351,27 @@ test('várias conexões do mesmo IP local não são cortadas (jogadores atrás d
   } finally {
     sockets.forEach((socket) => socket.destroy());
     await gate.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
+
+test('servidor em modo online: o portão só repassa, sem janela de senha', async () => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gate-online-'));
+  await writeFile(join(dataDir, 'server.properties'), `online-mode=true\nnetwork-compression-threshold=${THRESHOLD}\n`);
+  const logins: FakeLogin[] = [];
+  const backend = await fakeBackend((login) => logins.push(login));
+  const gate = new MinetuneGate({ listenPort: 0, backendHost: '127.0.0.1', backendPort: backend.port, dataDir, accountsDir: dataDir, configDir: dataDir, log: () => {} });
+  const gatePort = await gate.listen();
+  try {
+    const player = await joinGate(gatePort, 'Original');
+    assert.equal((await player.reader.next()).id, 0x0e, 'direto do servidor, sem janela do portão');
+    await waitFor(() => logins.length === 1);
+    assert.equal(logins[0]!.name, 'Original');
+    assert.deepEqual(await gate.accountStore.list(), [], 'nenhuma senha criada');
+    player.socket.destroy();
+  } finally {
+    await gate.close();
+    backend.server.close();
     await rm(dataDir, { recursive: true, force: true });
   }
 });

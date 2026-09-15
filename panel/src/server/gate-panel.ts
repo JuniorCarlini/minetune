@@ -13,21 +13,24 @@ import { AccountStore } from './gate/accounts.ts';
 import { PLAYER_NAME } from './gate/protocol.ts';
 import { requestMessages } from './i18n.ts';
 
-export function registerGate(api: Hono, { config, docker }: Services): void {
+export function registerGate(api: Hono, { config, docker, store }: Services): void {
   const accounts = new AccountStore(join(config.DATA_DIR, GATE_ACCOUNTS_DIR));
   const configFile = join(config.CONFIG_DIR, GATE_CONFIG_FILE);
   const readConfig = async () => parseGateConfig(await readFile(configFile, 'utf8').catch(() => ''));
 
   api.get('/gate', async (c) => {
-    const [gate, settings, list] = await Promise.all([
+    const [gate, settings, list, server] = await Promise.all([
       docker.info('gate').catch(() => ({ state: 'missing' as const })),
       readConfig(),
       accounts.list(),
+      store.readSettings(),
     ]);
     const body: GateResponse = {
       installed: gate.state !== 'missing',
       running: gate.state === 'running',
       requirePassword: settings.requirePassword,
+      // Sem ONLINE_MODE no server.env vale o padrão do Minecraft, que é ligado.
+      onlineMode: (server.values.ONLINE_MODE ?? 'TRUE').toLowerCase() !== 'false',
       accounts: list.sort((a, b) => a.name.localeCompare(b.name)),
     };
     return c.json(body);
