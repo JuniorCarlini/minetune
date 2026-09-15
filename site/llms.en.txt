@@ -1,0 +1,42 @@
+# Minetune
+
+> Minetune is a project to run a production-ready Minecraft server on Docker, with its own web panel (English, Portuguese and Spanish), incremental encrypted backups and deploy guides for home, a VPS or EasyPanel. Current version: {{VERSION}} ({{VERSION_DATE}}).
+
+Minetune bundles, in a single `docker compose`, the Minecraft server (itzg/minecraft-server image), the restic backup scheduler (itzg/mc-backup), its own web panel (Node.js, Hono and React) and a Docker access proxy with minimal permissions. The panel is made for non-technical admins: it uses game vocabulary, shows alerts with the button that fixes them and keeps technical names in a "?" tooltip next to each option.
+
+## What it does
+
+- Minecraft Java server with Paper (default), Purpur, Fabric, NeoForge or Vanilla, picking the version from each software's official list; Java 25 by default, with a warning when an old version needs a different Java image.
+- Web panel: a Home screen with server status, an address to copy and alerts (server off, memory full, game lagging, local-only backups); players, invite list (whitelist) and operators (op); every game rule of the running version; validated server settings; Modrinth plugins and mods; multiple worlds; console.
+- restic backups: incremental, deduplicated and encrypted, scheduled, manual and automatic before restores and updates. Destinations: local disk, Cloudflare R2, Amazon S3 or self-hosted S3 (RustFS, MinIO), set up in the panel with a connection test.
+- Crossplay with Minecraft Bedrock (phone, console and Windows) through Geyser and Floodgate, off by default.
+- Internet access through port forwarding, a playit.gg tunnel (works behind CGNAT), a VPS as a bridge or EasyPanel.
+- Security: panel bound to localhost by default, signed sessions with a login attempt limit, RCON only on the internal network and a Docker proxy that can't create containers.
+
+## Getting started
+
+Requirements: Docker with Compose v2, make and openssl. Set aside at least 6 GB of RAM.
+
+```
+git clone https://github.com/JuniorCarlini/minetune.git
+cd minetune
+make init
+make up
+```
+
+The panel opens at http://localhost:8080 with the PANEL_PASSWORD from the .env file, and the game at localhost:25565.
+
+## Links
+
+- [Official site](https://juniorcarlini.github.io/minetune/en/): overview, features and FAQ.
+- [Seed map](https://juniorcarlini.github.io/minetune/en/mapa.html): free tool that shows the biomes, structures (villages, strongholds, mansions, ancient cities) and spawn of any Minecraft Java 1.18 to 26.2 seed, computed in the browser with cubiomes.
+- [Changelog](https://juniorcarlini.github.io/minetune/en/changelog.html): what changed in each version (release notes in Portuguese).
+- [Source code on GitHub](https://github.com/JuniorCarlini/minetune): README with the full guide (in Portuguese).
+- [Architecture and decisions](https://github.com/JuniorCarlini/minetune/blob/main/docs/ARCHITECTURE.md)
+- [Backups and recovery](https://github.com/JuniorCarlini/minetune/blob/main/docs/BACKUP.md)
+- [Deploy and internet access](https://github.com/JuniorCarlini/minetune/blob/main/docs/DEPLOY.md)
+- [Performance](https://github.com/JuniorCarlini/minetune/blob/main/docs/PERFORMANCE.md)
+
+## Author
+
+Created by Junior Carlini (https://github.com/JuniorCarlini). Minecraft is a trademark of Mojang Studios and Microsoft; Minetune is not official or affiliated with them.

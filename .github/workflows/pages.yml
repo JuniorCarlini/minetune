@@ -13,6 +13,8 @@ on:
       - scripts/build-seedmap.sh
       - panel/package-lock.json
       - CHANGELOG.md
+      - CHANGELOG.en.md
+      - CHANGELOG.es.md
       - docs/assets/**
       - panel/src/web/assets/**
       - panel/src/web/components/rune-icons.generated.ts

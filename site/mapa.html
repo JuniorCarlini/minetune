@@ -1,18 +1,21 @@
 <!doctype html>
-<html lang="pt-BR" class="dark">
+<!-- Modelo das três línguas: os marcadores t:, ta: e tj: vêm de site/i18n/<língua>.json; o build gera /, /en/ e /es/. -->
+<html lang="{{LANG}}" class="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mapa de seed do Minecraft: biomas e estruturas — Minetune</title>
-    <meta name="description" content="Veja os biomas, vilas, fortalezas e o spawn de qualquer seed do Minecraft Java 26.2, 26.1 e 1.21 direto no navegador, em português." />
-    <link rel="canonical" href="https://juniorcarlini.github.io/minetune/mapa.html" />
+    <title>{{t:mapa.title}}</title>
+    <meta name="description" content="{{ta:mapa.description}}" />
+    <link rel="canonical" href="{{PAGE_URL}}" />
+    {{ALTERNATES}}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Minetune" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:url" content="https://juniorcarlini.github.io/minetune/mapa.html" />
-    <meta property="og:title" content="Mapa de seed do Minecraft: biomas e estruturas" />
-    <meta property="og:description" content="Biomas, vilas, fortalezas e spawn de qualquer seed do Minecraft Java, calculados no navegador." />
-    <meta property="og:image" content="https://juniorcarlini.github.io/minetune/assets/og.jpg" />
+    <meta property="og:locale" content="{{OG_LOCALE}}" />
+    {{OG_ALTERNATES}}
+    <meta property="og:url" content="{{PAGE_URL}}" />
+    <meta property="og:title" content="{{ta:mapa.ogTitle}}" />
+    <meta property="og:description" content="{{ta:mapa.ogDescription}}" />
+    <meta property="og:image" content="{{SITE}}assets/og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -22,37 +25,38 @@
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "Mapa de seed do Minecraft",
-        "url": "https://juniorcarlini.github.io/minetune/mapa.html",
+        "name": "{{tj:mapa.ldName}}",
+        "url": "{{PAGE_URL}}",
         "applicationCategory": "GameApplication",
-        "operatingSystem": "Navegador",
-        "inLanguage": "pt-BR",
+        "operatingSystem": "{{tj:mapa.ldOs}}",
+        "inLanguage": "{{LANG}}",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" },
-        "description": "Mostra os biomas, as estruturas e o spawn de uma seed do Minecraft Java, calculados no navegador.",
-        "isPartOf": { "@type": "WebSite", "name": "Minetune", "url": "https://juniorcarlini.github.io/minetune/" }
+        "description": "{{tj:mapa.ldDescription}}",
+        "isPartOf": { "@type": "WebSite", "name": "Minetune", "url": "{{HOME_URL}}" }
       }
     </script>
-    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="{{ROOT}}assets/logo.svg" type="image/svg+xml" />
     <!-- Tucano (a mesma biblioteca de componentes do painel) antes do CSS do site, que ajusta os tokens. -->
-    <link rel="stylesheet" href="assets/tucano/tucano.min.css" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="{{ROOT}}assets/tucano/tucano.min.css" />
+    <link rel="stylesheet" href="{{ROOT}}styles.css" />
   </head>
   <body>
-    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <a class="skip" href="#conteudo">{{t:common.skip}}</a>
 
     <header class="topbar">
       <div class="wrap">
         <a class="brand" href="./">
-          <img src="assets/logo.svg" alt="" />
+          <img src="{{ROOT}}assets/logo.svg" alt="" />
           <span class="mc-title" data-text="Minetune">Minetune</span>
         </a>
-        <nav class="nav" aria-label="Principal">
-          <a class="hide-sm" href="./#recursos">Recursos</a>
-          <a class="hide-sm" href="./#comecar">Começar</a>
-          <a class="hide-sm" href="./#perguntas">Perguntas</a>
-          <a href="mapa.html" aria-current="page">Mapa de seeds</a>
-          <a class="hide-sm" href="changelog.html">Changelog</a>
-          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> GitHub</a>
+        <nav class="nav" aria-label="{{ta:common.navMain}}">
+          <a class="hide-sm" href="./#recursos">{{t:common.features}}</a>
+          <a class="hide-sm" href="./#comecar">{{t:common.start}}</a>
+          <a class="hide-sm" href="./#perguntas">{{t:common.faq}}</a>
+          <a href="mapa.html" aria-current="page">{{t:common.seedmap}}</a>
+          <a class="hide-sm" href="changelog.html">{{t:common.changelog}}</a>
+          {{LANG_SWITCH}}
+          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune" aria-label="GitHub"><i data-icon="github"></i> <span class="btn-label">GitHub</span></a>
         </nav>
       </div>
     </header>
@@ -60,57 +64,57 @@
     <main id="conteudo">
       <section class="page-head">
         <div class="wrap">
-          <span class="eyebrow"><i data-icon="cube"></i> Ferramenta grátis</span>
-          <h1 class="mc-title" data-text="Mapa de seeds">Mapa de seeds</h1>
-          <p>Digite uma seed e veja onde ficam os biomas, as vilas, as fortalezas e o spawn. Clique num ponto ou numa estrutura para copiar o comando de teleporte. Tudo é calculado no seu navegador, com a mesma conta que o jogo usa para gerar o mundo.</p>
+          <span class="eyebrow"><i data-icon="cube"></i> {{t:mapa.eyebrow}}</span>
+          <h1 class="mc-title" data-text="{{ta:mapa.h1}}">{{t:mapa.h1}}</h1>
+          <p>{{t:mapa.lead}}</p>
         </div>
       </section>
 
       <div class="wrap seedmap">
         <form class="seedmap-controls" id="controls" autocomplete="off" novalidate>
           <div class="field field-seed">
-            <label class="tuc-label" for="seed">Seed</label>
+            <label class="tuc-label" for="seed">{{t:mapa.seed}}</label>
             <div class="field-row">
-              <input class="tuc-input" id="seed" name="seed" type="text" placeholder="Ex.: -8660647838225998762" spellcheck="false" />
-              <button class="tuc-btn is-outline is-icon" type="button" id="random" data-tuc-tip="Sortear uma seed" aria-label="Sortear uma seed"><i data-icon="refresh"></i></button>
+              <input class="tuc-input" id="seed" name="seed" type="text" placeholder="{{ta:mapa.seedPlaceholder}}" spellcheck="false" />
+              <button class="tuc-btn is-outline is-icon" type="button" id="random" data-tuc-tip="{{ta:mapa.random}}" aria-label="{{ta:mapa.random}}"><i data-icon="refresh"></i></button>
             </div>
           </div>
           <div class="field">
-            <label class="tuc-label" for="version">Versão</label>
+            <label class="tuc-label" for="version">{{t:mapa.version}}</label>
             <select id="version" name="version"></select>
           </div>
           <div class="field">
-            <label class="tuc-label" for="dimension">Mundo</label>
+            <label class="tuc-label" for="dimension">{{t:mapa.world}}</label>
             <select id="dimension" name="dimension">
-              <option value="0">Normal</option>
-              <option value="-1">Nether</option>
-              <option value="1">The End</option>
+              <option value="0">{{t:mapa.dimOverworld}}</option>
+              <option value="-1">{{t:mapa.dimNether}}</option>
+              <option value="1">{{t:mapa.dimEnd}}</option>
             </select>
           </div>
           <div class="field" id="height-field">
-            <label class="tuc-label" for="height">Altura</label>
+            <label class="tuc-label" for="height">{{t:mapa.height}}</label>
             <select id="height" name="height">
-              <option value="64">Superfície</option>
-              <option value="0">Cavernas</option>
-              <option value="-40">Profundezas</option>
+              <option value="64">{{t:mapa.surface}}</option>
+              <option value="0">{{t:mapa.caves}}</option>
+              <option value="-40">{{t:mapa.deep}}</option>
             </select>
           </div>
           <div class="field field-goto">
-            <label class="tuc-label" for="goto">Ir para X Z</label>
+            <label class="tuc-label" for="goto">{{t:mapa.goto}}</label>
             <div class="field-row">
               <input class="tuc-input" id="goto" name="goto" type="text" placeholder="-480 512" spellcheck="false" />
-              <button class="tuc-btn is-primary is-icon" type="submit" data-tuc-tip="Ir para a coordenada" aria-label="Ir para a coordenada"><i data-icon="play"></i></button>
+              <button class="tuc-btn is-primary is-icon" type="submit" data-tuc-tip="{{ta:mapa.gotoButton}}" aria-label="{{ta:mapa.gotoButton}}"><i data-icon="arrowRight"></i></button>
             </div>
           </div>
         </form>
 
         <div class="seedmap-layout">
           <div class="map-frame" id="frame">
-            <canvas id="map" tabindex="0" aria-label="Mapa de biomas da seed. Arraste para mover e use a roda do mouse ou os botões para aproximar." role="img"></canvas>
+            <canvas id="map" tabindex="0" aria-label="{{ta:mapa.canvas}}" role="img"></canvas>
             <div class="map-zoom">
-              <button class="tuc-btn is-outline is-icon" type="button" id="zoom-in" data-tuc-tip="Aproximar" data-placement="left" aria-label="Aproximar">+</button>
-              <button class="tuc-btn is-outline is-icon" type="button" id="zoom-out" data-tuc-tip="Afastar" data-placement="left" aria-label="Afastar">−</button>
-              <button class="tuc-btn is-outline is-icon" type="button" id="to-spawn" data-tuc-tip="Voltar ao spawn" data-placement="left" aria-label="Voltar ao spawn"><i data-icon="play"></i></button>
+              <button class="tuc-btn is-outline is-icon" type="button" id="zoom-in" data-tuc-tip="{{ta:mapa.zoomIn}}" data-placement="left" aria-label="{{ta:mapa.zoomIn}}">+</button>
+              <button class="tuc-btn is-outline is-icon" type="button" id="zoom-out" data-tuc-tip="{{ta:mapa.zoomOut}}" data-placement="left" aria-label="{{ta:mapa.zoomOut}}">−</button>
+              <button class="tuc-btn is-outline is-icon" type="button" id="to-spawn" data-tuc-tip="{{ta:mapa.toSpawn}}" data-placement="left" aria-label="{{ta:mapa.toSpawn}}"><!-- bússola do spawn, desenhada pelo app.js --></button>
             </div>
             <div class="map-hud" aria-live="polite">
               <span class="hud-coords" id="hud-coords">X 0 · Z 0</span>
@@ -121,13 +125,13 @@
               <div class="map-pop-head">
                 <span class="map-pop-icon" id="pop-icon"></span>
                 <strong id="pop-title">—</strong>
-                <button class="tuc-btn is-ghost is-icon is-sm" type="button" id="pop-close" aria-label="Fechar"><i data-icon="x"></i></button>
+                <button class="tuc-btn is-ghost is-icon is-sm" type="button" id="pop-close" aria-label="{{ta:common.close}}"><i data-icon="x"></i></button>
               </div>
               <p class="map-pop-coords" id="pop-coords"></p>
-              <label class="tuc-label" for="pop-command">Comando para o chat do jogo</label>
+              <label class="tuc-label" for="pop-command">{{t:mapa.command}}</label>
               <input class="tuc-input" id="pop-command" type="text" readonly spellcheck="false" />
               <p class="map-pop-note" id="pop-note"></p>
-              <button class="tuc-btn is-primary is-block" type="button" id="pop-copy"><i data-icon="copy"></i> Copiar comando</button>
+              <button class="tuc-btn is-primary is-block" type="button" id="pop-copy"><i data-icon="copy"></i> {{t:mapa.copyCommand}}</button>
             </div>
 
             <!-- Mesmo carregamento do painel: bloco de grama pulando e barra enchendo. -->
@@ -137,19 +141,19 @@
                 <div class="mc-loader-bar" aria-hidden="true">
                   <span style="--i: 0"></span><span style="--i: 1"></span><span style="--i: 2"></span><span style="--i: 3"></span><span style="--i: 4"></span><span style="--i: 5"></span><span style="--i: 6"></span><span style="--i: 7"></span><span style="--i: 8"></span><span style="--i: 9"></span>
                 </div>
-                <span class="mc-loader-label" id="map-status-text">Carregando o gerador</span>
+                <span class="mc-loader-label" id="map-status-text">{{t:mapa.loading}}</span>
               </div>
             </div>
           </div>
 
           <aside class="map-side">
-            <button class="tuc-btn is-primary is-block" type="button" id="share"><i data-icon="copy"></i> Copiar link deste mapa</button>
+            <button class="tuc-btn is-primary is-block" type="button" id="share"><i data-icon="copy"></i> {{t:mapa.share}}</button>
             <section class="side-block side-block-structures">
-              <h2>Estruturas</h2>
+              <h2>{{t:mapa.structures}}</h2>
               <div class="structure-list" id="structures"></div>
             </section>
             <section class="side-block">
-              <h2>Biomas nesta área</h2>
+              <h2>{{t:mapa.biomes}}</h2>
               <ul class="legend" id="legend"></ul>
             </section>
           </aside>
@@ -157,16 +161,16 @@
 
         <div class="seedmap-notes">
           <div class="note">
-            <h2>Onde acho a seed do meu servidor?</h2>
-            <p>No jogo, digite <code>/seed</code> (precisa ser administrador). No Minetune, abra o <strong>Console</strong> do painel e rode <code>seed</code>.</p>
+            <h2>{{t:mapa.note1.title}}</h2>
+            <p>{{t:mapa.note1.html}}</p>
           </div>
           <div class="note">
-            <h2>O mapa é exato?</h2>
-            <p>Os biomas e as posições das estruturas seguem a geração do jogo. Templos do deserto e da selva podem não aparecer quando o terreno não deixa, e o mapa não sabe o que já foi construído ou destruído no seu mundo.</p>
+            <h2>{{t:mapa.note2.title}}</h2>
+            <p>{{t:mapa.note2.text}}</p>
           </div>
           <div class="note">
-            <h2>De onde vem o cálculo?</h2>
-            <p>Da biblioteca <a href="https://github.com/Cubitect/cubiomes">cubiomes</a>, com o suporte às versões 26.x do <a href="https://github.com/xpple/cubiomes">fork de xpple</a>, ambos com licença MIT. Nada é enviado para servidor nenhum.</p>
+            <h2>{{t:mapa.note3.title}}</h2>
+            <p>{{t:mapa.note3.html}}</p>
           </div>
         </div>
       </div>
@@ -175,17 +179,19 @@
     <footer class="footer">
       <div class="wrap">
         <div>
-          <span class="footer-credit">Feito com <span class="heart"><i data-icon="heart"></i></span> por <a href="https://github.com/JuniorCarlini">JuniorCarlini</a></span>
-          <small>Minecraft é marca da Mojang Studios e da Microsoft. O Minetune não é oficial nem afiliado a elas.</small>
+          <span class="footer-credit">{{t:common.madeWith}}</span>
+          <small>{{t:common.trademark}}</small>
         </div>
-        <nav class="nav" aria-label="Rodapé">
-          <a href="./">Início</a>
-          <a href="changelog.html">Changelog</a>
+        <!-- Mesmo rodapé nas três páginas: só as páginas do site e o GitHub. -->
+        <nav class="nav footer-nav" aria-label="{{ta:common.navFooter}}">
+          <a href="./">{{t:common.home}}</a>
+          <a href="mapa.html" aria-current="page">{{t:common.seedmap}}</a>
+          <a href="changelog.html">{{t:common.changelog}}</a>
           <a href="https://github.com/JuniorCarlini/minetune">GitHub</a>
         </nav>
       </div>
     </footer>
 
-    <script type="module" src="seedmap/app.js"></script>
+    <script type="module" src="{{ROOT}}seedmap/app.js"></script>
   </body>
 </html>

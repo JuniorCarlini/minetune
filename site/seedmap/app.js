@@ -5,6 +5,7 @@
 
 import { init as initTucano, Select, toast } from '../assets/tucano/tucano.esm.js';
 import { iconCanvas, iconSvg } from './icons.js';
+import { BIOME_NAMES, NUMBER_LOCALE, STRUCTURE_NAMES, T } from './i18n.js';
 
 const TILE = 256; // pixels de tela de cada bloco do mapa
 const ZOOMS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128]; // blocos do jogo por pixel
@@ -32,98 +33,29 @@ const VERSIONS = [
 ];
 
 // maxBpp: a partir de quantos blocos por pixel a estrutura some (fica densa demais e cara de calcular).
+// O nome de cada estrutura vem de seedmap/i18n.js, na língua da página.
 const STRUCTURES = [
-  { name: 'village', label: 'Vila', color: '#f2c14e', dim: 0, maxBpp: 16, on: true },
-  { name: 'stronghold', label: 'Fortaleza', color: '#e05cff', dim: 0, maxBpp: Infinity, on: true },
-  { name: 'pillager_outpost', label: 'Posto avançado', color: '#a8a8a8', dim: 0, maxBpp: 16, on: true },
-  { name: 'mansion', label: 'Mansão da floresta', color: '#b07a45', dim: 0, maxBpp: 64, on: true },
-  { name: 'monument', label: 'Monumento oceânico', color: '#35d0c4', dim: 0, maxBpp: 32, on: true },
-  { name: 'ancient_city', label: 'Cidade ancestral', color: '#5b7cff', dim: 0, maxBpp: 16, on: true },
-  { name: 'trial_chambers', label: 'Câmaras do desafio', color: '#ff8a3d', dim: 0, maxBpp: 8, on: true },
-  { name: 'desert_pyramid', label: 'Templo do deserto', color: '#f3e2a9', dim: 0, maxBpp: 16, on: false },
-  { name: 'jungle_pyramid', label: 'Templo da selva', color: '#6cc24a', dim: 0, maxBpp: 16, on: false },
-  { name: 'swamp_hut', label: 'Cabana da bruxa', color: '#8e6fb3', dim: 0, maxBpp: 16, on: false },
-  { name: 'igloo', label: 'Iglu', color: '#d6f1ff', dim: 0, maxBpp: 16, on: false },
-  { name: 'trail_ruins', label: 'Ruínas de trilha', color: '#d0735c', dim: 0, maxBpp: 16, on: false },
-  { name: 'shipwreck', label: 'Naufrágio', color: '#9c7a54', dim: 0, maxBpp: 8, on: false },
-  { name: 'ocean_ruin', label: 'Ruínas oceânicas', color: '#7fb7b0', dim: 0, maxBpp: 8, on: false },
-  { name: 'ruined_portal', label: 'Portal em ruínas', color: '#a066ff', dim: 0, maxBpp: 8, on: false },
-  { name: 'fortress', label: 'Fortaleza do Nether', color: '#ff5a4f', dim: -1, maxBpp: 32, on: true },
-  { name: 'bastion_remnant', label: 'Bastião', color: '#c9c9c9', dim: -1, maxBpp: 32, on: true },
-  { name: 'ruined_portal_nether', label: 'Portal em ruínas', color: '#a066ff', dim: -1, maxBpp: 8, on: false },
-  { name: 'end_city', label: 'Cidade do End', color: '#e8dcff', dim: 1, maxBpp: 32, on: true },
-];
+  { name: 'village', color: '#f2c14e', dim: 0, maxBpp: 16, on: true },
+  { name: 'stronghold', color: '#e05cff', dim: 0, maxBpp: Infinity, on: true },
+  { name: 'pillager_outpost', color: '#a8a8a8', dim: 0, maxBpp: 16, on: true },
+  { name: 'mansion', color: '#b07a45', dim: 0, maxBpp: 64, on: true },
+  { name: 'monument', color: '#35d0c4', dim: 0, maxBpp: 32, on: true },
+  { name: 'ancient_city', color: '#5b7cff', dim: 0, maxBpp: 16, on: true },
+  { name: 'trial_chambers', color: '#ff8a3d', dim: 0, maxBpp: 8, on: true },
+  { name: 'desert_pyramid', color: '#f3e2a9', dim: 0, maxBpp: 16, on: false },
+  { name: 'jungle_pyramid', color: '#6cc24a', dim: 0, maxBpp: 16, on: false },
+  { name: 'swamp_hut', color: '#8e6fb3', dim: 0, maxBpp: 16, on: false },
+  { name: 'igloo', color: '#d6f1ff', dim: 0, maxBpp: 16, on: false },
+  { name: 'trail_ruins', color: '#d0735c', dim: 0, maxBpp: 16, on: false },
+  { name: 'shipwreck', color: '#9c7a54', dim: 0, maxBpp: 8, on: false },
+  { name: 'ocean_ruin', color: '#7fb7b0', dim: 0, maxBpp: 8, on: false },
+  { name: 'ruined_portal', color: '#a066ff', dim: 0, maxBpp: 8, on: false },
+  { name: 'fortress', color: '#ff5a4f', dim: -1, maxBpp: 32, on: true },
+  { name: 'bastion_remnant', color: '#c9c9c9', dim: -1, maxBpp: 32, on: true },
+  { name: 'ruined_portal_nether', color: '#a066ff', dim: -1, maxBpp: 8, on: false },
+  { name: 'end_city', color: '#e8dcff', dim: 1, maxBpp: 32, on: true },
+].map((s) => ({ ...s, label: STRUCTURE_NAMES[s.name] ?? s.name }));
 const STRONGHOLD = STRUCTURES.find((s) => s.name === 'stronghold');
-
-// Nomes oficiais do jogo em português (arquivo de idioma pt_br do Minecraft 26.1).
-const BIOMES_PT = {
-  badlands: 'Terras áridas',
-  bamboo_jungle: 'Selva de bambu',
-  basalt_deltas: 'Deltas de basalto',
-  beach: 'Praia',
-  birch_forest: 'Floresta de bétulas',
-  cherry_grove: 'Cerejal',
-  cold_ocean: 'Oceano frio',
-  crimson_forest: 'Floresta carmesim',
-  dark_forest: 'Floresta escura',
-  deep_cold_ocean: 'Oceano frio profundo',
-  deep_dark: 'Profundezas sombrias',
-  deep_frozen_ocean: 'Oceano congelado profundo',
-  deep_lukewarm_ocean: 'Oceano morno profundo',
-  deep_ocean: 'Oceano profundo',
-  desert: 'Deserto',
-  dripstone_caves: 'Cavernas de espeleotemas',
-  end_barrens: 'Zona árida do End',
-  end_highlands: 'Planaltos do End',
-  end_midlands: 'Zona média do End',
-  eroded_badlands: 'Terras áridas erodidas',
-  flower_forest: 'Floresta de flores',
-  forest: 'Floresta',
-  frozen_ocean: 'Oceano congelado',
-  frozen_peaks: 'Picos congelados',
-  frozen_river: 'Rio congelado',
-  grove: 'Bosque',
-  ice_spikes: 'Picos de gelo',
-  jagged_peaks: 'Picos pontiagudos',
-  jungle: 'Selva',
-  lukewarm_ocean: 'Oceano morno',
-  lush_caves: 'Cavernas verdejantes',
-  mangrove_swamp: 'Manguezal',
-  meadow: 'Pradaria',
-  mushroom_fields: 'Campos de cogumelos',
-  nether_wastes: 'Ruínas do Nether',
-  ocean: 'Oceano',
-  old_growth_birch_forest: 'Floresta de bétulas antigas',
-  old_growth_pine_taiga: 'Taiga de pinheiros antigos',
-  old_growth_spruce_taiga: 'Taiga de abetos antigos',
-  pale_garden: 'Jardim pálido',
-  plains: 'Planícies',
-  river: 'Rio',
-  savanna: 'Savana',
-  savanna_plateau: 'Planalto de savana',
-  small_end_islands: 'Ilhas pequenas do End',
-  snowy_beach: 'Praia nevada',
-  snowy_plains: 'Planícies nevadas',
-  snowy_slopes: 'Encostas nevadas',
-  snowy_taiga: 'Taiga nevada',
-  soul_sand_valley: 'Vale das almas',
-  sparse_jungle: 'Margem de selva',
-  stony_peaks: 'Picos rochosos',
-  stony_shore: 'Costa rochosa',
-  sulfur_caves: 'Cavernas de enxofre',
-  sunflower_plains: 'Planícies de girassóis',
-  swamp: 'Pântano',
-  taiga: 'Taiga',
-  the_end: 'O End',
-  the_void: 'O vazio',
-  warm_ocean: 'Oceano quente',
-  warped_forest: 'Floresta distorcida',
-  windswept_forest: 'Floresta das ventanias',
-  windswept_gravelly_hills: 'Colinas de cascalho das ventanias',
-  windswept_hills: 'Colinas das ventanias',
-  windswept_savanna: 'Savana das ventanias',
-  wooded_badlands: 'Terras áridas florestadas',
-};
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -239,6 +171,8 @@ function writeHash() {
       zoom: String(state.zoom),
     });
     history.replaceState(null, '', `#${params}`);
+    // Trocar de língua mantém o mesmo mapa: os links do seletor levam o mesmo #seed=… junto.
+    for (const link of document.querySelectorAll('.lang-switch a')) link.hash = String(params);
   }, 250);
 }
 
@@ -262,7 +196,7 @@ function startWorkers() {
     };
     worker.onerror = (event) => {
       event.preventDefault();
-      fail('Não foi possível carregar o gerador do mapa neste navegador.');
+      fail(T.workerFail);
     };
     workers.push(slot);
   }
@@ -328,7 +262,7 @@ async function loadWorld() {
     renderStructureList();
     requestDraw();
   } catch (err) {
-    if (myGen === gen) fail(`Não foi possível calcular esta seed (${err.message}).`);
+    if (myGen === gen) fail(T.seedFail(err.message));
   }
 }
 
@@ -481,7 +415,7 @@ function nearestMarker(px, py) {
   let best = null;
   let bestDist = 16;
   const candidates = visibleMarkers();
-  if (world?.spawn && state.dim === 0) candidates.push({ def: { label: 'Spawn' }, x: world.spawn[0], z: world.spawn[1] });
+  if (world?.spawn && state.dim === 0) candidates.push({ def: { name: 'spawn', label: T.spawn }, x: world.spawn[0], z: world.spawn[1] });
   for (const m of candidates) {
     const d = Math.hypot(screenX(m.x) - px, screenZ(m.z) - py);
     if (d < bestDist) {
@@ -531,6 +465,62 @@ function drawMarker(sx, sz, color, radius) {
   ctx.fillRect(x - radius, z - radius, radius * 2, radius * 2);
 }
 
+/** Moldura em volta de um ícone do mapa (contorno escuro para aparecer em qualquer bioma) e o nome em cima. */
+function drawMarkerHighlight(m, scale, color) {
+  const half = (12 * scale) / 2 + 3;
+  const x = Math.round(screenX(m.x));
+  const z = Math.round(screenZ(m.z));
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#111112';
+  ctx.strokeRect(x - half, z - half, half * 2, half * 2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = color;
+  ctx.strokeRect(x - half, z - half, half * 2, half * 2);
+  // O spawn já mostra o nome o tempo todo.
+  if (m.def.name !== 'spawn') drawLabel(m.def.label, x, z - half - 4);
+}
+
+/** Mira no ponto clicado; com zoom perto, contorna também o bloco exato. */
+function drawCrosshair(bx, bz) {
+  const blockPx = 1 / bpp();
+  const x = Math.round(screenX(bx + 0.5));
+  const z = Math.round(screenZ(bz + 0.5));
+  if (blockPx >= 6) {
+    const x0 = Math.round(screenX(bx));
+    const z0 = Math.round(screenZ(bz));
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#111112';
+    ctx.strokeRect(x0, z0, Math.round(blockPx), Math.round(blockPx));
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#5cec01';
+    ctx.strokeRect(x0 + 0.5, z0 + 0.5, Math.round(blockPx) - 1, Math.round(blockPx) - 1);
+  }
+  // Braços grossos com um anel vazio no meio: dá para ver o ponto exato e o bioma embaixo dele.
+  const arms = [
+    [-17, -2, 10, 4],
+    [7, -2, 10, 4],
+    [-2, -17, 4, 10],
+    [-2, 7, 4, 10],
+  ];
+  const ring = (inset, color) => {
+    ctx.fillStyle = color;
+    const s = 12 - inset * 2;
+    ctx.fillRect(x - 6 + inset, z - 6 + inset, s, 2);
+    ctx.fillRect(x - 6 + inset, z + 4 - inset, s, 2);
+    ctx.fillRect(x - 6 + inset, z - 6 + inset, 2, s);
+    ctx.fillRect(x + 4 - inset, z - 6 + inset, 2, s);
+  };
+  ctx.fillStyle = '#111112';
+  for (const [dx, dz, w, h] of arms) ctx.fillRect(x + dx - 1, z + dz - 1, w + 2, h + 2);
+  ctx.fillRect(x - 7, z - 7, 14, 2);
+  ctx.fillRect(x - 7, z + 5, 14, 2);
+  ctx.fillRect(x - 7, z - 7, 2, 14);
+  ctx.fillRect(x + 5, z - 7, 2, 14);
+  ctx.fillStyle = '#5cec01';
+  for (const [dx, dz, w, h] of arms) ctx.fillRect(x + dx, z + dz, w, h);
+  ring(0, '#5cec01');
+}
+
 function drawLabel(text, x, z) {
   ctx.font = '700 12px Monocraft, ui-monospace, monospace';
   ctx.textAlign = 'center';
@@ -558,7 +548,7 @@ function drawScale() {
   ctx.font = '12px Monocraft, ui-monospace, monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(`${blocks.toLocaleString('pt-BR')} blocos`, x0, y - 10);
+  ctx.fillText(T.blocks(blocks.toLocaleString(NUMBER_LOCALE)), x0, y - 10);
 }
 
 function draw() {
@@ -594,11 +584,22 @@ function draw() {
     ctx.drawImage(icon, Math.round(screenX(m.x) - icon.width / 2), Math.round(screenZ(m.z) - icon.height / 2));
   }
 
+  // Spawn: a bússola, sempre com o nome em cima.
   if (world.spawn && state.dim === 0) {
-    const sx = screenX(world.spawn[0]);
-    const sz = screenZ(world.spawn[1]);
-    drawMarker(sx, sz, '#f7cf5c', 7);
-    drawLabel('Spawn', Math.round(sx), Math.round(sz) - 12);
+    const icon = iconCanvas('spawn', iconScale);
+    const sx = Math.round(screenX(world.spawn[0]));
+    const sz = Math.round(screenZ(world.spawn[1]));
+    ctx.drawImage(icon, sx - icon.width / 2, sz - icon.height / 2);
+    drawLabel(T.spawn, sx, sz - icon.height / 2 - 3);
+  }
+
+  // Destaques: quem está sob o mouse (branco, com o nome) e o que foi clicado (verde).
+  // nearestMarker cria um objeto novo a cada movimento: compara pela posição, não pelo objeto.
+  const hoveringSelected = hovered && selected?.marker && hovered.x === selected.marker.x && hovered.z === selected.marker.z;
+  if (hovered && !hoveringSelected) drawMarkerHighlight(hovered, iconScale, '#ffffff');
+  if (selected) {
+    if (selected.marker) drawMarkerHighlight(selected.marker, iconScale, '#5cec01');
+    else drawCrosshair(selected.x, selected.z);
   }
 
   drawScale();
@@ -606,6 +607,9 @@ function draw() {
 
 // --- HUD e legenda -------------------------------------------------------------------------------
 let pointer = null;
+// Estrutura (ou spawn) sob o mouse e o ponto clicado: os dois ganham destaque no mapa.
+let hovered = null;
+let selected = null;
 
 function biomeAt(bx, bz) {
   const direct = (zoom) => {
@@ -624,7 +628,7 @@ function biomeAt(bx, bz) {
 function biomeName(id) {
   const internal = world?.names[id];
   if (!internal) return '—';
-  return BIOMES_PT[internal] ?? internal.replaceAll('_', ' ');
+  return BIOME_NAMES[internal] ?? internal.replaceAll('_', ' ');
 }
 
 function updateHud() {
@@ -633,7 +637,7 @@ function updateHud() {
   const bz = Math.floor(blockZ(px.y));
   els.hudCoords.textContent = `X ${bx} · Z ${bz}`;
   if (!world) {
-    els.hudBiome.textContent = 'calculando…';
+    els.hudBiome.textContent = T.computing;
     return;
   }
   const marker = pointer && nearestMarker(px.x, px.y);
@@ -671,7 +675,7 @@ function updateLegend() {
   if (!total) {
     const li = document.createElement('li');
     li.className = 'legend-empty';
-    li.textContent = 'Calculando…';
+    li.textContent = T.computingTitle;
     els.legend.replaceChildren(li);
     return;
   }
@@ -721,7 +725,7 @@ function renderStructureList() {
       name.textContent = def.label;
       const hint = document.createElement('span');
       hint.className = 'hint';
-      hint.textContent = !supported ? 'não existe aqui' : bpp() > def.maxBpp ? 'aproxime' : '';
+      hint.textContent = !supported ? T.notHere : bpp() > def.maxBpp ? T.zoomHint : '';
       label.append(input, swatch, name, hint);
       return label;
     }),
@@ -748,6 +752,11 @@ let popToken = 0;
 function closePopover() {
   popToken++;
   els.pop.hidden = true;
+  // A mira do ponto clicado some junto com a caixinha.
+  if (selected) {
+    selected = null;
+    requestDraw();
+  }
 }
 
 function placePopover(point) {
@@ -773,27 +782,27 @@ function teleportFor(x, z, y, marker) {
     return {
       coords: `X ${x} · Z ${z}`,
       command: `/execute in minecraft:the_nether run spreadplayers ${x} ${z} 0 1 under 120 false @s`,
-      note: 'Leva você ao Nether e procura um lugar seguro abaixo do teto.',
+      note: T.netherNote,
     };
   }
   if (state.dim === 1) {
     return {
       coords: `X ${x} · Z ${z}`,
       command: `/execute in minecraft:the_end run spreadplayers ${x} ${z} 0 1 false @s`,
-      note: 'Leva você ao End. Se não houver ilha nesse ponto, o jogo avisa e não teleporta.',
+      note: T.endNote,
     };
   }
   if (y == null) {
     return {
       coords: `X ${x} · Z ${z}`,
       command: `/spreadplayers ${x} ${z} 0 1 false @s`,
-      note: 'Leva você para o bloco mais alto desse ponto.',
+      note: T.highestNote,
     };
   }
   const top = Math.max(y, SEA_LEVEL);
-  let note = 'Você chega em cima do chão. Se parar dentro de uma árvore, é só quebrar e descer.';
-  if (y < SEA_LEVEL) note = 'Aqui tem água: você chega na superfície da água.';
-  else if (marker && UNDERGROUND.has(marker.def.name)) note = 'A estrutura fica embaixo da terra: você chega na superfície, logo acima dela.';
+  let note = T.groundNote;
+  if (y < SEA_LEVEL) note = T.waterNote;
+  else if (marker && UNDERGROUND.has(marker.def.name)) note = T.undergroundNote;
   return { coords: `X ${x} · Y ${top} · Z ${z}`, command: `/tp @s ${x} ${top} ${z}`, note };
 }
 
@@ -803,6 +812,9 @@ async function openPopover(point) {
   const x = marker ? marker.x : Math.floor(blockX(point.x));
   const z = marker ? marker.z : Math.floor(blockZ(point.y));
   const token = ++popToken;
+  // Marca no mapa o ponto (ou a estrutura) das coordenadas da caixinha.
+  selected = { x, z, marker };
+  requestDraw();
 
   if (marker?.def.name) els.popIcon.replaceChildren(iconSvg(marker.def.name, 24));
   else if (marker) els.popIcon.replaceChildren(swatchFor('#f7cf5c'));
@@ -814,7 +826,7 @@ async function openPopover(point) {
   els.popTitle.textContent = marker ? marker.def.label : biomeName(biomeAt(x, z));
   els.popCoords.textContent = `X ${x} · Z ${z}`;
   els.popCommand.value = '';
-  els.popNote.textContent = 'Calculando a altura…';
+  els.popNote.textContent = T.computingHeight;
   els.popCopy.disabled = true;
   els.pop.hidden = false;
   placePopover(point);
@@ -841,10 +853,10 @@ els.popClose.addEventListener('click', closePopover);
 els.popCopy.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(els.popCommand.value);
-    toast.success('Comando copiado. Cole no chat do jogo e aperte Enter.', { position: 'bottom-center' });
+    toast.success(T.commandCopied, { position: 'bottom-center' });
   } catch {
     els.popCommand.select();
-    toast.warning('Não deu para copiar sozinho: o comando ficou selecionado, use Ctrl+C.', { position: 'bottom-center' });
+    toast.warning(T.commandCopyFail, { position: 'bottom-center' });
   }
 });
 document.addEventListener('keydown', (event) => {
@@ -895,7 +907,6 @@ els.canvas.addEventListener('pointerdown', (event) => {
     const [a, b] = [...pointers.values()];
     pinchDistance = Math.hypot(a.x - b.x, a.y - b.y);
   }
-  els.canvas.classList.add('is-dragging');
 });
 
 els.canvas.addEventListener('pointermove', (event) => {
@@ -903,13 +914,20 @@ els.canvas.addEventListener('pointermove', (event) => {
   const previous = pointers.get(event.pointerId);
   if (event.pointerType === 'mouse') pointer = point;
   if (!previous) {
+    // Só passando o mouse: destaca a estrutura sob ele e troca o cursor para a mão de clique.
+    const over = event.pointerType === 'mouse' ? nearestMarker(point.x, point.y) : null;
+    if (over?.x !== hovered?.x || over?.z !== hovered?.z) hovered = over;
+    els.canvas.classList.toggle('is-over-marker', !!over);
     requestDraw();
     return;
   }
   pointers.set(event.pointerId, point);
   if (pointers.size === 1) {
     // Tremida de até 4 px ainda conta como clique (abre a caixinha), não como arrastar.
-    if (downPoint && Math.hypot(point.x - downPoint.x, point.y - downPoint.y) > 4) moved = true;
+    if (downPoint && Math.hypot(point.x - downPoint.x, point.y - downPoint.y) > 4) {
+      moved = true;
+      els.canvas.classList.add('is-dragging');
+    }
     panBy(point.x - previous.x, point.y - previous.y);
   } else if (pointers.size === 2) {
     const [a, b] = [...pointers.values()];
@@ -943,6 +961,8 @@ els.canvas.addEventListener('pointercancel', endPointer);
 els.canvas.addEventListener('pointerleave', (event) => {
   if (event.pointerType === 'mouse' && !pointers.size) {
     pointer = null;
+    hovered = null;
+    els.canvas.classList.remove('is-over-marker');
     requestDraw();
   }
 });
@@ -984,6 +1004,8 @@ els.canvas.addEventListener('keydown', (event) => {
 
 els.zoomIn.addEventListener('click', () => setZoom(state.zoom - 1));
 els.zoomOut.addEventListener('click', () => setZoom(state.zoom + 1));
+// O botão usa a mesma bússola do spawn no mapa.
+els.toSpawn.replaceChildren(iconSvg('spawn', 18));
 els.toSpawn.addEventListener('click', () => {
   [state.x, state.z] = world?.spawn && state.dim === 0 ? world.spawn : [0, 0];
   requestDraw();
@@ -1003,7 +1025,7 @@ function goTo() {
   const numbers = els.goto.value.match(/-?\d+/g)?.map(Number) ?? [];
   if (numbers.length < 2) {
     els.goto.setAttribute('aria-invalid', 'true');
-    toast.warning('Digite X e Z, por exemplo: -480 512', { position: 'bottom-center' });
+    toast.warning(T.gotoInvalid, { position: 'bottom-center' });
     return;
   }
   els.goto.removeAttribute('aria-invalid');
@@ -1051,9 +1073,9 @@ els.share.addEventListener('click', async () => {
   await new Promise((resolve) => setTimeout(resolve, 260));
   try {
     await navigator.clipboard.writeText(location.href);
-    toast.success('Link copiado. Quem abrir vê este mesmo mapa.', { position: 'bottom-center' });
+    toast.success(T.linkCopied, { position: 'bottom-center' });
   } catch {
-    toast.warning('Não deu para copiar sozinho: copie o endereço na barra do navegador.', { position: 'bottom-center' });
+    toast.warning(T.linkCopyFail, { position: 'bottom-center' });
   }
 });
 
@@ -1086,9 +1108,9 @@ new ResizeObserver(() => {
 document.fonts?.ready.then(requestDraw);
 
 if (typeof Worker === 'undefined' || typeof BigInt64Array === 'undefined' || typeof createImageBitmap === 'undefined') {
-  fail('Este navegador é antigo demais para o mapa. Tente o Chrome, o Firefox ou o Safari atualizados.');
+  fail(T.oldBrowser);
 } else {
-  setStatus('Carregando o gerador');
+  setStatus(T.loading);
   renderStructureList();
   startWorkers();
   loadWorld();

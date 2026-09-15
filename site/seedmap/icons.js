@@ -286,6 +286,23 @@ export const STRUCTURE_ICONS = {
 };
 STRUCTURE_ICONS.ruined_portal_nether = STRUCTURE_ICONS.ruined_portal;
 
+// Spawn do mundo: uma bússola, que no jogo aponta justamente para o spawn.
+// Aro de ouro, mostrador branco e a agulha vermelha para cima.
+STRUCTURE_ICONS.spawn = [
+  '...kkkkkk...',
+  '..kYyyyyYk..',
+  '.kYywwwwyYk.',
+  'kYywwwwrwyYk',
+  'kywwwwrrwwyk',
+  'kywwwrrwwwyk',
+  'kywwwGGwwwyk',
+  'kywwGGwwwwyk',
+  'kYywGwwwwyYk',
+  '.kYywwwwyYk.',
+  '..kYyyyyYk..',
+  '...kkkkkk...',
+];
+
 const canvasCache = new Map();
 
 /** Ícone desenhado num canvas do tamanho pedido (múltiplo de 12), pronto para drawImage. */

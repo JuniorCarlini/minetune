@@ -232,6 +232,28 @@ code {
 .nav a[aria-current='page'] {
   box-shadow: inset 0 -3px 0 var(--accent);
 }
+/* Troca de língua: siglas curtas no topo; o nome da língua, escrito nela mesma, vai no title e no aria-label. */
+.lang-switch {
+  display: inline-flex;
+  align-items: stretch;
+  margin-inline: 0.25rem;
+  border: 1px solid var(--line);
+}
+.nav .lang-switch a:not(.btn) {
+  padding: 0.25rem 0.45rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.nav .lang-switch a[aria-current='true'] {
+  color: var(--accent-fg);
+  background: var(--accent);
+}
+/* Aviso de que as notas de versão ficam em português (só em /en/ e /es/). */
+.changelog-lang-note {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
 
 /* --- Hero ----------------------------------------------------------------------- */
 .hero {
@@ -772,6 +794,16 @@ code {
   .nav a.hide-sm {
     display: none;
   }
+  .nav .lang-switch a:not(.btn) {
+    padding: 0.2rem 0.3rem;
+  }
+  /* Topo numa linha só; o rodapé pode quebrar ("Mapa de semillas · Documentación" não cabe lado a lado). */
+  .topbar .nav a {
+    white-space: nowrap;
+  }
+  .footer .nav {
+    flex-wrap: wrap;
+  }
   .hero {
     background:
       linear-gradient(180deg, rgb(30 30 31 / 0.82) 0%, rgb(30 30 31 / 0.95) 100%),
@@ -898,15 +930,23 @@ a.tuc-btn {
   border: 1px solid var(--line);
   box-shadow: 0 0 0 4px #111112;
 }
+/* Mira sobre o mapa (clicar mostra as coordenadas daquele ponto), mão sobre estruturas e spawn
+   e mão fechada só enquanto arrasta de verdade. */
 .map-frame canvas {
   display: block;
   width: 100%;
   height: 100%;
-  cursor: grab;
+  cursor: crosshair;
   touch-action: none;
+}
+.map-frame canvas.is-over-marker {
+  cursor: pointer;
 }
 .map-frame canvas.is-dragging {
   cursor: grabbing;
+}
+.map-zoom .structure-icon {
+  display: block;
 }
 .map-frame canvas:focus-visible {
   outline-offset: -3px;
@@ -1263,5 +1303,21 @@ a.tuc-btn {
   .map-side,
   .seedmap-notes {
     grid-template-columns: 1fr;
+  }
+}
+/* Celular estreito: com o seletor de língua no topo, o nome ao lado do logo não cabe; fica só o logo. */
+@media (max-width: 480px) {
+  .brand .mc-title {
+    display: none;
+  }
+  .nav a:not(.btn) {
+    padding-inline: 0.3rem;
+  }
+  .nav .btn-sm {
+    padding: 0 0.55rem;
+  }
+  /* "Mapa de semillas" é longo: o botão do GitHub fica só com o ícone (o nome segue no aria-label). */
+  .topbar .btn-label {
+    display: none;
   }
 }

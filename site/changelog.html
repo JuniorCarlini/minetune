@@ -1,25 +1,28 @@
 <!doctype html>
-<html lang="pt-BR">
+<!-- Modelo das três línguas: os marcadores t:, ta: e tj: vêm de site/i18n/<língua>.json; o build gera /, /en/ e /es/. -->
+<html lang="{{LANG}}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Changelog — Minetune</title>
-    <meta name="description" content="Todas as mudanças do Minetune, versão por versão." />
-    <link rel="canonical" href="https://juniorcarlini.github.io/minetune/changelog.html" />
+    <title>{{t:changelog.title}}</title>
+    <meta name="description" content="{{ta:changelog.description}}" />
+    <link rel="canonical" href="{{PAGE_URL}}" />
+    {{ALTERNATES}}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Minetune" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:url" content="https://juniorcarlini.github.io/minetune/changelog.html" />
-    <meta property="og:title" content="Changelog — Minetune" />
-    <meta property="og:description" content="Todas as mudanças do Minetune, versão por versão. Versão mais recente: v{{VERSION}}." />
-    <meta property="og:image" content="https://juniorcarlini.github.io/minetune/assets/og.jpg" />
+    <meta property="og:locale" content="{{OG_LOCALE}}" />
+    {{OG_ALTERNATES}}
+    <meta property="og:url" content="{{PAGE_URL}}" />
+    <meta property="og:title" content="{{ta:changelog.title}}" />
+    <meta property="og:description" content="{{ta:changelog.ogDescription}}" />
+    <meta property="og:image" content="{{SITE}}assets/og.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Logo e nome Minetune sobre uma cena noturna de Minecraft com um rack de servidor" />
+    <meta property="og:image:alt" content="{{ta:common.ogImageAlt}}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Changelog — Minetune" />
-    <meta name="twitter:image" content="https://juniorcarlini.github.io/minetune/assets/og.jpg" />
+    <meta name="twitter:title" content="{{ta:changelog.title}}" />
+    <meta name="twitter:image" content="{{SITE}}assets/og.jpg" />
     <meta name="theme-color" content="#1e1e1f" />
     <meta name="robots" content="index, follow" />
     <script type="application/ld+json">
@@ -28,44 +31,45 @@
         "@graph": [
           {
             "@type": "WebPage",
-            "@id": "https://juniorcarlini.github.io/minetune/changelog.html",
-            "url": "https://juniorcarlini.github.io/minetune/changelog.html",
-            "name": "Changelog do Minetune",
-            "description": "Todas as mudanças do Minetune, versão por versão. Versão mais recente: v{{VERSION}}.",
-            "inLanguage": "pt-BR",
+            "@id": "{{PAGE_URL}}",
+            "url": "{{PAGE_URL}}",
+            "name": "{{tj:changelog.ldName}}",
+            "description": "{{tj:changelog.ogDescription}}",
+            "inLanguage": "{{LANG}}",
             "dateModified": "{{VERSION_ISO}}",
-            "isPartOf": { "@id": "https://juniorcarlini.github.io/minetune/#website" },
-            "about": { "@id": "https://juniorcarlini.github.io/minetune/#software" }
+            "isPartOf": { "@id": "{{SITE}}#website" },
+            "about": { "@id": "{{SITE}}#software" }
           },
           {
             "@type": "BreadcrumbList",
             "itemListElement": [
-              { "@type": "ListItem", "position": 1, "name": "Minetune", "item": "https://juniorcarlini.github.io/minetune/" },
-              { "@type": "ListItem", "position": 2, "name": "Changelog", "item": "https://juniorcarlini.github.io/minetune/changelog.html" }
+              { "@type": "ListItem", "position": 1, "name": "Minetune", "item": "{{HOME_URL}}" },
+              { "@type": "ListItem", "position": 2, "name": "Changelog", "item": "{{PAGE_URL}}" }
             ]
           }
         ]
       }
     </script>
-    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="{{ROOT}}assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="{{ROOT}}styles.css" />
   </head>
   <body>
-    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <a class="skip" href="#conteudo">{{t:common.skip}}</a>
 
     <header class="topbar">
       <div class="wrap">
         <a class="brand" href="./">
-          <img src="assets/logo.svg" alt="" />
+          <img src="{{ROOT}}assets/logo.svg" alt="" />
           <span class="mc-title" data-text="Minetune">Minetune</span>
         </a>
-        <nav class="nav" aria-label="Principal">
-          <a class="hide-sm" href="./#recursos">Recursos</a>
-          <a class="hide-sm" href="./#comecar">Começar</a>
-          <a class="hide-sm" href="./#perguntas">Perguntas</a>
-          <a class="hide-sm" href="mapa.html">Mapa de seeds</a>
-          <a href="changelog.html" aria-current="page">Changelog</a>
-          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> GitHub</a>
+        <nav class="nav" aria-label="{{ta:common.navMain}}">
+          <a class="hide-sm" href="./#recursos">{{t:common.features}}</a>
+          <a class="hide-sm" href="./#comecar">{{t:common.start}}</a>
+          <a class="hide-sm" href="./#perguntas">{{t:common.faq}}</a>
+          <a class="hide-sm" href="mapa.html">{{t:common.seedmap}}</a>
+          <a href="changelog.html" aria-current="page">{{t:common.changelog}}</a>
+          {{LANG_SWITCH}}
+          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune" aria-label="GitHub"><i data-icon="github"></i> <span class="btn-label">GitHub</span></a>
         </nav>
       </div>
     </header>
@@ -73,15 +77,16 @@
     <main id="conteudo">
       <section class="page-head">
         <div class="wrap">
-          <span class="eyebrow"><i data-icon="refresh"></i> Novidades</span>
+          <span class="eyebrow"><i data-icon="refresh"></i> {{t:changelog.eyebrow}}</span>
           <h1 class="mc-title" data-text="Changelog">Changelog</h1>
-          <p>Tudo o que mudou no Minetune, versão por versão. A versão mais recente é a <a href="#v{{VERSION}}">v{{VERSION}}</a>, de {{VERSION_DATE}}.</p>
+          <p>{{t:changelog.leadHtml}}</p>
+          <!-- CHANGELOG_NOTE -->
         </div>
       </section>
 
       <div class="wrap changelog-layout">
-        <nav class="toc" id="toc" aria-label="Versões">
-          <span class="toc-title">Versões</span>
+        <nav class="toc" id="toc" aria-label="{{ta:changelog.versions}}">
+          <span class="toc-title">{{t:changelog.versions}}</span>
           <!-- TOC -->
         </nav>
         <div class="changelog">
@@ -93,12 +98,14 @@
     <footer class="footer">
       <div class="wrap">
         <div>
-          <span class="footer-credit">Feito com <span class="heart"><i data-icon="heart"></i></span> por <a href="https://github.com/JuniorCarlini">JuniorCarlini</a></span>
-          <small>Minecraft é marca da Mojang Studios e da Microsoft. O Minetune não é oficial nem afiliado a elas.</small>
+          <span class="footer-credit">{{t:common.madeWith}}</span>
+          <small>{{t:common.trademark}}</small>
         </div>
-        <nav class="nav" aria-label="Rodapé">
-          <a href="./">Início</a>
-          <a href="https://github.com/JuniorCarlini/minetune/blob/main/CHANGELOG.md">CHANGELOG.md</a>
+        <!-- Mesmo rodapé nas três páginas: só as páginas do site e o GitHub. -->
+        <nav class="nav footer-nav" aria-label="{{ta:common.navFooter}}">
+          <a href="./">{{t:common.home}}</a>
+          <a href="mapa.html">{{t:common.seedmap}}</a>
+          <a href="changelog.html" aria-current="page">{{t:common.changelog}}</a>
           <a href="https://github.com/JuniorCarlini/minetune">GitHub</a>
         </nav>
       </div>

@@ -1,32 +1,35 @@
 <!doctype html>
-<html lang="pt-BR">
+<!-- Modelo das três línguas: os marcadores t:, ta: e tj: vêm de site/i18n/<língua>.json; o build gera /, /en/ e /es/. -->
+<html lang="{{LANG}}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Minetune — crie seu servidor de Minecraft com Docker e painel web</title>
-    <meta name="description" content="Crie e administre um servidor de Minecraft Java e Bedrock com Docker: painel em português, backups criptografados e deploy em casa, VPS ou EasyPanel." />
-    <link rel="canonical" href="https://juniorcarlini.github.io/minetune/" />
+    <title>{{t:index.title}}</title>
+    <meta name="description" content="{{ta:index.description}}" />
+    <link rel="canonical" href="{{PAGE_URL}}" />
+    {{ALTERNATES}}
     <!-- Prévia em redes sociais e mensageiros: a imagem precisa de URL absoluta. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Minetune" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta property="og:url" content="https://juniorcarlini.github.io/minetune/" />
-    <meta property="og:title" content="Minetune — crie seu servidor de Minecraft com Docker e painel web" />
-    <meta property="og:description" content="Crie e administre um servidor de Minecraft Java e Bedrock com Docker: painel em português, backups criptografados e deploy em casa, VPS ou EasyPanel." />
-    <meta property="og:image" content="https://juniorcarlini.github.io/minetune/assets/og.jpg" />
+    <meta property="og:locale" content="{{OG_LOCALE}}" />
+    {{OG_ALTERNATES}}
+    <meta property="og:url" content="{{PAGE_URL}}" />
+    <meta property="og:title" content="{{ta:index.title}}" />
+    <meta property="og:description" content="{{ta:index.description}}" />
+    <meta property="og:image" content="{{SITE}}assets/og.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Logo e nome Minetune sobre uma cena noturna de Minecraft com um rack de servidor" />
+    <meta property="og:image:alt" content="{{ta:common.ogImageAlt}}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Minetune — crie seu servidor de Minecraft com Docker e painel web" />
-    <meta name="twitter:description" content="Crie e administre um servidor de Minecraft com Docker e painel web em português." />
-    <meta name="twitter:image" content="https://juniorcarlini.github.io/minetune/assets/og.jpg" />
+    <meta name="twitter:title" content="{{ta:index.title}}" />
+    <meta name="twitter:description" content="{{ta:index.twitterDescription}}" />
+    <meta name="twitter:image" content="{{SITE}}assets/og.jpg" />
     <meta name="theme-color" content="#1e1e1f" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="author" content="Junior Carlini" />
-    <link rel="alternate" type="text/plain" href="https://juniorcarlini.github.io/minetune/llms.txt" title="Resumo do Minetune para assistentes de IA" />
-    <link rel="sitemap" type="application/xml" href="https://juniorcarlini.github.io/minetune/sitemap.xml" />
+    <link rel="alternate" type="text/plain" href="{{LLMS_URL}}" title="{{ta:common.llmsTitle}}" />
+    <link rel="sitemap" type="application/xml" href="{{SITE}}sitemap.xml" />
     <!-- Dados estruturados: o que é o software, quem fez e as perguntas frequentes (as mesmas da página). -->
     <script type="application/ld+json">
       {
@@ -34,10 +37,10 @@
         "@graph": [
           {
             "@type": "WebSite",
-            "@id": "https://juniorcarlini.github.io/minetune/#website",
-            "url": "https://juniorcarlini.github.io/minetune/",
+            "@id": "{{SITE}}#website",
+            "url": "{{HOME_URL}}",
             "name": "Minetune",
-            "inLanguage": "pt-BR",
+            "inLanguage": "{{LANG}}",
             "publisher": { "@id": "https://github.com/JuniorCarlini#person" }
           },
           {
@@ -48,29 +51,30 @@
           },
           {
             "@type": "SoftwareApplication",
-            "@id": "https://juniorcarlini.github.io/minetune/#software",
+            "@id": "{{SITE}}#software",
             "name": "Minetune",
-            "description": "Servidor Minecraft pronto para produção em Docker, com painel web próprio em português, backups incrementais e criptografados e deploy em casa, VPS ou EasyPanel.",
-            "url": "https://juniorcarlini.github.io/minetune/",
-            "image": "https://juniorcarlini.github.io/minetune/assets/og.jpg",
-            "screenshot": "https://juniorcarlini.github.io/minetune/assets/screenshots/overview.png",
+            "description": "{{tj:index.ld.softwareDescription}}",
+            "url": "{{HOME_URL}}",
+            "image": "{{SITE}}assets/og.jpg",
+            "screenshot": "{{SITE}}{{SHOTS}}overview.png",
             "applicationCategory": "GameApplication",
-            "applicationSubCategory": "Servidor de jogos",
-            "operatingSystem": "Linux, macOS e Windows com Docker",
+            "applicationSubCategory": "{{tj:index.ld.subCategory}}",
+            "operatingSystem": "{{tj:index.ld.os}}",
             "softwareVersion": "{{VERSION}}",
             "datePublished": "2026-09-12",
             "dateModified": "{{VERSION_ISO}}",
-            "inLanguage": "pt-BR",
+            "inLanguage": "{{LANG}}",
             "author": { "@id": "https://github.com/JuniorCarlini#person" },
-            "releaseNotes": "https://juniorcarlini.github.io/minetune/changelog.html",
+            "releaseNotes": "{{CHANGELOG_URL}}",
             "downloadUrl": "https://github.com/JuniorCarlini/minetune",
-            "softwareRequirements": "Docker com Compose v2, make e openssl",
+            "softwareRequirements": "{{tj:index.ld.requirements}}",
             "featureList": [
-              "Paper, Purpur, Fabric, NeoForge ou Vanilla com a lista oficial de versões",
-              "Painel web em português para quem não é técnico",
-              "Backups incrementais e criptografados para disco local, Cloudflare R2, Amazon S3 ou RustFS",
-              "Crossplay com Minecraft Bedrock via Geyser e Floodgate",
-              "Acesso pela internet por port forward, playit.gg, VPS ou EasyPanel"
+              "{{tj:index.ld.feature1}}",
+              "{{tj:index.ld.feature2}}",
+              "{{tj:index.ld.feature3}}",
+              "{{tj:index.ld.feature4}}",
+              "{{tj:index.ld.feature5}}",
+              "{{tj:index.ld.feature6}}"
             ]
           },
           {
@@ -83,67 +87,41 @@
           },
           {
             "@type": "FAQPage",
-            "@id": "https://juniorcarlini.github.io/minetune/#perguntas",
+            "@id": "{{PAGE_URL}}#perguntas",
+            "inLanguage": "{{LANG}}",
             "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "O que é o Minetune?",
-                "acceptedAnswer": { "@type": "Answer", "text": "É um projeto para rodar um servidor de Minecraft em Docker já organizado para uso real: servidor otimizado, painel web em português, backups criptografados e guias para colocar no ar em casa, numa VPS ou no EasyPanel." }
-              },
-              {
-                "@type": "Question",
-                "name": "Como criar um servidor de Minecraft com o Minetune?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Com Docker instalado, clone o repositório e rode make init para gerar as senhas e make up para subir tudo. O painel abre em localhost:8080 e o jogo em localhost:25565." }
-              },
-              {
-                "@type": "Question",
-                "name": "Quais tipos e versões de servidor são suportados?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Paper (padrão), Purpur, Fabric, NeoForge e Vanilla. O painel lista as versões oficiais de cada um, das mais recentes para as mais antigas, e avisa quando uma versão antiga precisa de outra imagem de Java." }
-              },
-              {
-                "@type": "Question",
-                "name": "Onde ficam os backups do mundo?",
-                "acceptedAnswer": { "@type": "Answer", "text": "No disco local por padrão, ou fora da máquina em Cloudflare R2, Amazon S3 ou num S3 próprio como RustFS. Os backups são incrementais e criptografados com restic, e o destino é configurado pelo painel com teste de conexão." }
-              },
-              {
-                "@type": "Question",
-                "name": "Dá para jogar pelo celular ou console?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Sim. Ligando o crossplay com Bedrock nas configurações, o Minetune instala Geyser e Floodgate, e jogadores de celular, console e Windows entram pela porta 19132 sem precisar de conta Java." }
-              },
-              {
-                "@type": "Question",
-                "name": "Preciso abrir portas no roteador?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Não obrigatoriamente. Com IP público dá para usar port forward; sem IP público ou atrás de CGNAT, o túnel playit.gg funciona sem abrir portas. Também é possível usar uma VPS como ponte ou hospedar no EasyPanel." }
-              },
-              {
-                "@type": "Question",
-                "name": "Quantos jogadores o servidor aguenta?",
-                "acceptedAnswer": { "@type": "Answer", "text": "O máximo de jogadores é uma configuração do painel, de 1 a 1000. O limite real é a máquina: processador, memória e internet. Dezenas de jogadores cabem numa máquina comum; centenas pedem máquina forte e, em geral, vários servidores ligados por um proxy." }
-              }
+              { "@type": "Question", "name": "{{tj:index.faq.q1}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a1}}" } },
+              { "@type": "Question", "name": "{{tj:index.faq.q2}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a2}}" } },
+              { "@type": "Question", "name": "{{tj:index.faq.q3}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a3}}" } },
+              { "@type": "Question", "name": "{{tj:index.faq.q4}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a4}}" } },
+              { "@type": "Question", "name": "{{tj:index.faq.q5}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a5}}" } },
+              { "@type": "Question", "name": "{{tj:index.faq.q6}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a6}}" } },
+              { "@type": "Question", "name": "{{tj:index.faq.q7}}", "acceptedAnswer": { "@type": "Answer", "text": "{{tj:index.faq.a7}}" } }
             ]
           }
         ]
       }
     </script>
-    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="{{ROOT}}assets/logo.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="{{ROOT}}styles.css" />
   </head>
   <body>
-    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <a class="skip" href="#conteudo">{{t:common.skip}}</a>
 
     <header class="topbar">
       <div class="wrap">
         <a class="brand" href="./">
-          <img src="assets/logo.svg" alt="" />
+          <img src="{{ROOT}}assets/logo.svg" alt="" />
           <span class="mc-title" data-text="Minetune">Minetune</span>
         </a>
-        <nav class="nav" aria-label="Principal">
-          <a class="hide-sm" href="#recursos">Recursos</a>
-          <a class="hide-sm" href="#comecar">Começar</a>
-          <a class="hide-sm" href="#perguntas">Perguntas</a>
-          <a href="mapa.html">Mapa de seeds</a>
-          <a class="hide-sm" href="changelog.html">Changelog</a>
-          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> GitHub</a>
+        <nav class="nav" aria-label="{{ta:common.navMain}}">
+          <a class="hide-sm" href="#recursos">{{t:common.features}}</a>
+          <a class="hide-sm" href="#comecar">{{t:common.start}}</a>
+          <a class="hide-sm" href="#perguntas">{{t:common.faq}}</a>
+          <a href="mapa.html">{{t:common.seedmap}}</a>
+          <a class="hide-sm" href="changelog.html">{{t:common.changelog}}</a>
+          {{LANG_SWITCH}}
+          <a class="btn btn-sm" href="https://github.com/JuniorCarlini/minetune" aria-label="GitHub"><i data-icon="github"></i> <span class="btn-label">GitHub</span></a>
         </nav>
       </div>
     </header>
@@ -151,14 +129,12 @@
     <main id="conteudo">
       <section class="hero">
         <div class="wrap">
-          <img class="hero-logo" src="assets/logo.svg" alt="" />
+          <img class="hero-logo" src="{{ROOT}}assets/logo.svg" alt="" />
           <h1 class="mc-title" data-text="Minetune">Minetune</h1>
-          <p class="hero-lead">
-            Crie e administre seu servidor de Minecraft com Docker: painel web em português, backups criptografados e deploy em casa, numa VPS ou no EasyPanel.
-          </p>
+          <p class="hero-lead">{{t:index.hero.lead}}</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#comecar"><i data-icon="play"></i> Começar agora</a>
-            <a class="btn" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> Ver no GitHub</a>
+            <a class="btn btn-primary" href="#comecar"><i data-icon="play"></i> {{t:index.hero.start}}</a>
+            <a class="btn" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> {{t:common.viewGithub}}</a>
           </div>
           <div class="hero-meta">
             <a class="chip" href="changelog.html#v{{VERSION}}"><i data-icon="cube"></i> <strong>v{{VERSION}}</strong> · {{VERSION_DATE}}</a>
@@ -171,48 +147,48 @@
 
       <div class="wrap showcase">
         <div class="window">
-          <div class="window-bar"><span></span><span></span><span></span><em>Minetune · Início</em></div>
-          <img src="assets/screenshots/overview.png" width="1440" height="900" alt="Tela Início do painel Minetune mostrando servidor ligado, endereço para copiar, avisos e uso de memória e processador" />
+          <div class="window-bar"><span></span><span></span><span></span><em>{{t:index.window}}</em></div>
+          <img src="{{ROOT}}{{SHOTS}}overview.png" width="1440" height="900" alt="{{ta:index.overviewAlt}}" />
         </div>
       </div>
 
       <section class="section" id="recursos">
         <div class="wrap">
           <div class="section-head">
-            <span class="eyebrow"><i data-icon="check"></i> O que vem pronto</span>
-            <h2>Tudo o que um servidor de Minecraft precisa para rodar de verdade</h2>
-            <p>Sem improviso: servidor otimizado, painel para configurar sem editar arquivos, backups que saem da máquina e caminhos claros para abrir para a internet.</p>
+            <span class="eyebrow"><i data-icon="check"></i> {{t:index.features.eyebrow}}</span>
+            <h2>{{t:index.features.title}}</h2>
+            <p>{{t:index.features.lead}}</p>
           </div>
           <div class="features">
             <article class="feature">
               <span class="feature-icon"><i data-icon="cube"></i></span>
-              <h3>Servidor otimizado</h3>
-              <p>Paper 26.2 por padrão, ou Purpur, Fabric, NeoForge e Vanilla. Java 25, flags Aikar e patches de desempenho.</p>
+              <h3>{{t:index.f1.title}}</h3>
+              <p>{{t:index.f1.text}}</p>
             </article>
             <article class="feature">
               <span class="feature-icon"><i data-icon="dashboard"></i></span>
-              <h3>Painel web próprio</h3>
-              <p>Em português e sem jargão: estado do servidor, jogadores, regras do jogo, configurações, plugins do Modrinth e backups, com avisos que dizem o que fazer.</p>
+              <h3>{{t:index.f2.title}}</h3>
+              <p>{{t:index.f2.text}}</p>
             </article>
             <article class="feature">
               <span class="feature-icon"><i data-icon="backups"></i></span>
-              <h3>Backups criptografados</h3>
-              <p>restic incremental e deduplicado, agendado ou na hora, com restore seguro que desfaz a troca se algo falhar.</p>
+              <h3>{{t:index.f3.title}}</h3>
+              <p>{{t:index.f3.text}}</p>
             </article>
             <article class="feature">
               <span class="feature-icon"><i data-icon="players"></i></span>
-              <h3>Crossplay com Bedrock</h3>
-              <p>Geyser e Floodgate com um toggle: celular, console e Windows entram sem conta Java.</p>
+              <h3>{{t:index.f4.title}}</h3>
+              <p>{{t:index.f4.text}}</p>
             </article>
             <article class="feature">
               <span class="feature-icon"><i data-icon="shield"></i></span>
-              <h3>Seguro por padrão</h3>
-              <p>Painel só na própria máquina, acesso remoto ao console fechado e Docker acessado por proxy que não deixa criar containers.</p>
+              <h3>{{t:index.f5.title}}</h3>
+              <p>{{t:index.f5.text}}</p>
             </article>
             <article class="feature">
               <span class="feature-icon"><i data-icon="globe"></i></span>
-              <h3>Roda em qualquer lugar</h3>
-              <p>PC de casa, VPS ou EasyPanel. Port forward, túnel playit.gg para CGNAT ou VPS como ponte.</p>
+              <h3>{{t:index.f6.title}}</h3>
+              <p>{{t:index.f6.text}}</p>
             </article>
           </div>
         </div>
@@ -221,31 +197,31 @@
       <section class="section section-alt" id="comecar">
         <div class="wrap">
           <div class="section-head">
-            <span class="eyebrow"><i data-icon="console"></i> Início rápido</span>
-            <h2>Seu servidor de Minecraft no ar em poucos minutos</h2>
-            <p>Precisa só de Docker com Compose v2, <code>make</code> e <code>openssl</code>. Reserve pelo menos 6 GB de RAM.</p>
+            <span class="eyebrow"><i data-icon="console"></i> {{t:index.start.eyebrow}}</span>
+            <h2>{{t:index.start.title}}</h2>
+            <p>{{t:index.start.leadHtml}}</p>
           </div>
           <div class="steps">
             <div class="step">
               <span class="step-num">1</span>
-              <h3>Baixe o projeto</h3>
+              <h3>{{t:index.step1}}</h3>
               <pre class="terminal"><span class="p">$ </span>git clone https://github.com/JuniorCarlini/minetune.git
 <span class="p">$ </span>cd minetune</pre>
             </div>
             <div class="step">
               <span class="step-num">2</span>
-              <h3>Gere os segredos e suba</h3>
-              <pre class="terminal"><span class="c"># gera senhas no .env</span>
+              <h3>{{t:index.step2}}</h3>
+              <pre class="terminal"><span class="c"># {{t:index.term.secrets}}</span>
 <span class="p">$ </span>make init
-<span class="c"># ~1–3 min no 1º boot</span>
+<span class="c"># {{t:index.term.firstBoot}}</span>
 <span class="p">$ </span>make up</pre>
             </div>
             <div class="step">
               <span class="step-num">3</span>
-              <h3>Abra o painel e jogue</h3>
-              <pre class="terminal"><span class="c"># painel (PANEL_PASSWORD)</span>
+              <h3>{{t:index.step3}}</h3>
+              <pre class="terminal"><span class="c"># {{t:index.term.panel}}</span>
 http://localhost:8080
-<span class="c"># jogo</span>
+<span class="c"># {{t:index.term.game}}</span>
 localhost:25565</pre>
             </div>
           </div>
@@ -255,15 +231,15 @@ localhost:25565</pre>
       <section class="section">
         <div class="wrap">
           <div class="section-head">
-            <span class="eyebrow"><i data-icon="upload"></i> Backups</span>
-            <h2>Backup do mundo guardado fora da máquina</h2>
-            <p>Cada cópia envia só o que mudou e é criptografada antes de sair. O salvamento pausa durante a cópia, então nada fica pela metade. O destino é escolhido no próprio painel, com teste de conexão.</p>
+            <span class="eyebrow"><i data-icon="upload"></i> {{t:index.backups.eyebrow}}</span>
+            <h2>{{t:index.backups.title}}</h2>
+            <p>{{t:index.backups.lead}}</p>
           </div>
           <div class="targets">
-            <span class="target"><i data-icon="save"></i> Disco local</span>
+            <span class="target"><i data-icon="save"></i> {{t:index.target.local}}</span>
             <span class="target"><i data-icon="upload"></i> Cloudflare R2</span>
             <span class="target"><i data-icon="upload"></i> AWS S3</span>
-            <span class="target"><i data-icon="memory"></i> RustFS (S3 próprio)</span>
+            <span class="target"><i data-icon="memory"></i> {{t:index.target.rustfs}}</span>
           </div>
         </div>
       </section>
@@ -271,38 +247,38 @@ localhost:25565</pre>
       <section class="section section-alt" id="painel">
         <div class="wrap">
           <div class="section-head">
-            <span class="eyebrow"><i data-icon="monitor"></i> O painel</span>
-            <h2>Painel de servidor Minecraft com cara de Minecraft</h2>
-            <p>Cantos retos, botões com bisel, fonte e ícones pixelados. Cada área do servidor tem a sua página.</p>
+            <span class="eyebrow"><i data-icon="monitor"></i> {{t:index.panel.eyebrow}}</span>
+            <h2>{{t:index.panel.title}}</h2>
+            <p>{{t:index.panel.lead}}</p>
           </div>
           <div class="gallery">
             <figure class="shot">
-              <img src="assets/screenshots/settings.png" width="1440" height="900" loading="lazy" alt="Configurações do servidor Minecraft em linguagem simples, com versão e tipo de servidor" />
-              <figcaption>Configurações em linguagem simples, validadas antes de salvar</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}settings.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.settings.alt}}" />
+              <figcaption>{{t:index.shot.settings.caption}}</figcaption>
             </figure>
             <figure class="shot">
-              <img src="assets/screenshots/gamerules.png" width="1440" height="900" loading="lazy" alt="Regras do jogo do Minecraft com busca e categorias" />
-              <figcaption>Todas as regras do jogo, com busca e categorias</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}gamerules.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.gamerules.alt}}" />
+              <figcaption>{{t:index.shot.gamerules.caption}}</figcaption>
             </figure>
             <figure class="shot">
-              <img src="assets/screenshots/plugins.png" width="1440" height="900" loading="lazy" alt="Plugins e mods do Modrinth compatíveis com a versão do servidor" />
-              <figcaption>Plugins e mods com busca no Modrinth</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}plugins.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.plugins.alt}}" />
+              <figcaption>{{t:index.shot.plugins.caption}}</figcaption>
             </figure>
             <figure class="shot">
-              <img src="assets/screenshots/backups.png" width="1440" height="900" loading="lazy" alt="Backups do mundo com aviso de proteção e lista de cópias de segurança" />
-              <figcaption>Backups na hora e restauração segura</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}backups.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.backups.alt}}" />
+              <figcaption>{{t:index.shot.backups.caption}}</figcaption>
             </figure>
             <figure class="shot">
-              <img src="assets/screenshots/backup-destination.png" width="1440" height="900" loading="lazy" alt="Escolha de onde guardar os backups: este computador, Cloudflare R2, Amazon S3 ou S3 próprio" />
-              <figcaption>Onde guardar os backups, com teste de conexão</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}backup-destination.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.destination.alt}}" />
+              <figcaption>{{t:index.shot.destination.caption}}</figcaption>
             </figure>
             <figure class="shot">
-              <img src="assets/screenshots/players.png" width="1440" height="900" loading="lazy" alt="Jogadores online, lista de convidados, administradores e banidos" />
-              <figcaption>Jogadores, lista de convidados e administradores</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}players.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.players.alt}}" />
+              <figcaption>{{t:index.shot.players.caption}}</figcaption>
             </figure>
             <figure class="shot">
-              <img src="assets/screenshots/console.png" width="1440" height="900" loading="lazy" alt="Console do servidor com registro ao vivo e comandos sugeridos" />
-              <figcaption>Console para quem já conhece os comandos</figcaption>
+              <img src="{{ROOT}}{{SHOTS}}console.png" width="1440" height="900" loading="lazy" alt="{{ta:index.shot.console.alt}}" />
+              <figcaption>{{t:index.shot.console.caption}}</figcaption>
             </figure>
           </div>
         </div>
@@ -311,37 +287,37 @@ localhost:25565</pre>
       <section class="section section-alt" id="perguntas">
         <div class="wrap">
           <div class="section-head">
-            <span class="eyebrow"><i data-icon="search"></i> Perguntas frequentes</span>
-            <h2>Dúvidas comuns antes de subir o servidor</h2>
+            <span class="eyebrow"><i data-icon="search"></i> {{t:index.faq.eyebrow}}</span>
+            <h2>{{t:index.faq.title}}</h2>
           </div>
           <div class="faq">
             <details class="faq-item">
-              <summary>O que é o Minetune?</summary>
-              <p>É um projeto para rodar um servidor de Minecraft em Docker já organizado para uso real: servidor otimizado, painel web em português, backups criptografados e guias para colocar no ar em casa, numa VPS ou no EasyPanel.</p>
+              <summary>{{t:index.faq.q1}}</summary>
+              <p>{{t:index.faq.a1}}</p>
             </details>
             <details class="faq-item">
-              <summary>Como criar um servidor de Minecraft com o Minetune?</summary>
-              <p>Com Docker instalado, clone o repositório e rode <code>make init</code> para gerar as senhas e <code>make up</code> para subir tudo. O painel abre em <code>localhost:8080</code> e o jogo em <code>localhost:25565</code>.</p>
+              <summary>{{t:index.faq.q2}}</summary>
+              <p>{{t:index.faq.a2Html}}</p>
             </details>
             <details class="faq-item">
-              <summary>Quais tipos e versões de servidor são suportados?</summary>
-              <p>Paper (padrão), Purpur, Fabric, NeoForge e Vanilla. O painel lista as versões oficiais de cada um, das mais recentes para as mais antigas, e avisa quando uma versão antiga precisa de outra imagem de Java.</p>
+              <summary>{{t:index.faq.q3}}</summary>
+              <p>{{t:index.faq.a3}}</p>
             </details>
             <details class="faq-item">
-              <summary>Onde ficam os backups do mundo?</summary>
-              <p>No disco local por padrão, ou fora da máquina em Cloudflare R2, Amazon S3 ou num S3 próprio como RustFS. Os backups são incrementais e criptografados com restic, e o destino é configurado pelo painel com teste de conexão.</p>
+              <summary>{{t:index.faq.q4}}</summary>
+              <p>{{t:index.faq.a4}}</p>
             </details>
             <details class="faq-item">
-              <summary>Dá para jogar pelo celular ou console?</summary>
-              <p>Sim. Ligando o crossplay com Bedrock nas configurações, o Minetune instala Geyser e Floodgate, e jogadores de celular, console e Windows entram pela porta 19132 sem precisar de conta Java.</p>
+              <summary>{{t:index.faq.q5}}</summary>
+              <p>{{t:index.faq.a5}}</p>
             </details>
             <details class="faq-item">
-              <summary>Preciso abrir portas no roteador?</summary>
-              <p>Não obrigatoriamente. Com IP público dá para usar port forward; sem IP público ou atrás de CGNAT, o túnel playit.gg funciona sem abrir portas. Também é possível usar uma VPS como ponte ou hospedar no EasyPanel.</p>
+              <summary>{{t:index.faq.q6}}</summary>
+              <p>{{t:index.faq.a6}}</p>
             </details>
             <details class="faq-item">
-              <summary>Quantos jogadores o servidor aguenta?</summary>
-              <p>O máximo de jogadores é uma configuração do painel, de 1 a 1000. O limite real é a máquina: processador, memória e internet. Dezenas de jogadores cabem numa máquina comum; centenas pedem máquina forte e, em geral, vários servidores ligados por um proxy.</p>
+              <summary>{{t:index.faq.q7}}</summary>
+              <p>{{t:index.faq.a7}}</p>
             </details>
           </div>
         </div>
@@ -349,11 +325,11 @@ localhost:25565</pre>
 
       <section class="section cta">
         <div class="wrap">
-          <img src="assets/logo.svg" alt="" />
-          <h2>Pronto para subir o seu servidor?</h2>
+          <img src="{{ROOT}}assets/logo.svg" alt="" />
+          <h2>{{t:index.cta.title}}</h2>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> Ver no GitHub</a>
-            <a class="btn" href="changelog.html"><i data-icon="refresh"></i> O que há de novo</a>
+            <a class="btn btn-primary" href="https://github.com/JuniorCarlini/minetune"><i data-icon="github"></i> {{t:common.viewGithub}}</a>
+            <a class="btn" href="changelog.html"><i data-icon="refresh"></i> {{t:index.cta.whatsNew}}</a>
           </div>
         </div>
       </section>
@@ -362,13 +338,14 @@ localhost:25565</pre>
     <footer class="footer">
       <div class="wrap">
         <div>
-          <span class="footer-credit">Feito com <span class="heart"><i data-icon="heart"></i></span> por <a href="https://github.com/JuniorCarlini">JuniorCarlini</a></span>
-          <small>Minecraft é marca da Mojang Studios e da Microsoft. O Minetune não é oficial nem afiliado a elas.</small>
+          <span class="footer-credit">{{t:common.madeWith}}</span>
+          <small>{{t:common.trademark}}</small>
         </div>
-        <nav class="nav" aria-label="Rodapé">
-          <a href="mapa.html">Mapa de seeds</a>
-          <a href="changelog.html">Changelog</a>
-          <a href="https://github.com/JuniorCarlini/minetune#-documentação">Documentação</a>
+        <!-- Mesmo rodapé nas três páginas: só as páginas do site e o GitHub. -->
+        <nav class="nav footer-nav" aria-label="{{ta:common.navFooter}}">
+          <a href="./" aria-current="page">{{t:common.home}}</a>
+          <a href="mapa.html">{{t:common.seedmap}}</a>
+          <a href="changelog.html">{{t:common.changelog}}</a>
           <a href="https://github.com/JuniorCarlini/minetune">GitHub</a>
         </nav>
       </div>
