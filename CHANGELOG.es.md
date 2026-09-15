@@ -9,6 +9,14 @@ Tipos de cambio: **Añadido** (novedades), **Cambiado** (cambios en lo que ya
 existía), **Obsoleto** (se quitará en una versión futura), **Eliminado**, **Corregido**
 (errores) y **Seguridad** (vulnerabilidades).
 
+## [0.3.2] - 2026-09-15
+
+### Corregido
+
+- En Minecraft 26.2 con el servidor en modo offline, el juego rechazaba la entrada por la
+  puerta con "Failed to decode packet login_finished": el 26.2 añadió un dato más al final
+  del inicio de sesión. La puerta ahora usa el formato de cada versión.
+
 ## [0.3.1] - 2026-09-15
 
 ### Corregido
@@ -231,6 +239,7 @@ Primera versión: servidor, copias de seguridad, panel web y documentación.
 - Acceso a Docker mediante un proxy con lista de permisos: solo lectura de estado y
   logs y encender, parar o reiniciar contenedores.
 
+[0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...v0.2.0

@@ -9,6 +9,14 @@ Change types: **Added** (new features), **Changed** (changes to existing
 features), **Deprecated** (will be removed in a future version), **Removed**, **Fixed**
 (bugs) and **Security** (vulnerabilities).
 
+## [0.3.2] - 2026-09-15
+
+### Fixed
+
+- On Minecraft 26.2 with the server in offline mode, the game refused to join through the
+  gate with "Failed to decode packet login_finished": 26.2 added one more field at the end
+  of login. The gate now uses each version's format.
+
 ## [0.3.1] - 2026-09-15
 
 ### Fixed
@@ -231,6 +239,7 @@ First version: server, backups, web panel and documentation.
 - Docker access through a proxy with an allowlist: only reading status and
   logs and starting, stopping or restarting containers.
 
+[0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/JuniorCarlini/minetune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/JuniorCarlini/minetune/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/JuniorCarlini/minetune/compare/v0.1.0...v0.2.0
