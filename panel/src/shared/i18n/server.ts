@@ -17,7 +17,7 @@ export const server = defineMessages(
     routeNotFound: 'Rota não encontrada',
     frontendMissing: 'Frontend não compilado. Rode `npm run build` ou use `npm run dev`.',
     unknownSetting: 'Configuração desconhecida ou reservada',
-    memoryOverLimit: (limitGb: string) => `Heap + ~768 MB de overhead ultrapassa o limite do container (${limitGb} GB, MC_MEMORY_LIMIT no .env)`,
+    memoryOverLimit: (limitGb: string) => `Heap + ~768 MB de overhead ultrapassa o limite do container (${limitGb} GB). Diminua o heap ou aumente o limite de memória do container (MC_MEMORY_LIMIT no .env do compose; no Hangar, nos recursos do serviço).`,
     versionNeedsJava: (id: string, java: number, imageJava: number) =>
       `${id} precisa de Java ${java}, e esta instalação usa a imagem do Minetune com Java ${imageJava}, que não dá para trocar por aqui. Escolha uma versão que rode no Java ${imageJava}.`,
     invalidServerType: 'Software de servidor inválido',
@@ -132,7 +132,7 @@ export const server = defineMessages(
       routeNotFound: 'Route not found',
       frontendMissing: 'Frontend not built. Run `npm run build` or use `npm run dev`.',
       unknownSetting: 'Unknown or reserved setting',
-      memoryOverLimit: (limitGb: string) => `Heap + ~768 MB overhead exceeds the container limit (${limitGb} GB, MC_MEMORY_LIMIT in .env)`,
+      memoryOverLimit: (limitGb: string) => `Heap + ~768 MB overhead exceeds the container limit (${limitGb} GB). Lower the heap or raise the container memory limit (MC_MEMORY_LIMIT in the compose .env; on Hangar, in the service resources).`,
       versionNeedsJava: (id: string, java: number, imageJava: number) =>
         `${id} needs Java ${java}, and this install uses the Minetune image with Java ${imageJava}, which can't be changed here. Pick a version that runs on Java ${imageJava}.`,
       invalidServerType: 'Invalid server software',
@@ -243,7 +243,7 @@ export const server = defineMessages(
       routeNotFound: 'Ruta no encontrada',
       frontendMissing: 'Frontend sin compilar. Ejecuta `npm run build` o usa `npm run dev`.',
       unknownSetting: 'Configuración desconocida o reservada',
-      memoryOverLimit: (limitGb: string) => `Heap + ~768 MB de sobrecarga supera el límite del contenedor (${limitGb} GB, MC_MEMORY_LIMIT en .env)`,
+      memoryOverLimit: (limitGb: string) => `Heap + ~768 MB de sobrecarga supera el límite del contenedor (${limitGb} GB). Reduce el heap o aumenta el límite de memoria del contenedor (MC_MEMORY_LIMIT en el .env del compose; en Hangar, en los recursos del servicio).`,
       versionNeedsJava: (id: string, java: number, imageJava: number) =>
         `${id} necesita Java ${java}, y esta instalación usa la imagen de Minetune con Java ${imageJava}, que no se puede cambiar aquí. Elige una versión que funcione con Java ${imageJava}.`,
       invalidServerType: 'Software de servidor no válido',
