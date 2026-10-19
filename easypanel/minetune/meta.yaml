@@ -16,6 +16,8 @@ instructions: >-
 changeLog:
   - date: 2026-09-15
     description: first release (Minetune 0.3.4)
+  - date: 2026-10-19
+    description: Minetune 0.4.0
 links:
   - label: Website
     url: https://juniorcarlini.github.io/minetune/
@@ -40,7 +42,7 @@ schema:
     version:
       type: string
       title: Minetune Version
-      default: "0.3.4"
+      default: "0.4.0"
     memoryLimit:
       type: string
       title: Minecraft Server Memory Limit

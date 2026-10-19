@@ -11,6 +11,8 @@ existia), **Obsoleto** (vai sair numa versão futura), **Removido**, **Corrigido
 
 ## [Não lançado]
 
+## [0.4.0] - 2026-10-19
+
 ### Adicionado
 
 - Imagem `ghcr.io/juniorcarlini/minetune` com tudo num container só: servidor, portão,
@@ -271,7 +273,8 @@ Primeira versão: servidor, backups, painel web e documentação.
 - Acesso ao Docker por proxy com lista de permissões: só leitura de status e
   logs e ligar, parar ou reiniciar containers.
 
-[Não lançado]: https://github.com/JuniorCarlini/minetune/compare/v0.3.4...HEAD
+[Não lançado]: https://github.com/JuniorCarlini/minetune/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/JuniorCarlini/minetune/compare/v0.3.4...v0.4.0
 [0.3.4]: https://github.com/JuniorCarlini/minetune/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2
