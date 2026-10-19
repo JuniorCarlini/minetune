@@ -104,6 +104,31 @@ O Node 24 executa TypeScript nativamente (type stripping). O backend roda os
 Dependências de runtime: `hono`, `@hono/node-server`, `zod`. RCON, cliente
 Docker e parser de `.env` são implementações pequenas e testadas no próprio projeto.
 
+## 6.1. Um container só, para quem instala um por app
+
+Algumas plataformas (Hangar) instalam um container por app e não dão acesso ao
+Docker. A imagem `ghcr.io/juniorcarlini/minetune` (`docker/allinone/`) roda os mesmos
+quatro processos do compose (servidor, portão, agendador e painel) num container:
+
+- **Base itzg e binários copiados.** A imagem final é a `itzg/minecraft-server:java25`
+  com o `node` da imagem oficial do Node 24, o `restic` da imagem oficial e o
+  `backup-loop.sh` do `itzg/mc-backup` (o `rcon-cli` e o `mc-monitor` que ele usa já
+  vêm na itzg). Nada é compilado ou reinstalado; o único pacote é o `tini`.
+- **Supervisor em bash** (`supervisor.sh`) sob o `tini`. São quatro processos e um
+  protocolo pequeno: s6 ou supervisord trariam outra árvore de serviços para entender,
+  e um supervisor em Node custaria ~40 MB. O bash já está na imagem e ocupa ~4 MB.
+  Religa quem cai com espera crescente até 60 s (como o `restart: unless-stopped`) e,
+  no `docker stop`, para o resto e manda o SIGTERM só ao `mc-server-runner`, que salva
+  o mundo em até `STOP_DURATION`.
+- **Painel sem Docker.** Com `MINETUNE_CONTROL=local` o painel troca o cliente do
+  Docker (`docker.ts`) pelo `local-control.ts`, com a mesma interface
+  (`control.ts`): estado e pedidos por arquivos em `/tmp/minetune`, console pelo log
+  que o supervisor grava de cada processo e CPU/memória pelo cgroup do container.
+- **Portas.** O portão fica com a 25565; o servidor vai para a 25566, só local.
+- **Usuário 1000 para tudo.** O entrypoint só usa root para acertar o dono dos volumes
+  e desce (junto com o `tini`, que sem `CAP_KILL` não conseguiria sinalizar outro
+  usuário). A troca: os plugins do servidor rodam com o mesmo usuário do painel.
+
 ## 7. Decisões validadas em teste real (Paper 26.2, ARM64)
 
 - **Flags MeowIce derrubaram a JVM em ARM64** (`barrierSetAssembler_aarch64

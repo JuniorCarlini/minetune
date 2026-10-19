@@ -11,7 +11,7 @@
 # =============================================================================
 set -euo pipefail
 
-BACKUP_ENV=/minetune/config/backup.env
+BACKUP_ENV="${MINETUNE_CONFIG_DIR:-/minetune/config}/backup.env"
 ALLOWED_KEYS=(
   RESTIC_REPOSITORY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
   BACKUP_INTERVAL PRUNE_RESTIC_RETENTION PAUSE_IF_NO_PLAYERS RESTIC_LIMIT_UPLOAD

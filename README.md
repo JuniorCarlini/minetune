@@ -53,6 +53,7 @@ Ele junta tudo o que um servidor Minecraft precisa para rodar de verdade, sem im
 ## Sumário
 
 - [Início rápido](#-início-rápido)
+- [Um container só](#-um-container-só)
 - [O que vem pronto](#-o-que-vem-pronto)
 - [O painel](#-o-painel)
 - [Configuração](#-configuração)
@@ -92,6 +93,102 @@ Pronto:
 | **Painel** | <http://localhost:8080> | senha em `PANEL_PASSWORD` no `.env` |
 | **Jogo (Java)** | `localhost:25565` | |
 | **Jogo (Bedrock)** | `localhost:19132` (UDP) | só com o crossplay ligado |
+
+## 📦 Um container só
+
+Para plataformas que instalam um container por app (como o Hangar) ou para quem quer
+subir tudo com um `docker run`: a imagem `ghcr.io/juniorcarlini/minetune` traz
+servidor, portão, agendador de backups e painel num container só, sem acesso ao
+Docker. São os mesmos processos da instalação com compose, sob um supervisor pequeno,
+então o consumo de memória e CPU é o mesmo.
+
+```bash
+docker run -d --name minetune \
+  -p 127.0.0.1:8080:8080 -p 25565:25565 -p 19132:19132/udp \
+  -v minetune-data:/data \
+  -v minetune-backups:/backups \
+  --stop-timeout 90 \
+  --restart unless-stopped \
+  ghcr.io/juniorcarlini/minetune:latest
+
+docker logs minetune | grep "Senha do painel"
+```
+
+O painel fica em <http://localhost:8080>. Como no compose, ele só escuta na própria
+máquina; para abrir na rede, troque `127.0.0.1:8080` por `8080` ou, melhor, ponha um
+proxy reverso com HTTPS na frente.
+
+- **Senhas.** Sem variáveis de ambiente, a primeira subida gera a senha do painel,
+  a do RCON e a dos backups e guarda tudo em `/data/.minetune/secrets.env`. A senha do
+  painel aparece uma vez no log. **Guarde a `RESTIC_PASSWORD` desse arquivo fora do
+  servidor**: sem ela os backups não abrem. Para escolher as suas, passe
+  `PANEL_PASSWORD`, `PANEL_SESSION_SECRET`, `RCON_PASSWORD` e `RESTIC_PASSWORD`;
+  variável definida sempre vence o arquivo.
+- **Volumes.** `/data` guarda o mundo, a configuração (`/data/minetune-config`, com os
+  padrões copiados na primeira subida) e o estado do Minetune (`/data/.minetune`).
+  `/backups` é o destino "Disco local" do restic: é opcional, mas sem um volume com nome
+  o Docker cria um anônimo, que some quando o container é recriado. Melhor ainda:
+  configure um destino na nuvem na página Backups.
+- **Primeira subida.** Baixa o servidor e os plugins e gera o mundo: ~1 min numa
+  máquina boa, até ~5 min numa modesta. A verificação de saúde tem `start_period` de
+  5 min e só fica vermelha se o servidor não responder em 15 min
+  (`MINETUNE_BOOT_GRACE`, em segundos). Servidor desligado pelo painel conta como
+  saudável, para a plataforma não religar o que você desligou.
+- **Desligar.** O `docker stop` avisa os jogadores e salva o mundo antes de sair (até
+  60 s), por isso o `--stop-timeout 90`. Com o padrão de 10 s do Docker o servidor
+  seria derrubado no meio.
+- **Memória.** Painel, portão e agendador usam ~200 MB além do servidor. Com limite
+  de memória no container (`--memory`) abaixo de ~5 GB, a memória inicial do servidor
+  se ajusta a ele, deixando ~1 GB para a JVM e 256 MB para o resto; o painel também
+  desconta esses 256 MB ao validar a memória que você escolhe.
+- **Comandos dentro do container**: use `docker exec -u 1000 minetune ...`. Como root,
+  arquivos criados no volume ficariam com outro dono.
+
+Compose de exemplo, com o container travado ao máximo:
+
+```yaml
+services:
+  minetune:
+    image: ghcr.io/juniorcarlini/minetune:latest
+    ports:
+      - "127.0.0.1:8080:8080"     # painel: ponha um proxy com HTTPS na frente
+      - "25565:25565/tcp"          # jogo (Java), recebido pelo portão
+      - "19132:19132/udp"          # Bedrock, só com o crossplay ligado
+    volumes:
+      - minetune-data:/data
+      - minetune-backups:/backups
+    environment:
+      TZ: America/Sao_Paulo
+      # PANEL_PASSWORD: troque-esta-senha   # opcional; sem ela, gerada e mostrada no log
+    mem_limit: 6g
+    stop_grace_period: 90s
+    read_only: true
+    tmpfs:
+      - /tmp:exec,mode=1777,size=256m  # exec: o Netty do servidor carrega bibliotecas nativas daqui
+    cap_drop: [ALL]
+    # Só para acertar o dono dos volumes e descer para o usuário 1000. Com
+    # `user: "1000:1000"` e volumes com nome, nenhuma capability é necessária.
+    cap_add: [CHOWN, SETUID, SETGID]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+volumes:
+  minetune-data: {}
+  minetune-backups: {}
+```
+
+O que muda em relação ao compose com vários containers:
+
+| | Vários containers (`compose.yaml`) | Um container (`ghcr.io/juniorcarlini/minetune`) |
+|---|---|---|
+| Acesso ao Docker | painel via `docker-proxy` com lista de permissões | nenhum (`MINETUNE_CONTROL=local`) |
+| Ligar, parar, reiniciar | API do Docker | supervisor do container |
+| Configuração | `./config` no host | `/data/minetune-config` no volume |
+| Isolamento | cada parte num container | mesmo usuário (1000) para tudo |
+
+O isolamento é a troca: no container único os plugins do servidor rodam com o mesmo
+usuário do painel e conseguiriam ler as senhas dele. Se você instala plugins de origem
+duvidosa, prefira o compose com vários containers.
 
 ## 📦 O que vem pronto
 
@@ -214,6 +311,7 @@ Destinos, regra 3-2-1, restore de um arquivo só e recuperação numa máquina n
 | **VPS** (Hetzner, Oracle, Contabo, AWS…) | Mesmo fluxo; painel atrás de um proxy reverso com HTTPS. |
 | **EasyPanel** | Compose pelo Git, ou colar o `deploy/compose.yaml` (imagens publicadas), e publicar o painel pelo domínio do EasyPanel. |
 | **Umbrel** | Community App Store pronta em `umbrel/`: painel pelo Umbrel, jogo na porta 25565. |
+| **Hangar ou um container só** | Imagem `ghcr.io/juniorcarlini/minetune`, um volume, sem acesso ao Docker: [Um container só](#-um-container-só). |
 | **EasyPanel** | Template em `easypanel/minetune/` (gerado por `scripts/build-easypanel.mjs`), com as senhas criadas na instalação. |
 
 Como os jogadores chegam até o servidor:
@@ -318,6 +416,8 @@ Por que cada decisão foi tomada: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 │   └── patches/              #   ajustes em YAMLs do Paper e do Geyser
 ├── docker/minecraft/
 │   └── entrypoint.sh         # carrega server.env a cada start, monta plugins e patches
+├── docker/backup/            # entrypoint do agendador (lê config/backup.env)
+├── docker/allinone/          # imagem de um container só: Dockerfile, supervisor, saúde
 ├── panel/                    # painel web (TypeScript)
 │   ├── src/shared/           #   catálogos e contratos usados pela API e pela UI
 │   ├── src/server/           #   API Hono, RCON, Docker, restic, jobs, CLI

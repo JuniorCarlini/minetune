@@ -13,7 +13,8 @@
 # =============================================================================
 set -euo pipefail
 
-CONFIG_DIR=/minetune/config
+# No container único (docker/allinone) a configuração fica dentro do volume de dados.
+CONFIG_DIR="${MINETUNE_CONFIG_DIR:-/minetune/config}"
 SERVER_ENV="$CONFIG_DIR/server.env"
 
 log() { echo "[minetune] $*"; }
@@ -48,6 +49,10 @@ if [[ -d "$DEFAULTS_DIR" && -w "$CONFIG_DIR" ]]; then
       elif [[ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
         limit_bytes="$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)"
       fi
+      # No container único o limite também cobre painel e portão (MINETUNE_MEMORY_RESERVE_MB).
+      if [[ "$limit_bytes" =~ ^[0-9]+$ ]]; then
+        limit_bytes=$(( limit_bytes - ${MINETUNE_MEMORY_RESERVE_MB:-0} * 1024 * 1024 ))
+      fi
       if [[ "$limit_bytes" =~ ^[0-9]+$ ]] && (( limit_bytes < 5 * 1024 * 1024 * 1024 )); then
         heap_gb=$(( (limit_bytes / 1024 / 1024 - 1024) / 1024 ))
         if (( heap_gb < 1 )); then heap_gb=1; fi
@@ -59,6 +64,12 @@ if [[ -d "$DEFAULTS_DIR" && -w "$CONFIG_DIR" ]]; then
       log "Memória inicial do servidor: $initial_memory"
     fi
   fi
+fi
+
+# Container único: o supervisor roda só a parte de cima (cópia dos padrões e memória inicial)
+# antes de ligar o painel, para ele já encontrar o server.env na primeira subida.
+if [[ "${MINETUNE_PREPARE_ONLY:-false}" == "true" ]]; then
+  exit 0
 fi
 
 # Chaves de infraestrutura: vêm do compose e não podem ser sobrescritas pelo server.env.

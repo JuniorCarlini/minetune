@@ -9,6 +9,17 @@ Tipos de cambio: **Añadido** (novedades), **Cambiado** (cambios en lo que ya
 existía), **Obsoleto** (se quitará en una versión futura), **Eliminado**, **Corregido**
 (errores) y **Seguridad** (vulnerabilidades).
 
+## [Sin publicar]
+
+### Añadido
+
+- Imagen `ghcr.io/juniorcarlini/minetune` con todo en un solo contenedor: servidor,
+  portón, programador de backups y panel, los mismos procesos del compose bajo un
+  supervisor pequeño. Se instala como un contenedor por app (Hangar) o con un solo
+  `docker run` y un volumen, sin acceso a Docker; sin variables, el primer arranque
+  genera las contraseñas y muestra la del panel en el log. Ver "Um container só" en
+  el README.
+
 ## [0.3.4] - 2026-09-15
 
 ### Corregido
@@ -262,6 +273,7 @@ Primera versión: servidor, copias de seguridad, panel web y documentación.
 - Acceso a Docker mediante un proxy con lista de permisos: solo lectura de estado y
   logs y encender, parar o reiniciar contenedores.
 
+[Sin publicar]: https://github.com/JuniorCarlini/minetune/compare/v0.3.4...HEAD
 [0.3.4]: https://github.com/JuniorCarlini/minetune/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2

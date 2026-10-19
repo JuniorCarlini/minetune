@@ -1,6 +1,6 @@
 # Publica as imagens do Minetune no GitHub Container Registry (amd64 e arm64).
-# Plataformas que não têm o código-fonte (EasyPanel colando o compose, Umbrel) precisam delas
-# prontas. Roda só em tag de versão (v0.3.0) ou manualmente, para não publicar a cada push.
+# Plataformas que não têm o código-fonte (EasyPanel colando o compose, Umbrel, Hangar) precisam
+# delas prontas. Roda só em tag de versão (v0.3.0) ou manualmente, para não publicar a cada push.
 name: Imagens
 
 on:
@@ -32,6 +32,11 @@ jobs:
           - name: minetune-backup
             context: .
             file: docker/backup/Dockerfile
+          # Tudo num container só (servidor, portão, backups e painel), para quem instala um
+          # container por app (Hangar) ou quer `docker run` com um volume. Ver docker/allinone.
+          - name: minetune
+            context: .
+            file: docker/allinone/Dockerfile
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3

@@ -48,7 +48,7 @@ const JVM_OVERHEAD_BYTES = 768 * 1024 ** 2;
 const PLAYER_NAME = /^\.?[A-Za-z0-9_]{1,32}$/;
 
 export function apiRoutes(services: Services): Hono {
-  const { docker, rcon, restic, backupConfig, store, operations, jobs, config, worlds, profiles } = services;
+  const { control, rcon, restic, backupConfig, store, operations, jobs, config, worlds, profiles } = services;
   const api = new Hono();
 
   const cached = cache<SnapshotInfo[]>(60_000, () => restic.snapshots());
@@ -84,7 +84,7 @@ export function apiRoutes(services: Services): Hono {
    * do repositório (imagem da itzg) o seletor só avisa, porque dá para trocar MC_IMAGE_TAG.
    */
   const assertVersionRunsOnImage = async (version: string, m: Messages) => {
-    const server = await docker.inspect('server').catch(() => null);
+    const server = await control.inspect('server').catch(() => null);
     const needed = requiredJava(version);
     if (!server?.java || !needed || imageAllowsJavaChange(server.image)) return;
     if (compatibility(needed, server.java) !== 'ok') {
@@ -115,9 +115,9 @@ export function apiRoutes(services: Services): Hono {
   api.get('/status', async (c) => {
     const { values } = await store.readSettings();
     const [server, backup, gate] = await Promise.all([
-      docker.info('server'),
-      docker.info('backup').catch(() => ({ state: 'missing' as const })),
-      docker.info('gate').catch(() => ({ state: 'missing' as const })),
+      control.info('server'),
+      control.info('backup').catch(() => ({ state: 'missing' as const })),
+      control.info('gate').catch(() => ({ state: 'missing' as const })),
     ]);
     // Nunca espera o restic: usa o que já está em cache e atualiza em segundo plano.
     const snapshots = cached.peek() ?? [];
@@ -137,7 +137,7 @@ export function apiRoutes(services: Services): Hono {
 
     if (server.state === 'running') {
       const [resources, list, tps] = await Promise.all([
-        docker.stats('server').catch(() => null),
+        control.stats('server').catch(() => null),
         rcon.command('list').catch(() => ''),
         loaderForType(values.TYPE) === 'paper' ? rcon.command('tps').catch(() => '') : Promise.resolve(''),
       ]);
@@ -155,14 +155,14 @@ export function apiRoutes(services: Services): Hono {
       const { say } = requestMessages(c).server;
       await rcon.command(`say ${action === 'stop' ? say.stop : say.restart}`).catch(() => undefined);
     }
-    await docker.action('server', action);
+    await control.action('server', action);
     return c.json({ ok: true });
   });
 
   // --- Configurações ----------------------------------------------------------------
   api.get('/settings', async (c) => {
     const target = await scope(c);
-    const [settings, server] = await Promise.all([target.read.readSettings(), docker.inspect('server').catch(() => null)]);
+    const [settings, server] = await Promise.all([target.read.readSettings(), control.inspect('server').catch(() => null)]);
     const body: SettingsResponse = {
       ...settings,
       memoryLimitBytes: server?.memoryLimit || undefined,
@@ -183,7 +183,7 @@ export function apiRoutes(services: Services): Hono {
     const memory = body.values.MEMORY;
     if (memory) {
       const heap = parseMemory(memory);
-      const server = await docker.inspect('server').catch(() => null);
+      const server = await control.inspect('server').catch(() => null);
       if (heap && server?.memoryLimit && heap + JVM_OVERHEAD_BYTES > server.memoryLimit) {
         const limitGb = (server.memoryLimit / 1024 ** 3).toFixed(1);
         throw new ValidationError({ MEMORY: m.server.memoryOverLimit(limitGb) });
@@ -211,13 +211,13 @@ export function apiRoutes(services: Services): Hono {
     if (body.apply !== 'none' && target.active) {
       const job = await jobs.start('apply-settings', async (ctx) => {
         if (changed.length > 0) ctx.log(m.server.job.changed(changed.map((k) => fieldText(k, m).label).join(', ')));
-        const server = await docker.inspect('server');
+        const server = await control.inspect('server');
         if (body.apply === 'backup-and-restart' && server?.state === 'running') {
           await operations.backup({ ...ctx, progress: (p) => ctx.progress(p * 0.8) }, 'pre-config-change');
         }
         await rcon.command(`say ${m.server.say.applying}`).catch(() => undefined);
         ctx.log(m.server.job.restarting);
-        await docker.action('server', server?.state === 'running' ? 'restart' : 'start');
+        await control.action('server', server?.state === 'running' ? 'restart' : 'start');
         cached.invalidate();
       }, requestLocale(c));
       response.jobId = job.id;
@@ -237,7 +237,7 @@ export function apiRoutes(services: Services): Hono {
     let list = versionLists.get(type);
     if (!list) versionLists.set(type, (list = cache(60 * 60_000, () => fetchVersions(type))));
 
-    const server = await docker.inspect('server').catch(() => null);
+    const server = await control.inspect('server').catch(() => null);
     const body: VersionsResponse = {
       type,
       // Java de dentro do container; o nome da imagem só diz o Java nas tags javaNN da itzg.
@@ -284,7 +284,7 @@ export function apiRoutes(services: Services): Hono {
   // --- Jogadores ------------------------------------------------------------------------
   api.get('/players', async (c) => {
     const target = await scope(c);
-    const server = await docker.info('server');
+    const server = await control.info('server');
     // Quem está jogando só existe no mundo ligado; num guardado aparecem as listas guardadas com ele.
     const list = target.active && server.state === 'running' ? parseList(await rcon.command('list').catch(() => '')) : null;
     const [whitelist, ops, banned] = await Promise.all([
@@ -485,9 +485,9 @@ export function apiRoutes(services: Services): Hono {
     cached.invalidate();
 
     // O agendador só relê o arquivo ao iniciar.
-    const scheduler = await docker.info('backup').catch(() => null);
+    const scheduler = await control.info('backup').catch(() => null);
     const restartedScheduler = scheduler?.state === 'running';
-    if (restartedScheduler) await docker.action('backup', 'restart', 30);
+    if (restartedScheduler) await control.action('backup', 'restart', 30);
     return c.json({ restartedScheduler, initialized });
   });
 
@@ -543,11 +543,11 @@ export function apiRoutes(services: Services): Hono {
    */
   const activate = async (ctx: JobContext, from: string, to: string, name: string) => {
     const { server: t } = ctx.m ?? PT;
-    const server = await docker.inspect('server');
+    const server = await control.inspect('server');
     if (server?.state === 'running') {
       await rcon.command(`say ${t.say.switching(name)}`).catch(() => undefined);
       ctx.log(t.job.stopping);
-      await docker.action('server', 'stop', 90);
+      await control.action('server', 'stop', 90);
     }
     let saved = false;
     try {
@@ -567,7 +567,7 @@ export function apiRoutes(services: Services): Hono {
       throw err;
     } finally {
       ctx.log(t.job.starting);
-      await docker.action('server', 'start').catch((e: Error) => ctx.log(t.job.startFailed(e.message)));
+      await control.action('server', 'start').catch((e: Error) => ctx.log(t.job.startFailed(e.message)));
     }
   };
 
@@ -598,7 +598,7 @@ export function apiRoutes(services: Services): Hono {
   api.get('/worlds', async (c) => {
     const { values } = await store.readSettings();
     const active = activeWorld(values);
-    const [list, server] = await Promise.all([worlds.list(active), docker.info('server')]);
+    const [list, server] = await Promise.all([worlds.list(active), control.info('server')]);
 
     for (const world of list) {
       const settings = world.active ? values : await storedWorldSettings(world.folder);
@@ -760,7 +760,7 @@ export function apiRoutes(services: Services): Hono {
       const abort = new AbortController();
       stream.onAbort(() => abort.abort());
       try {
-        for await (const line of docker.logs('server', { tail: 300, follow: true, signal: abort.signal })) {
+        for await (const line of control.logs('server', { tail: 300, follow: true, signal: abort.signal })) {
           await stream.writeSSE({ data: line });
         }
       } catch (err) {

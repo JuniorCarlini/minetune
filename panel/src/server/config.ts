@@ -12,6 +12,16 @@ const baseSchema = z.object({
   RCON_PASSWORD: z.string().min(1, 'RCON_PASSWORD é obrigatório'),
 
   DOCKER_API: z.url().default('http://docker-proxy:2375'),
+  /**
+   * docker: cada parte num container, controladas pela API do Docker (compose, EasyPanel, Umbrel).
+   * local: container único, controlado pelo supervisor dele (ghcr.io/juniorcarlini/minetune).
+   */
+  MINETUNE_CONTROL: z.enum(['docker', 'local']).default('docker'),
+  /** Pasta em memória onde o supervisor do container único grava estado e lê pedidos. */
+  MINETUNE_RUN_DIR: z.string().default('/tmp/minetune'),
+  /** Saída de cada processo no container único (o console do painel lê a do servidor). */
+  MINETUNE_LOG_DIR: z.string().default('/data/.minetune/logs'),
+  MINETUNE_IMAGE: z.string().default('ghcr.io/juniorcarlini/minetune'),
 
   /** Endereço que os amigos usam (domínio ou túnel); vazio = painel deduz pelo navegador. */
   PUBLIC_ADDRESS: z.string().default(''),

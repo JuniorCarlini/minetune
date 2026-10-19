@@ -52,7 +52,7 @@ const SAVE_PAUSE_MAX_MS = 30 * 60_000;
 
 export function registerWorldTransfer(api: Hono, deps: WorldTransferDeps): void {
   const { services, findWorld, storedWorldSettings, activeWorld } = deps;
-  const { config, docker, rcon, restic, store, jobs, worlds, profiles } = services;
+  const { config, control, rcon, restic, store, jobs, worlds, profiles } = services;
   const workDir = () => join(config.DATA_DIR, '.minetune', 'uploads');
 
   /** Nome livre na raiz e em mundos-guardados/: "nome", "nome-2", "nome-3"... cabendo no limite. */
@@ -215,7 +215,7 @@ export function registerWorldTransfer(api: Hono, deps: WorldTransferDeps): void 
     let savingPaused = false;
     if (world.active) {
       await profiles.saveLive(world.folder).catch(() => undefined);
-      const server = await docker.info('server');
+      const server = await control.info('server');
       if (server.state === 'running') {
         try {
           await rcon.command('save-off');

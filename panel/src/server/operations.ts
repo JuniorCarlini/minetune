@@ -6,7 +6,7 @@ import { access, mkdir, readdir, rename, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { INTL_LOCALE, PT } from '../shared/i18n/index.ts';
 import type { BaseConfig } from './config.ts';
-import type { DockerClient } from './docker.ts';
+import type { ServiceControl } from './control.ts';
 import type { JobContext } from './jobs.ts';
 import type { RconClient } from './rcon.ts';
 import type { Restic } from './restic.ts';
@@ -19,13 +19,13 @@ const exists = (path: string) =>
 
 export class Operations {
   private readonly config: BaseConfig;
-  private readonly docker: DockerClient;
+  private readonly control: ServiceControl;
   private readonly rcon: RconClient;
   private readonly restic: Restic;
 
-  constructor(config: BaseConfig, docker: DockerClient, rcon: RconClient, restic: Restic) {
+  constructor(config: BaseConfig, control: ServiceControl, rcon: RconClient, restic: Restic) {
     this.config = config;
-    this.docker = docker;
+    this.control = control;
     this.rcon = rcon;
     this.restic = restic;
   }
@@ -35,7 +35,7 @@ export class Operations {
    * religa. Se o servidor estiver parado os arquivos já estão consistentes.
    */
   async backup(ctx: JobContext, tag: string): Promise<string> {
-    const server = await this.docker.inspect('server').catch(() => null);
+    const server = await this.control.inspect('server').catch(() => null);
     const t = (ctx.m ?? PT).server.job;
     let autosaveDisabled = false;
 
@@ -88,18 +88,18 @@ export class Operations {
       await this.backup({ log: ctx.log, progress: (p) => ctx.progress(p * 0.3), m: ctx.m, locale: ctx.locale }, 'pre-restore');
     }
 
-    const server = await this.docker.inspect('server');
-    const scheduler = await this.docker.inspect('backup').catch(() => null);
+    const server = await this.control.inspect('server');
+    const scheduler = await this.control.inspect('backup').catch(() => null);
     const serverWasRunning = server?.state === 'running';
     const schedulerWasRunning = scheduler?.state === 'running';
 
     if (serverWasRunning) {
       await this.rcon.command(`say ${m.server.say.restoring}`).catch(() => undefined);
     }
-    if (schedulerWasRunning) await this.docker.action('backup', 'stop', 30);
+    if (schedulerWasRunning) await this.control.action('backup', 'stop', 30);
     if (serverWasRunning) {
       ctx.log(t.stoppingForRestore);
-      await this.docker.action('server', 'stop', 90);
+      await this.control.action('server', 'stop', 90);
     }
 
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -135,10 +135,10 @@ export class Operations {
       await rm(staging, { recursive: true, force: true }).catch(() => undefined);
       if (serverWasRunning) {
         ctx.log(t.startingAfterRestore);
-        await this.docker.action('server', 'start').catch((err: Error) => ctx.log(t.startServerFailed(err.message)));
+        await this.control.action('server', 'start').catch((err: Error) => ctx.log(t.startServerFailed(err.message)));
       }
       if (schedulerWasRunning) {
-        await this.docker.action('backup', 'start').catch((err: Error) => ctx.log(t.startSchedulerFailed(err.message)));
+        await this.control.action('backup', 'start').catch((err: Error) => ctx.log(t.startSchedulerFailed(err.message)));
       }
     }
   }

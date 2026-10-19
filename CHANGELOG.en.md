@@ -9,6 +9,17 @@ Change types: **Added** (new features), **Changed** (changes to existing
 features), **Deprecated** (will be removed in a future version), **Removed**, **Fixed**
 (bugs) and **Security** (vulnerabilities).
 
+## [Unreleased]
+
+### Added
+
+- `ghcr.io/juniorcarlini/minetune` image with everything in a single container: server,
+  gate, backup scheduler and panel, the same processes as the compose stack under a
+  small supervisor. It installs as one container per app (Hangar) or with a single
+  `docker run` and one volume, with no Docker access; with no variables set, the first
+  boot generates the passwords and prints the panel one in the log. See "Um container
+  só" in the README.
+
 ## [0.3.4] - 2026-09-15
 
 ### Fixed
@@ -262,6 +273,7 @@ First version: server, backups, web panel and documentation.
 - Docker access through a proxy with an allowlist: only reading status and
   logs and starting, stopping or restarting containers.
 
+[Unreleased]: https://github.com/JuniorCarlini/minetune/compare/v0.3.4...HEAD
 [0.3.4]: https://github.com/JuniorCarlini/minetune/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/JuniorCarlini/minetune/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/JuniorCarlini/minetune/compare/v0.3.1...v0.3.2

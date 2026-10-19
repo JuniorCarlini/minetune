@@ -8,8 +8,9 @@
 
 import type { ContainerInfo, ContainerState } from '../shared/api.ts';
 import { javaFromEnv } from '../shared/versions.ts';
+import type { ControlAction, Role, ServiceControl, ServiceDetails, ServiceStats } from './control.ts';
 
-export type Role = 'server' | 'backup' | 'gate';
+export type { Role } from './control.ts';
 
 export class DockerError extends Error {
   readonly status?: number;
@@ -39,7 +40,7 @@ interface ContainerStats {
   memory_stats: { usage?: number; limit?: number; stats?: { inactive_file?: number } };
 }
 
-export class DockerClient {
+export class DockerClient implements ServiceControl {
   private readonly baseUrl: string;
   private readonly instance: string;
   /** Última amostra de CPU por container, para calcular o % sem a espera do Docker. */
@@ -74,7 +75,7 @@ export class DockerClient {
     return found?.Id ?? null;
   }
 
-  async inspect(role: Role): Promise<(ContainerInfo & { id: string; memoryLimit: number; java: number | null }) | null> {
+  async inspect(role: Role): Promise<ServiceDetails | null> {
     const id = await this.findId(role);
     if (!id) return null;
     const res = await this.request(`/containers/${id}/json`);
@@ -97,7 +98,7 @@ export class DockerClient {
     return info;
   }
 
-  async stats(role: Role): Promise<{ memoryUsed: number; memoryLimit: number; cpuPercent: number | null; cpuCores: number } | null> {
+  async stats(role: Role): Promise<ServiceStats | null> {
     const id = await this.findId(role);
     if (!id) return null;
     // one-shot responde em ~90ms. Sem ele o Docker espera ~2s para colher duas amostras e
@@ -124,7 +125,7 @@ export class DockerClient {
     };
   }
 
-  async action(role: Role, action: 'start' | 'stop' | 'restart', timeoutSeconds = 90): Promise<void> {
+  async action(role: Role, action: ControlAction, timeoutSeconds = 90): Promise<void> {
     const id = await this.findId(role);
     if (!id) throw new DockerError(`Container "${role}" não encontrado (instância ${this.instance})`, 404);
     const query = action === 'start' ? '' : `?t=${timeoutSeconds}`;

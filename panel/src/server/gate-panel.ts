@@ -13,14 +13,14 @@ import { AccountStore } from './gate/accounts.ts';
 import { PLAYER_NAME } from './gate/protocol.ts';
 import { requestMessages } from './i18n.ts';
 
-export function registerGate(api: Hono, { config, docker, store }: Services): void {
+export function registerGate(api: Hono, { config, control, store }: Services): void {
   const accounts = new AccountStore(join(config.DATA_DIR, GATE_ACCOUNTS_DIR));
   const configFile = join(config.CONFIG_DIR, GATE_CONFIG_FILE);
   const readConfig = async () => parseGateConfig(await readFile(configFile, 'utf8').catch(() => ''));
 
   api.get('/gate', async (c) => {
     const [gate, settings, list, server] = await Promise.all([
-      docker.info('gate').catch(() => ({ state: 'missing' as const })),
+      control.info('gate').catch(() => ({ state: 'missing' as const })),
       readConfig(),
       accounts.list(),
       store.readSettings(),
@@ -48,7 +48,7 @@ export function registerGate(api: Hono, { config, docker, store }: Services): vo
 
   // Botão do aviso da tela Início: o proxy do Docker só libera start/stop/restart.
   api.post('/gate/start', async (c) => {
-    await docker.action('gate', 'start');
+    await control.action('gate', 'start');
     return c.json({ ok: true });
   });
 
