@@ -4,4 +4,3 @@
 # O Paper já inclui o profiler spark (/spark).
 
 # Pré-geração de chunks: a otimização mais efetiva para evitar lag de exploração.
-chunky?
